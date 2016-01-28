@@ -176,7 +176,7 @@ GEOSGeometryH    dataset_get_leaf_geo(dataset *dh, dataset_leaf *leaf);
 #define dataset_is_last(i) ((i.si->pid+1 == i.dh->metadata.pagecount) && (i.page->data->used == i.position+1))
 #define dataset_iter_is_same(i, j) (i.dh == j.dh && i.si->pid == j.si->pid && i.position == j.position)
 
-#define dataset_meta_stddev(m, axis) (sqrt(m.axis##_psa / (m.count-1)))
+#define dataset_meta_stddev(m, axis) (sqrt(m.axis##_psa / (m.count)))
 
 #ifdef __cplusplus
 }

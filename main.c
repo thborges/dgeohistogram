@@ -8,25 +8,152 @@
 #include "dataset.h"
 #include "glibwrap.h"
 #include "ogrext.h"
+#include "rtree.h"
+#include "rtree-star.h"
+#include "histogram.h"
 
 dataset *read_geos(char *shpfile);
+
+OGRDataSourceH ogr_ds;
 
 int main(int argc, char* argv[]) {
 	//srand(time(NULL));
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
 
-	if (argc < 2) {
-		printf("Use: %s file.shp\n", argv[0]);
+	if (argc < 3) {
+		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp\n", argv[0]);
 		return 1;
 	}
 
-	dataset *ds = read_geos(argv[1]);
+	enum HistogramHashMethod hm = HHASH_AREAFRAC;
+	if (strcmp(argv[1], "mbrc") == 0)
+		hm = HHASH_MBRCENTER;
+	else
+	if (strcmp(argv[1], "centr") == 0)
+		hm = HHASH_CENTROID;
+	else
+	if (strcmp(argv[1], "areaf") == 0)
+		hm = HHASH_AREAFRAC;
+	else
+	if (strcmp(argv[1], "areafs") == 0)
+		hm = HHASH_AREAFRACSPLIT;
+	else {
+		printf("Method %s does not exists.\n", argv[1]);
+		exit(1);
+	}
+	
+	dataset *ds = read_geos(argv[2]);
 
 	// chamar a função que cria o histograma
-	histogram_generate(ds, 0);
+	histogram_generate(ds, hm, 0);
 	histogram_print_geojson(ds);
 
+	// cria uma r*
+	rtree_root *rtree = NULL;
+	rtree = rtree_new_rstar(30, 10);
+
+	unsigned read = 0;
+	dataset_iter_seg iter;
+	dataset_foreach(iter, ds) {
+		read++;
+		GEOSGeometryH geo = dataset_get_leaf_geo(ds, iter.item);
+		rtree_append(rtree, geo);
+		print_progress_gauge(read, ds->metadata.count);
+	}
+
+
+	double accuracy = 0.0;
+	double sum_ei = 0.0;
+	double sum_ri = 0.0;
+	double mean = 0.0;
+	double M2 = 0.0;
+	double sum_error = 0.0;
+	int n = 0;
+
+	dataset_histogram *hist = &ds->metadata.hist;
+	int cells = hist->xqtd*hist->yqtd;
+
+	rtree_window_stat stats;
+	for(int x = 0; x < hist->xqtd; x++) {
+		Envelope e;
+		e.MinX = hist->xtics[x];
+		e.MaxX = hist->xtics[x+1]; 
+
+		for(int y = 0; y < hist->yqtd; y++) {
+			n++;
+			e.MinY = hist->ytics[y];
+			e.MaxY = hist->ytics[y+1];
+
+			histogram_cell *cell = GET_HISTOGRAM_CELL(hist, x, y);
+
+			memset(&stats, 0, sizeof(rtree_window_stat));
+
+			char wkt[1024];
+			sprintf(wkt, "POLYGON ((%f %f, %f %f, %f %f, %f %f, %f %f))", 
+				e.MinX, e.MinY, 
+				e.MaxX, e.MinY, 
+				e.MaxX, e.MaxY,
+				e.MinX, e.MaxY,
+				e.MinX, e.MinY);
+			GEOSGeometryH win = GEOSGeomFromWKT(wkt);
+			assert(win != NULL);
+			//printf("%s\n", wkt);
+		
+			GList *results = rtree_window_search(rtree, win, &stats);
+			
+			int riq = g_list_length(results);
+			int rhq = cell->cardin;
+			int error = abs(rhq-riq);
+
+			//average relative error
+			sum_ei += error;
+			sum_ri += riq;
+
+			//stdev of error
+			double delta = error - mean;
+			mean += delta/(double)n;
+			M2 += delta*(error - mean);
+
+			//sum error
+			sum_error += error;
+
+			//precision and recall
+			int pv, pf, nf;
+			if (rhq >= riq) {
+				pv = riq;
+				pf = rhq-riq;
+				nf = 0;
+			}
+			else {
+				pv = rhq;
+				pf = 0;
+				nf = riq-rhq;
+			}
+			double p = pv==0 && pf==0 ? 1.0 : pv / (double)(pv+pf);
+			double r = pv==0 && nf==0 ? 1.0 : pv / (double)(pv+nf);
+			accuracy += (p+r)/2.0;
+			//printf(" %.2f", (p+r)/2.0);
+			//printf(" %d:%d", rhq, riq);
+			//printf(" %d", error);
+
+			if (isnan(p+r)) 
+				printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
+			
+			g_list_free(results);
+			GEOSGeom_destroy(win);
+
+			print_progress_gauge(n, cells);
+		}
+		//printf("\n");
+	}
+	
+	printf("Average Relative Error: %f\nStdevp error: %f\nError sum: %f\n", 
+		sum_ei / (double)sum_ri,
+		sqrt(M2/(double)n),
+		sum_error);
+	
+	OGR_DS_Destroy(ogr_ds);
 	finishGEOS();
 
 	return 0;
@@ -35,16 +162,17 @@ int main(int argc, char* argv[]) {
 dataset *read_geos(char *shpfile) {
 	dataset *results = dataset_create_mem("", 1);
 
-	OGRDataSourceH ds;
-	ds = OGROpen(shpfile, false, NULL);
-	if (ds == NULL) {
+	ogr_ds = OGROpen(shpfile, false, NULL);
+	if (ogr_ds == NULL) {
 		fprintf(stderr, "Invalid shapefile.\n");
 		return results;
 	}
 
-	OGRLayerH layer = OGR_DS_GetLayer(ds, 0);
+	OGRLayerH layer = OGR_DS_GetLayer(ogr_ds, 0);
 	OGR_L_ResetReading(layer);
 	int layer_count = OGR_L_GetFeatureCount(layer, FALSE);
+
+	results->temp_ogr_layer = layer;
 
 	clock_t cs = clock();
 	
@@ -61,10 +189,11 @@ dataset *read_geos(char *shpfile) {
 			GEOSGeometryH ggeo = GEOSGeomFromWKB_buf(wkb, wkb_size);
 
 			if (ggeo) {
-				dataset_leaf *leaves = dataset_add(results);
-				leaves[0].geo = ggeo;
-				GEOSGetEnvelope(ggeo, &leaves[0].mbr);
-
+				dataset_leaf *leaf = dataset_add(results);
+				long long gid = OGR_F_GetFID(feature);
+				Envelope mbr = OGRGetEnvelope(geometry);
+				dataset_fill_leaf_id(leaf, 0, gid, &mbr);
+				leaf[0].points = OGRGetNumPoints(geometry);
 			}
 		}
 		OGR_F_Destroy(feature);
@@ -72,7 +201,6 @@ dataset *read_geos(char *shpfile) {
 		read++;
 		print_progress_gauge(read, layer_count);
 	}
-	OGR_DS_Destroy(ds);
 
 	clock_t cf = clock();
 	double runtime_diff_us = (cf-cs) * 1000. / CLOCKS_PER_SEC;

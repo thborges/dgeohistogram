@@ -5,6 +5,7 @@
  *      Author: thborges
  */
 
+#include <float.h>
 #include "histogram.h"
 
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd) {
@@ -53,15 +54,29 @@ void fill_hist_cell_mbr_center(dataset_leaf *l, dataset *ds, dataset_histogram *
 	cell->points += l->points;
 }
 
-inline __attribute__((always_inline))
-void fill_hist_cell_area_fraction(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
-	// proportional to cover area
+//inline __attribute__((always_inline))
+void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double objarea, double points) {
 
-	int xini = (l->mbr.MinX - ds->metadata.hist.mbr.MinX) / dh->xsize;
-	int xfim = (l->mbr.MaxX - ds->metadata.hist.mbr.MinX) / dh->xsize;
-	int yini = (l->mbr.MinY - ds->metadata.hist.mbr.MinY) / dh->ysize;
-	int yfim = (l->mbr.MaxY - ds->metadata.hist.mbr.MinY) / dh->ysize;
-	double objarea = ENVELOPE_AREA(l->mbr);
+	int xini = (ev.MinX - dh->mbr.MinX) / dh->xsize;
+	int xfim = (ev.MaxX - dh->mbr.MinX) / dh->xsize;
+	int yini = (ev.MinY - dh->mbr.MinY) / dh->ysize;
+	int yfim = (ev.MaxY - dh->mbr.MinY) / dh->ysize;
+
+	const double epsilon = 1e-100;
+	if (ev.MaxX - dh->xtics[xfim] < epsilon && xini > 0) {
+		//printf("l.MaxX %.10f, cell.MaxX %.10f\n", l->mbr.MaxX, dh->xtics[xfim]);
+		xfim--;
+	}
+	if (ev.MaxY - dh->ytics[yfim] < epsilon && yini > 0) {
+		//printf("l.MaxY %.10f, cell.MaxY %.10f\n", l->mbr.MaxY, dh->ytics[yfim]);
+		yfim--;
+	}
+	if (xfim < xini)
+		xini = xfim;
+	if (yfim < yini)
+		yini = yfim;
+
+	//printf("%d %d %d %d\n", xini, xfim, yini, yfim);
 
 	for(int x = xini; x <= xfim; x++) {
 		Envelope rs;
@@ -72,25 +87,135 @@ void fill_hist_cell_area_fraction(dataset_leaf *l, dataset *ds, dataset_histogra
 			rs.MinY = dh->ytics[y];
 			rs.MaxY = dh->ytics[y+1];
 
-			Envelope inters = EnvelopeIntersection(l->mbr, rs);
+			Envelope inters = EnvelopeIntersection(ev, rs);
 			double intarea = ENVELOPE_AREA(inters);
 			double rsarea = ENVELOPE_AREA(rs);
 
 			// for point objects, objarea == 0.0
 			double fraction = (objarea == 0.0) ? 1.0 : intarea / objarea;
 
-			histogram_cell *cell = &ds->metadata.hist.hcells[x*ds->metadata.hist.yqtd +y];
-			cell->cardin += fraction;
-			cell->points += l->points; //object is replicated
+			histogram_cell *cell = &dh->hcells[x*dh->yqtd +y];
+			cell->cardin += 1.0;//fraction;
+			cell->points += points; //object is replicated
 		}
 	}
+}
+
+inline __attribute__((always_inline))
+void fill_hist_cell_area_fraction(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+	// proportional to cover area
+
+	//printf("GID %lld: ", l->gid);
+
+	double objarea = ENVELOPE_AREA(l->mbr);
+	hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
 
 	//printf("%10.5f <= %10.5f <= %10.5f\n", ds->metadata.hist.xtics[xp], x, ds->metadata.hist.xtics[xp+1]);
 	//assert(x >= ds->metadata.hist.xtics[xp] && x <= ds->metadata.hist.xtics[xp+1]);
 	//assert(y >= ds->metadata.hist.ytics[yp] && y <= ds->metadata.hist.ytics[yp+1]);
 }
 
-void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum JoinPredicateCheck pcheck) {
+void envelope_update(Envelope *e, double X, double Y) {
+	e->MinX = MIN(e->MinX, X);
+	e->MinY = MIN(e->MinY, Y);
+	e->MaxX = MAX(e->MaxX, X);
+	e->MaxY = MAX(e->MaxY, Y);
+}
+
+//inline __attribute__((always_inline))
+void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+	// proportional to cover area
+
+	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
+	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
+	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
+	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
+	double objarea = ENVELOPE_AREA(l->mbr);
+
+	// is a candidate for split?
+	int xspan = xfim - xini;
+	int yspan = yfim - yini;
+	if (xspan > 2 || yspan > 2) { // more than two cells?
+		int xsplit = xspan > yspan;
+		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
+		
+		double split_at;
+		if (xsplit)
+			split_at = (l->mbr.MaxX + l->mbr.MinX) / 2.0;
+		else
+			split_at = (l->mbr.MaxY + l->mbr.MinY) / 2.0;
+
+		Envelope e1 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+		Envelope e2 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+
+		const GEOSGeometry *linearRing;
+		const GEOSCoordSequence *coordSeq;
+		int numGeom = GEOSGetNumGeometries(geo);
+		for(int n = 0; n < numGeom; n++) {
+			const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
+			if (GEOSGeomTypeId(ngeo) == GEOS_POLYGON)
+				linearRing = GEOSGetExteriorRing(ngeo);
+			else
+				linearRing = ngeo;
+
+			char splitted = '0';
+			double last_x, last_y;
+			int numPoints = GEOSGeomGetNumPoints(linearRing);
+	        coordSeq = GEOSGeom_getCoordSeq(linearRing);
+			for (int p=0; p < numPoints; p++) {
+				double xCoord, yCoord;
+        		GEOSCoordSeq_getX(coordSeq, p, &xCoord);
+		        GEOSCoordSeq_getY(coordSeq, p, &yCoord);
+				if ((xsplit && xCoord <= split_at) || (!xsplit && yCoord <= split_at)) {
+					if (splitted == '0') 
+						splitted = 'x';
+					else if (splitted == 'y') {
+						splitted = '1';
+						envelope_update(&e1, last_x, last_y);
+						split_at = xsplit ? last_x: last_y;
+					}		
+					envelope_update(&e1, xCoord, yCoord);
+				}
+				else {
+					if (splitted == '0') 
+						splitted = 'y';
+					else if (splitted == 'x') {
+						splitted = '1';
+						envelope_update(&e2, last_x, last_y);
+						split_at = xsplit ? last_x: last_y;
+					}		
+					envelope_update(&e2, xCoord, yCoord);
+				}
+				last_x = xCoord;
+				last_y = yCoord;
+			}
+			
+		}
+		if (xsplit)
+			e1.MaxX = e2.MinX = split_at;
+		else
+			e1.MaxY = e2.MinY = split_at;
+		
+		objarea = ENVELOPE_AREA(e1) + ENVELOPE_AREA(e2);
+		hash_envelope_area_fraction(dh, e1, objarea, l->points);
+		hash_envelope_area_fraction(dh, e2, objarea, l->points);
+
+		if (l->gid != -1) // free because of the call to dataset_get_leaf_geo
+			GEOSGeom_destroy(geo);
+
+		/*print_geojson_header();
+		print_geojson_mbr(l->mbr, "orig");
+		print_geojson_mbr(e1, "e1");
+		print_geojson_mbr(e2, "e2");
+		print_geojson_footer();*/
+	}
+	else {
+		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
+	}
+}
+
+
+void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
 
 	dataset_histogram *dh = &ds->metadata.hist;
 	dh->xsize = psizex;
@@ -113,13 +238,30 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 	dataset_foreach(di, ds) {
 		dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
 
-		//fill_hist_cell_centroid(l, ds, dh);
-		//fill_hist_cell_mbr_center(l, ds, dh);
-		fill_hist_cell_area_fraction(l, ds, dh);
+		switch (hm) {
+			case HHASH_CENTROID:
+				fill_hist_cell_centroid(l, ds, dh);
+				break;
+	
+			case HHASH_MBRCENTER: 
+				fill_hist_cell_mbr_center(l, ds, dh);
+				break;
+
+			case HHASH_AREAFRAC:
+				fill_hist_cell_area_fraction(l, ds, dh);
+				break;
+
+			case HHASH_AREAFRACSPLIT:
+				fill_hist_cell_area_fraction_with_split(l, ds, dh);
+				break;
+
+			default:
+				printf("Histogram method not defined.\n");
+		}
 	}
 }
 
-void histogram_generate_avg(dataset *ds, enum JoinPredicateCheck pcheck) {
+void histogram_generate_avg(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -128,13 +270,13 @@ void histogram_generate_avg(dataset *ds, enum JoinPredicateCheck pcheck) {
 	double psizey = ds->metadata.y_average;
 
 	dataset_histogram *dh = &ds->metadata.hist;
-	histogram_alloc(dh, rangex / psizex + 1, rangey / psizey + 1);
+	histogram_alloc(dh, ceil(rangex / psizex), ceil(rangey / psizey));
 
-	histogram_generate_cells_fix(ds, psizex, psizey, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
 
 };
 
-void histogram_generate_hw(dataset *ds, double x, double y, enum JoinPredicateCheck pcheck) {
+void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -151,13 +293,13 @@ void histogram_generate_hw(dataset *ds, double x, double y, enum JoinPredicateCh
 		psizey = rangey / MAX;
 
 	dataset_histogram *dh = &ds->metadata.hist;
-	histogram_alloc(dh, rangex / psizex + 1, rangey / psizey + 1);
+	histogram_alloc(dh, ceil(rangex / psizex), ceil(rangey / psizey));
 
-	histogram_generate_cells_fix(ds, psizex, psizey, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
 
 };
 
-void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum JoinPredicateCheck pcheck) {
+void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -168,7 +310,7 @@ void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum JoinPredic
 	dataset_histogram *dh = &ds->metadata.hist;
 	histogram_alloc(dh, fsizex, fsizey);
 
-	histogram_generate_cells_fix(ds, psizex, psizey, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
 	
 };
 
@@ -205,7 +347,7 @@ void histogram_build_metadata(dataset *ds, enum JoinPredicateCheck pcheck) {
 	}
 }
 
-void histogram_generate(dataset *ds, enum JoinPredicateCheck pcheck) {
+void histogram_generate(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
 
 	histogram_build_metadata(ds, pcheck);
 
@@ -215,7 +357,7 @@ void histogram_generate(dataset *ds, enum JoinPredicateCheck pcheck) {
 	histogram_generate_hw(ds, 
 		ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
 		ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
-		pcheck);
+		hm, pcheck);
 }
 
 
