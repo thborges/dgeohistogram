@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 
 	if (argc < 4) {
 		printf(
-"Use: %s file.shp m_size cluster_size [-rgut] [-rlazy] [-r0] [-s] [-g] [-gpu]\n", argv[0]);
+"Use: %s file.shp m_size cluster_size [-rgut] [-rlazy] [-r0] [-rstar] [-s] [-g] [-gpu]\n", argv[0]);
 		return 1;
 	}
 
@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
 			if (strcmp(argv[i], "-rgut") == 0) rtreetype = RGUT;
 			if (strcmp(argv[i], "-rlazy") == 0) rtreetype = RLAZY;
 			if (strcmp(argv[i], "-r0") == 0) rtreetype = R0;
+			if (strcmp(argv[i], "-rstar") == 0) rtreetype = RSTAR;
 		}
 	}
 

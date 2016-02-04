@@ -46,6 +46,10 @@ void check_mbrs_recursive(rtree_node *node) {
 	Envelope e = node->mbr;
  	Envelope f = rtree_compute_mbr(node);
 #endif
+	if (!(e.MinX == f.MinX && e.MinY == f.MinY && e.MaxX == f.MaxX && e.MaxY == f.MaxY)) {
+		printf("%f %f, %f %f\n", e.MinX, e.MinY, e.MaxX, e.MaxY);
+		printf("%f %f, %f %f\n", f.MinX, f.MinY, f.MaxX, f.MaxY);
+	}
 	assert(e.MinX == f.MinX && e.MinY == f.MinY && e.MaxX == f.MaxX && e.MaxY == f.MaxY);
 }
 

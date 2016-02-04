@@ -7,45 +7,18 @@
 int rtree_choose_subtree_gut(rtree_root *root, rtree_node *n, const Envelope e) {
 	int index = -1;
 
-	if (n->dirs[0]->type == LEAF) { //if the node points to leaves. r* trick
-		double minoroverlap = DBL_MAX;
-		double currentarea = DBL_MAX;
-		int minoridx = 0;
-	
-		for(int i = 0; i < n->used; i++) {
-			double overlap = 0.0;
-			Envelope mbrnew = e;
-			ENVELOPE_MERGE(mbrnew, n->dirs[i]->mbr);
-
-			for(int j = 0; j < n->used; j++) {
-				if (j == i) continue;
-				if (ENVELOPE_INTERSECTS(mbrnew, n->dirs[j]->mbr))
-					overlap += ENVELOPE_AREA(EnvelopeIntersection2(mbrnew, n->dirs[j]->mbr));
-			}
-
-			double area = ENVELOPE_AREA(mbrnew);
-			if (overlap < minoroverlap || (overlap == minoroverlap && area < currentarea)) {
-				minoroverlap = overlap;
-				currentarea = area; 
-				minoridx = i;
-			}
-		}
-		index = minoridx;
-	}
-	else {
-		double minor_enlargement = DBL_MAX;
-		double current_area = DBL_MAX;
-		for(int i = 0; i < n->used; i++) {
-			Envelope eaux = n->dirs[i]->mbr;
-			double initarea = ENVELOPE_AREA(eaux);
-			ENVELOPE_MERGE(eaux, e);
-			double newarea = ENVELOPE_AREA(eaux);
-			double increase = newarea - initarea;
-			if (increase < minor_enlargement || (increase == minor_enlargement && newarea < current_area)) {
-				index = i;
-				minor_enlargement = increase;
-				current_area = newarea;
-			}
+	double minor_enlargement = DBL_MAX;
+	double current_area = DBL_MAX;
+	for(int i = 0; i < n->used; i++) {
+		Envelope eaux = n->dirs[i]->mbr;
+		double initarea = ENVELOPE_AREA(eaux);
+		ENVELOPE_MERGE(eaux, e);
+		double newarea = ENVELOPE_AREA(eaux);
+		double increase = newarea - initarea;
+		if (increase < minor_enlargement || (increase == minor_enlargement && newarea < current_area)) {
+			index = i;
+			minor_enlargement = increase;
+			current_area = newarea;
 		}
 	}
 	return index;
@@ -68,9 +41,9 @@ void pick_seeds(rtree_node *n, int seeds[], int m) {
 
 
     //IMPRESSÃO DOS NÓS 
-    printf("NÓ CHEIO!\n");
+    ////printf("NÓ CHEIO!\n");
     for (int i = 0; i < m; i++) {
-        printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", i + 1, n->dirs[i]->mbr.MinX, n->dirs[i]->mbr.MinY, n->dirs[i]->mbr.MaxX, n->dirs[i]->mbr.MaxY);
+        ////printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", i + 1, n->dirs[i]->mbr.MinX, n->dirs[i]->mbr.MinY, n->dirs[i]->mbr.MaxX, n->dirs[i]->mbr.MaxY);
     }
     
     
@@ -129,9 +102,9 @@ void pick_seeds(rtree_node *n, int seeds[], int m) {
     no1 = indiceI;
     no2 = indiceJ;
 
-    printf("\n---- SEMENTES ENCONTRADAS ----\n");
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no2 + 1, n->dirs[no2]->mbr.MinX, n->dirs[no2]->mbr.MinY, n->dirs[no2]->mbr.MaxX, n->dirs[no2]->mbr.MaxY);
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no1 + 1, n->dirs[no1]->mbr.MinX, n->dirs[no1]->mbr.MinY, n->dirs[no1]->mbr.MaxX, n->dirs[no1]->mbr.MaxY);
+//    printf("\n---- SEMENTES ENCONTRADAS ----\n");
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no2 + 1, n->dirs[no2]->mbr.MinX, n->dirs[no2]->mbr.MinY, n->dirs[no2]->mbr.MaxX, n->dirs[no2]->mbr.MaxY);
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no1 + 1, n->dirs[no1]->mbr.MinX, n->dirs[no1]->mbr.MinY, n->dirs[no1]->mbr.MaxX, n->dirs[no1]->mbr.MaxY);
 
 }
 
@@ -168,10 +141,10 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
 
     areaG1 = ENVELOPE_AREA(mbr1);
     areaG2 = ENVELOPE_AREA(mbr2);
-    printf("AREA INICIAL DE G1: %f \n", areaG1);
-    printf("AREA INICIAL DE G2: %f \n\n", areaG2);
+//    printf("AREA INICIAL DE G1: %f \n", areaG1);
+//    printf("AREA INICIAL DE G2: %f \n\n", areaG2);
 
-    for (int i = 0; i < m; ++i) {
+    for (int i = 0; i < n->used; ++i) {
         if (!((seeds[0] == i) || (seeds[1] == i))) {
             minX1 = 0.0;
             maxX1 = 0.0;
@@ -212,8 +185,8 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
             englobarG1 = (maxX1 - minX1) * (maxY1 - minY1);
             diferencaG1 = englobarG1 - areaG1;
 
-            printf("Englobar G1: %f \n", englobarG1);
-            printf("DIFERENCA DE G1: %f \n\n", diferencaG1);
+//            printf("Englobar G1: %f \n", englobarG1);
+//            printf("DIFERENCA DE G1: %f \n\n", diferencaG1);
 
 
             //----- VERIFICAÇÃO PARA O SEGUNDO NÓ ------
@@ -248,8 +221,8 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
             englobarG2 = (maxX2 - minX2) * (maxY2 - minY2);
             diferencaG2 = englobarG2 - areaG2;
 
-            printf("Englobar G2: %f \n", englobarG2);
-            printf("DIFERENCA DE G2: %f \n\n", diferencaG2);
+//            printf("Englobar G2: %f \n", englobarG2);
+//            printf("DIFERENCA DE G2: %f \n\n", diferencaG2);
 
 
 
@@ -257,7 +230,7 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
             
 
             if (diferencaG1 <= diferencaG2) {
-                printf("G1 é menor: \n\n");
+//                printf("G1 é menor: \n\n");
                 
                 mbr1.MinX = minX1;
                 mbr1.MinY = minY1;
@@ -280,7 +253,7 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
                 
 
             } else {
-                printf("G2 é menor: \n\n");
+//                printf("G2 é menor: \n\n");
                 
                 mbr2.MinX = minX2;
                 mbr2.MinY = minY2;
@@ -334,24 +307,25 @@ rtree_node *rtree_split_gut_quad(rtree_root *root, rtree_node *n, rtree_node *ne
     g2->dirs[g2->used] = n->dirs[seeds[1]];
 
     //IMPRIMI OS NOVOS NÓS
-    printf("--------- NOVOS NÓS ----------\n");
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->dirs[g1->used]->mbr.MinX, g1->dirs[g1->used]->mbr.MinY, g1->dirs[g1->used]->mbr.MaxX, g1->dirs[g1->used]->mbr.MaxY);
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->dirs[g2->used]->mbr.MinX, g2->dirs[g2->used]->mbr.MinY, g2->dirs[g2->used]->mbr.MaxX, g2->dirs[g2->used]->mbr.MaxY);
-    printf("\n");
+//    printf("--------- NOVOS NÓS ----------\n");
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->dirs[g1->used]->mbr.MinX, g1->dirs[g1->used]->mbr.MinY, g1->dirs[g1->used]->mbr.MaxX, g1->dirs[g1->used]->mbr.MaxY);
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->dirs[g2->used]->mbr.MinX, g2->dirs[g2->used]->mbr.MinY, g2->dirs[g2->used]->mbr.MaxX, g2->dirs[g2->used]->mbr.MaxY);
+//    printf("\n");
     g1->used++;
     g2->used++;
 
     //PICK NEXT
     pick_next(n, g1, g2, seeds, m);
 
-	g1->mbr = rtree_compute_mbr(g1);
-	g2->mbr = rtree_compute_mbr(g2);
-
-	//TODO: preencher o N com os nós de g1 e apagar o g1
+	// finalization
 	for(int i = 0; i < g1->used; i++) {
 		n->dirs[i] = g1->dirs[i];
 	}
 	n->used = g1->used;
+
+	n->mbr = rtree_compute_mbr(n);
+	g2->mbr = rtree_compute_mbr(g2);
+
 
 	g_free(g1->dirs);
 	g_free(g1);
@@ -375,9 +349,9 @@ void pick_seeds_leaf(rtree_node *n, int seeds[], int m) {
 
 
     //IMPRESSÃO DOS NÓS 
-    printf("NÓ CHEIO!\n");
+//    printf("NÓ CHEIO!\n");
     for (int i = 0; i < m; i++) {
-        printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", i + 1, n->leaves[i].mbr.MinX, n->leaves[i].mbr.MinY, n->leaves[i].mbr.MaxX, n->leaves[i].mbr.MaxY);
+//        printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", i + 1, n->leaves[i].mbr.MinX, n->leaves[i].mbr.MinY, n->leaves[i].mbr.MaxX, n->leaves[i].mbr.MaxY);
     }
     
     
@@ -436,9 +410,9 @@ void pick_seeds_leaf(rtree_node *n, int seeds[], int m) {
     no1 = indiceI;
     no2 = indiceJ;
 
-    printf("\n---- SEMENTES ENCONTRADAS ----\n");
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no2 + 1, n->leaves[no2].mbr.MinX, n->leaves[no2].mbr.MinY, n->leaves[no2].mbr.MaxX, n->leaves[no2].mbr.MaxY);
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no1 + 1, n->leaves[no1].mbr.MinX, n->leaves[no1].mbr.MinY, n->leaves[no1].mbr.MaxX, n->leaves[no1].mbr.MaxY);
+//    printf("\n---- SEMENTES ENCONTRADAS ----\n");
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no2 + 1, n->leaves[no2].mbr.MinX, n->leaves[no2].mbr.MinY, n->leaves[no2].mbr.MaxX, n->leaves[no2].mbr.MaxY);
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", no1 + 1, n->leaves[no1].mbr.MinX, n->leaves[no1].mbr.MinY, n->leaves[no1].mbr.MaxX, n->leaves[no1].mbr.MaxY);
 
 }
 
@@ -475,10 +449,10 @@ void pick_next_leaf(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], 
 
     areaG1 = ENVELOPE_AREA(mbr1);
     areaG2 = ENVELOPE_AREA(mbr2);
-    printf("AREA INICIAL DE G1: %f \n", areaG1);
-    printf("AREA INICIAL DE G2: %f \n\n", areaG2);
+//    printf("AREA INICIAL DE G1: %f \n", areaG1);
+//    printf("AREA INICIAL DE G2: %f \n\n", areaG2);
 
-    for (int i = 0; i < m; ++i) {
+    for (int i = 0; i < n->used; ++i) {
         if (!((seeds[0] == i) || (seeds[1] == i))) {
             minX1 = 0.0;
             maxX1 = 0.0;
@@ -519,8 +493,8 @@ void pick_next_leaf(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], 
             englobarG1 = (maxX1 - minX1) * (maxY1 - minY1);
             diferencaG1 = englobarG1 - areaG1;
 
-            printf("Englobar G1: %f \n", englobarG1);
-            printf("DIFERENCA DE G1: %f \n\n", diferencaG1);
+//            printf("Englobar G1: %f \n", englobarG1);
+//            printf("DIFERENCA DE G1: %f \n\n", diferencaG1);
 
 
             //----- VERIFICAÇÃO PARA O SEGUNDO NÓ ------
@@ -555,8 +529,8 @@ void pick_next_leaf(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], 
             englobarG2 = (maxX2 - minX2) * (maxY2 - minY2);
             diferencaG2 = englobarG2 - areaG2;
 
-            printf("Englobar G2: %f \n", englobarG2);
-            printf("DIFERENCA DE G2: %f \n\n", diferencaG2);
+//            printf("Englobar G2: %f \n", englobarG2);
+//            printf("DIFERENCA DE G2: %f \n\n", diferencaG2);
 
 
 
@@ -564,7 +538,7 @@ void pick_next_leaf(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], 
             
 
             if (diferencaG1 <= diferencaG2) {
-                printf("G1 é menor: \n\n");
+//                printf("G1 é menor: \n\n");
                 
                 mbr1.MinX = minX1;
                 mbr1.MinY = minY1;
@@ -587,7 +561,7 @@ void pick_next_leaf(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], 
                 
 
             } else {
-                printf("G2 é menor: \n\n");
+//                printf("G2 é menor: \n\n");
                 
                 mbr2.MinX = minX2;
                 mbr2.MinY = minY2;
@@ -639,24 +613,24 @@ rtree_node *rtree_split_gut_quad_leaf(rtree_root *root, rtree_node *n, rtree_nod
     g2->leaves[g2->used] = n->leaves[seeds[1]];
 
     //IMPRIMI OS NOVOS NÓS
-    printf("--------- NOVOS NÓS ----------\n");
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->leaves[g1->used].mbr.MinX, g1->leaves[g1->used].mbr.MinY, g1->leaves[g1->used].mbr.MaxX, g1->leaves[g1->used].mbr.MaxY);
-    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->leaves[g2->used].mbr.MinX, g2->leaves[g2->used].mbr.MinY, g2->leaves[g2->used].mbr.MaxX, g2->leaves[g2->used].mbr.MaxY);
-    printf("\n");
+//    printf("--------- NOVOS NÓS ----------\n");
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->leaves[g1->used].mbr.MinX, g1->leaves[g1->used].mbr.MinY, g1->leaves[g1->used].mbr.MaxX, g1->leaves[g1->used].mbr.MaxY);
+//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->leaves[g2->used].mbr.MinX, g2->leaves[g2->used].mbr.MinY, g2->leaves[g2->used].mbr.MaxX, g2->leaves[g2->used].mbr.MaxY);
+//    printf("\n");
     g1->used++;
     g2->used++;
 
     //PICK NEXT
     pick_next_leaf(n, g1, g2, seeds, root->m);
 
-	g1->mbr = rtree_compute_mbr(g1);
-	g2->mbr = rtree_compute_mbr(g2);
-
-	//TODO: preencher o N com os nós de g1 e apagar o g1
+	// finalization
 	for(int i = 0; i < g1->used; i++) {
 		n->leaves[i] = g1->leaves[i];
 	}
 	n->used = g1->used;
+
+	n->mbr = rtree_compute_mbr(n);
+	g2->mbr = rtree_compute_mbr(g2);
 
 	g_free(g1->leaves);
 	g_free(g1);
