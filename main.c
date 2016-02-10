@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
 	// chamar a função que cria o histograma
 	histogram_generate(ds, hm, 0);
 	histogram_print_geojson(ds);
+	histogram_print(ds, CARDIN);
 
 	// cria uma r*
 	rtree_root *rtree = NULL;

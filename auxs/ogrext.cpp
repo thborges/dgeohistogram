@@ -73,10 +73,8 @@ int OGRGetNumPoints(OGRGeometryH ogrg) {
 		case wkbLineString:
 			return OGR_G_GetPointCount(ogrg);
 		case wkbPolygon:
-			rings = ((OGRPolygon*)ogrg)->getNumInteriorRings();
 			total = OGR_G_GetPointCount(((OGRPolygon*)ogrg)->getExteriorRing());
-			for(int i = 0; i < rings; i++)
-				total += OGR_G_GetPointCount(((OGRPolygon*)ogrg)->getInteriorRing(i));
+			total += OGR_G_GetPointCount(((OGRPolygon*)ogrg)->getInteriorRing(0));
 			return total;
 		case wkbMultiPolygon:
 		case wkbMultiLineString:
