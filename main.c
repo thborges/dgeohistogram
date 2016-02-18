@@ -20,6 +20,8 @@ enum IndexType {
 	RLAZY,
 	R0,
 	RGUT,
+	RLINEAR,
+	RCORNER,
 };
 
 rtree_root *build_rtree(char *shpfile, int m_size, int cluster_size, int shapes, enum IndexType rtreetype);
@@ -47,7 +49,7 @@ int main(int argc, char* argv[]) {
 
 	if (argc < 4) {
 		printf(
-"Use: %s file.shp m_size cluster_size [-rgut] [-rlazy] [-r0] [-rstar] [-s] [-g] [-gpu]\n", argv[0]);
+"Use: %s file.shp m_size cluster_size [-rgut] [-rlinear] [-rcorner] [-rlazy] [-r0] [-rstar] [-s] [-g] [-gpu]\n", argv[0]);
 		return 1;
 	}
 
@@ -107,6 +109,9 @@ int main(int argc, char* argv[]) {
 			if (strcmp(argv[i], "-gpu") == 0) gpu = true;
 			
 			if (strcmp(argv[i], "-rgut") == 0) rtreetype = RGUT;
+			if (strcmp(argv[i], "-rlinear") == 0) rtreetype = RLINEAR;
+			if (strcmp(argv[i], "-rcorner") == 0) rtreetype = RCORNER;
+
 			if (strcmp(argv[i], "-rlazy") == 0) rtreetype = RLAZY;
 			if (strcmp(argv[i], "-r0") == 0) rtreetype = R0;
 			if (strcmp(argv[i], "-rstar") == 0) rtreetype = RSTAR;
@@ -162,6 +167,12 @@ rtree_root *build_rtree(char *shpfile, int m_size, int cluster_size, int shapes,
 			break;
 		case RGUT:
 			rtree = rtree_new_rtree_gut_quad(m_size, cluster_size);
+			break;
+		case RLINEAR:
+			rtree = rtree_new_rtree_gut_linear(m_size, cluster_size);
+			break;
+		case RCORNER:
+			rtree = rtree_new_rtree_corner(m_size, cluster_size);
 			break;
 
 	}

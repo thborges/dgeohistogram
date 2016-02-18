@@ -15,7 +15,6 @@
 #include "wkbconvert.h"
 #include "glibwrap.h"
 
-
 dataset_page *dataset_getpage(dataset *dh, dataset_segment *seg, unsigned pid);
 dataset_page *dataset_alloc_page(unsigned pid);
 
