@@ -243,10 +243,11 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
                 maxY1 = 0.0;  
                 
                 //ADICIONA O NÓ AO G1, VERIFICANDO m
-                if((g1->used == minm(m)) && (g2->used < minm(m))){
+                if (minm(m) - g2->used - (n->used - i) >= 0) {
+					// itens restantes são necessários para atingir minm(M) para g2
                     g2->dirs[g2->used] = n->dirs[i];
                     g2->used++;  
-                }else {
+                } else {
                     g1->dirs[g1->used] = n->dirs[i];
                     g1->used++;
                 }
@@ -266,10 +267,11 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
                 maxY2 = 0.0;
                 
                 //ADICIONA O NÓ AO G2, VERIFICANDO m
-                if((g2->used == minm(m)) && (g1->used < minm(m))){
-                    g1->dirs[g1->used] = n->dirs[i];
+                if (minm(m) - g1->used - (n->used - i) >= 0) {
+   					// itens restantes são necessários para atingir minm(M) para g2
+	                g1->dirs[g1->used] = n->dirs[i];
                     g1->used++;
-                }else {
+                } else {
                     g2->dirs[g2->used] = n->dirs[i];
                     g2->used++;
                 }
@@ -284,8 +286,6 @@ void pick_next(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m
             
         }
     }
-
-    
 
 }
 

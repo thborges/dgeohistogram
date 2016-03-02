@@ -1,31 +1,10 @@
 
 #include <float.h>
-#include "rtree-star.h"
+#include "rtree-gut.h"
 #include "rtree-reinsert.h"
 
 
-int rtree_choose_subtree_linear(rtree_root *root, rtree_node *n, const Envelope e) {
-	int index = -1;
-
-	double minor_enlargement = DBL_MAX;
-	double current_area = DBL_MAX;
-	for(int i = 0; i < n->used; i++) {
-		Envelope eaux = n->dirs[i]->mbr;
-		double initarea = ENVELOPE_AREA(eaux);
-		ENVELOPE_MERGE(eaux, e);
-		double newarea = ENVELOPE_AREA(eaux);
-		double increase = newarea - initarea;
-		if (increase < minor_enlargement || (increase == minor_enlargement && newarea < current_area)) {
-			index = i;
-			minor_enlargement = increase;
-			current_area = newarea;
-		}
-	}
-	return index;
-}
-
-
-void pick_seeds_linear(rtree_node *n, int seeds[], int m) {
+void pick_seeds_linear(rtree_node *n, int seeds[]) {
     double ultX = 0.0;
     double ultY = 0.0;
     int minX = 0, maxX = 0;
@@ -41,7 +20,7 @@ void pick_seeds_linear(rtree_node *n, int seeds[], int m) {
 
 
     //BUSCA OBJETOS MAIS DISTANTES EM X
-    for (int i = 1; i < m; ++i) {
+    for (int i = 0; i < n->used; ++i) {
         //ENCONTRA ALCANCE DE X E Y 
         if (n->dirs[i]->mbr.MaxX > ultX) {
             ultX = n->dirs[i]->mbr.MaxX;
@@ -88,20 +67,9 @@ void pick_seeds_linear(rtree_node *n, int seeds[], int m) {
 
     seeds[0] = no1;
     seeds[1] = no2;
-}
-
-void pick_next_linear(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m) {
-        for(int i = 0; i < m; i++){
-            if(!(i == seeds[0]) || !(i == seeds[1])){
-                if(g1->used <= minm(m)){
-                    g1->dirs[g1->used] = n->dirs[i];
-                    g1->used++;
-                }else{
-                    g2->dirs[g2->used] = n->dirs[i];
-                    g2->used++;
-                }
-            }        
-        }
+	assert(no1 != no2);
+	assert(no1 >= 0 && no1 < n->used);
+	assert(no2 >= 0 && no2 < n->used);
 
 }
 
@@ -112,36 +80,60 @@ rtree_node *rtree_split_gut_linear(rtree_root *root, rtree_node *n, rtree_node *
 	rtree_node *new_dir = rtree_new_node(root, DIRECTORY);
 	rtree_node *g2 = new_dir;
 
-	n->dirs[n->used] = newn;
-	n->used++;
+	n->dirs[n->used++] = newn;
 
     //PICK SEEDS
-    pick_seeds_linear(n, seeds, m);
+    pick_seeds_linear(n, seeds);
 
     //ADICIONA AS SEMENTES AOS NOVOS NÓS
-    g1->dirs[g1->used] = n->dirs[seeds[0]];
-    g2->dirs[g2->used] = n->dirs[seeds[1]];
-
-    //IMPRIMI OS NOVOS NÓS
-//    printf("--------- NOVOS NÓS ----------\n");
-//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->dirs[g1->used]->mbr.MinX, g1->dirs[g1->used]->mbr.MinY, g1->dirs[g1->used]->mbr.MaxX, g1->dirs[g1->used]->mbr.MaxY);
-//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->dirs[g2->used]->mbr.MinX, g2->dirs[g2->used]->mbr.MinY, g2->dirs[g2->used]->mbr.MaxX, g2->dirs[g2->used]->mbr.MaxY);
-//    printf("\n");
-    g1->used++;
-    g2->used++;
+    g1->dirs[g1->used++] = n->dirs[seeds[0]];
+    g2->dirs[g2->used++] = n->dirs[seeds[1]];
 
     //PICK NEXT
-    pick_next_linear(n, g1, g2, seeds, m);
+	Envelope env_s0 = n->dirs[seeds[0]]->mbr;
+	double area_s0 = ENVELOPE_AREA(env_s0);
+   	Envelope env_s1 = n->dirs[seeds[1]]->mbr;
+	double area_s1 = ENVELOPE_AREA(env_s1);
+
+	int minimum = minm(root->m);
+	int remaining = n->used - 2;
+	for(int i = 0; i < n->used; i++){
+		if (i == seeds[0]) continue;
+		if (i == seeds[1]) continue;
+
+		if (g1->used < minimum && remaining <= minimum)
+			g1->dirs[g1->used++] = n->dirs[i];
+		else
+		if (g2->used < minimum && remaining <= minimum)
+			g2->dirs[g2->used++] = n->dirs[i];
+		else {
+			Envelope eaux = env_s0;
+			ENVELOPE_MERGE(eaux, n->dirs[i]->mbr);
+			double enlarg_s0 = ENVELOPE_AREA(eaux) / area_s0;
+
+			eaux = env_s1;
+			ENVELOPE_MERGE(eaux, n->dirs[i]->mbr);
+			double enlarg_s1 = ENVELOPE_AREA(eaux) / area_s1;
+
+			if (enlarg_s0 <= enlarg_s1)
+            	g1->dirs[g1->used++] = n->dirs[i];
+        	else
+	            g2->dirs[g2->used++] = n->dirs[i];
+        }
+
+		remaining--;
+    }
 
 	// finalization
+	n->used = 0;
 	for(int i = 0; i < g1->used; i++) {
-		n->dirs[i] = g1->dirs[i];
+		n->dirs[n->used++] = g1->dirs[i];
 	}
-	n->used = g1->used;
 
 	n->mbr = rtree_compute_mbr(n);
 	g2->mbr = rtree_compute_mbr(g2);
 
+	assert(n->used + g2->used == m+1);
 
 	g_free(g1->dirs);
 	g_free(g1);
@@ -149,7 +141,7 @@ rtree_node *rtree_split_gut_linear(rtree_root *root, rtree_node *n, rtree_node *
 	return new_dir;
 }
 
-void pick_seeds_leaf_linear(rtree_node *n, int seeds[], int m) {
+void pick_seeds_leaf_linear(rtree_node *n, int seeds[]) {
     double ultX = 0.0;
     double ultY = 0.0;
     int minX = 0, maxX = 0;
@@ -164,7 +156,7 @@ void pick_seeds_leaf_linear(rtree_node *n, int seeds[], int m) {
 
 
     //BUSCA OBJETOS MAIS DISTANTES EM X
-    for (int i = 1; i < m; ++i) {
+    for (int i = 0; i < n->used; ++i) {
         //ENCONTRA ALCANCE DE X E Y 
         if (n->leaves[i].mbr.MaxX > ultX) {
             ultX = n->leaves[i].mbr.MaxX;
@@ -211,23 +203,11 @@ void pick_seeds_leaf_linear(rtree_node *n, int seeds[], int m) {
 
     seeds[0] = no1;
     seeds[1] = no2;
-
+	assert(no1 != no2);
+	assert(no1 >= 0 && no1 < n->used);
+	assert(no2 >= 0 && no2 < n->used);
 }
 
-void pick_next_leaf_linear(rtree_node *n, rtree_node *g1, rtree_node *g2, int seeds[], int m) {
-   
-        for(int i = 0; i < m; i++){
-            if(!(i == seeds[0]) || !(i == seeds[1])){
-                if(g1->used <= minm(m)){
-                    g1->leaves[g1->used] = n->leaves[i];
-                    g1->used++;
-                }else{
-                    g2->leaves[g2->used] = n->leaves[i];
-                    g2->used++;
-                }
-            }        
-        }
-}
 
 rtree_node *rtree_split_gut_linear_leaf(rtree_root *root, rtree_node *n, rtree_node *parent, const GEOSGeometryH ngeo, const Envelope e) {
 
@@ -241,22 +221,46 @@ rtree_node *rtree_split_gut_linear_leaf(rtree_root *root, rtree_node *n, rtree_n
 	n->used++;
 
     //PICK SEEDS
-    pick_seeds_leaf_linear(n, seeds, root->m);
+    pick_seeds_leaf_linear(n, seeds);
 
     //ADICIONA AS SEMENTES AOS NOVOS NÓS
-    g1->leaves[g1->used] = n->leaves[seeds[0]];
-    g2->leaves[g2->used] = n->leaves[seeds[1]];
-
-    //IMPRIMI OS NOVOS NÓS
-//    printf("--------- NOVOS NÓS ----------\n");
-//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g1->used + 1, g1->leaves[g1->used].mbr.MinX, g1->leaves[g1->used].mbr.MinY, g1->leaves[g1->used].mbr.MaxX, g1->leaves[g1->used].mbr.MaxY);
-//    printf("[%d] - (%.0f, %.0f) (%.0f, %.0f) \n", g2->used + 1, g2->leaves[g2->used].mbr.MinX, g2->leaves[g2->used].mbr.MinY, g2->leaves[g2->used].mbr.MaxX, g2->leaves[g2->used].mbr.MaxY);
-//    printf("\n");
-    g1->used++;
-    g2->used++;
+    g1->leaves[g1->used++] = n->leaves[seeds[0]];
+    g2->leaves[g2->used++] = n->leaves[seeds[1]];
 
     //PICK NEXT
-    pick_next_leaf_linear(n, g1, g2, seeds, root->m);
+	Envelope env_s0 = n->leaves[seeds[0]].mbr;
+	double area_s0 = ENVELOPE_AREA(env_s0);
+   	Envelope env_s1 = n->leaves[seeds[1]].mbr;
+	double area_s1 = ENVELOPE_AREA(env_s1);
+
+	int minimum = minm(root->m);
+	int remaining = n->used - 2;
+	for(int i = 0; i < n->used; i++){
+		if (i == seeds[0]) continue;
+		if (i == seeds[1]) continue;
+
+		if (g1->used < minimum && remaining <= minimum)
+			g1->leaves[g1->used++] = n->leaves[i];
+		else
+		if (g2->used < minimum && remaining <= minimum)
+			g2->leaves[g2->used++] = n->leaves[i];
+		else {
+			Envelope eaux = env_s0;
+			ENVELOPE_MERGE(eaux, n->leaves[i].mbr);
+			double enlarg_s0 = ENVELOPE_AREA(eaux) / area_s0;
+
+			eaux = env_s1;
+			ENVELOPE_MERGE(eaux, n->leaves[i].mbr);
+			double enlarg_s1 = ENVELOPE_AREA(eaux) / area_s1;
+
+			if (enlarg_s0 <= enlarg_s1)
+            	g1->leaves[g1->used++] = n->leaves[i];
+        	else
+	            g2->leaves[g2->used++] = n->leaves[i];
+        }
+
+		remaining--;
+    }
 
 	// finalization
 	for(int i = 0; i < g1->used; i++) {
@@ -266,6 +270,10 @@ rtree_node *rtree_split_gut_linear_leaf(rtree_root *root, rtree_node *n, rtree_n
 
 	n->mbr = rtree_compute_mbr(n);
 	g2->mbr = rtree_compute_mbr(g2);
+
+	if (!(n->used + g2->used == root->m+1))
+		printf("N: %d, G2: %d, m=%d\n", n->used, g2->used, root->m+1);
+	assert(n->used + g2->used == root->m+1);
 
 	g_free(g1->leaves);
 	g_free(g1);
@@ -279,7 +287,7 @@ rtree_root *rtree_new_rtree_gut_linear(const int m, const int servers) {
 	return rtree_new(
 		m,
 		servers,
-		rtree_choose_subtree_linear,
+		rtree_choose_subtree_gut,
 		rtree_split_gut_linear,
 		rtree_split_gut_linear_leaf,
 		NULL, NULL, NULL);

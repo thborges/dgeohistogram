@@ -17,9 +17,9 @@ rtree_node *rtree_new_node(rtree_root *root, const enum NodeTypeEnum type) {
 	n->type = type;
 	n->used = 0;
 	if (type == LEAF)
-		n->leaves = g_new0(rtree_leaf, root->m);
+		n->leaves = g_new0(rtree_leaf, root->m+1);
 	else
-		n->dirs = g_new0(rtree_node*, root->m);
+		n->dirs = g_new0(rtree_node*, root->m+1);
 
 	//Where to put the node?
 	rtree_distributor_rr(root, n);

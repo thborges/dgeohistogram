@@ -1,9 +1,9 @@
 INCLUDES= \
-	-I/usr/include \
-	-I/usr/include/gdal \
+	-I/opt/local/include \
+	-I/opt/local/include/gdal \
 	-Iauxs
 
-LIBS=-L/usr/lib
+LIBS=-L/opt/local/lib
 
 all: geosext.o
 	gcc -ggdb -std=c11  -O0 -c $(INCLUDES) main.c histogram.c auxs/*.c 
