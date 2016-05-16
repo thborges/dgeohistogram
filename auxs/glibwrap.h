@@ -57,6 +57,11 @@ typedef struct GList GList;
 #define g_list_previous(lst) (lst->priour)
 #define g_list_next(lst) (lst->next)
 
+#define	g_list_foreach(var, list)		\
+	for(var = g_list_first(list);	\
+		var != NULL;					\
+		var = g_list_next(var))
+
 GList *g_list_append(GList *lst, void *data);
 GList *g_list_prepend(GList *lst, void *data);
 GList *g_list_remove_link(GList *list, GList *link);

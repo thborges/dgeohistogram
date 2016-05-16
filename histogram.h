@@ -16,7 +16,7 @@ extern "C" {
 #include "dataset.h"
 #include "geosext.h"
 
-#define GET_HISTOGRAM_CELL(h, x, y) &(h)->hcells[(x)*(h)->yqtd + (y)]
+#define GET_HISTOGRAM_CELL(h, x, y) (&(h)->hcells[(x)*(h)->yqtd + (y)])
 #define SET_IN_PLACE(var, place) (var = var | 1<<(place-1))
 #define IS_IN_PLACE(var, place) (var & 1<<(place-1))
 
@@ -46,6 +46,7 @@ void histogram_print_geojson(dataset *ds);
 int histogram_join_cardinality(dataset *dr, dataset *ds);
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd);
 void histogram_print_estimative(char *name, multiway_histogram_estimate *estimate, int servers);
+double histogram_search_hist(dataset_histogram *dh, Envelope query);
 
 #ifdef __cplusplus
 }

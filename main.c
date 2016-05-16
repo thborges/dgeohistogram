@@ -1,4 +1,5 @@
 
+#include <libgen.h>
 #include <ogr_api.h>
 #include <geos_c.h>
 #include <cpl_conv.h>
@@ -11,6 +12,7 @@
 #include "rtree.h"
 #include "rtree-star.h"
 #include "histogram.h"
+#include "minskew.h"
 
 dataset *read_geos(char *shpfile);
 
@@ -21,8 +23,8 @@ int main(int argc, char* argv[]) {
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
 
-	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp\n", argv[0]);
+	if (argc < 4) {
+		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp queries.shp\n", argv[0]);
 		return 1;
 	}
 
@@ -50,6 +52,10 @@ int main(int argc, char* argv[]) {
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
 
+	// create min skew histogram
+	GList *minskewh = minskew_generate_hist(ds, 5000);
+	minskew_print_hist(ds, minskewh);
+
 	// cria uma r*
 	rtree_root *rtree = NULL;
 	rtree = rtree_new_rstar(30, 10);
@@ -63,7 +69,6 @@ int main(int argc, char* argv[]) {
 		print_progress_gauge(read, ds->metadata.count);
 	}
 
-
 	double accuracy = 0.0;
 	double sum_ei = 0.0;
 	double sum_ri = 0.0;
@@ -76,76 +81,64 @@ int main(int argc, char* argv[]) {
 	int cells = hist->xqtd*hist->yqtd;
 
 	rtree_window_stat stats;
-	for(int x = 0; x < hist->xqtd; x++) {
-		Envelope e;
-		e.MinX = hist->xtics[x];
-		e.MaxX = hist->xtics[x+1]; 
+	dataset *queries = read_geos(argv[3]);
+	dataset_iter it;
+	dataset_foreach(it, queries) {
+		n++;
 
-		for(int y = 0; y < hist->yqtd; y++) {
-			n++;
-			e.MinY = hist->ytics[y];
-			e.MaxY = hist->ytics[y+1];
+		GEOSGeometryH geoquery = dataset_get_leaf_geo(queries, it.item);
+		Envelope query = it.item->mbr;
 
-			histogram_cell *cell = GET_HISTOGRAM_CELL(hist, x, y);
+		memset(&stats, 0, sizeof(rtree_window_stat));
+		GList *results = rtree_window_search(rtree, geoquery, &stats);
 
-			memset(&stats, 0, sizeof(rtree_window_stat));
+		// real cardinality from rtree
+		int riq = g_list_length(results);
 
-			char wkt[1024];
-			sprintf(wkt, "POLYGON ((%f %f, %f %f, %f %f, %f %f, %f %f))", 
-				e.MinX, e.MinY, 
-				e.MaxX, e.MinY, 
-				e.MaxX, e.MaxY,
-				e.MinX, e.MaxY,
-				e.MinX, e.MinY);
-			GEOSGeometryH win = GEOSGeomFromWKT(wkt);
-			assert(win != NULL);
-			//printf("%s\n", wkt);
-		
-			GList *results = rtree_window_search(rtree, win, &stats);
-			
-			int riq = g_list_length(results);
-			int rhq = cell->cardin;
-			int error = abs(rhq-riq);
+		// histogram estimate cardinality
+		//int rhq = histogram_search_hist(&ds->metadata.hist, query);
+		int rhq = minskew_search_hist(minskewh, query);
 
-			//average relative error
-			sum_ei += error;
-			sum_ri += riq;
+		int error = abs(rhq-riq);
 
-			//stdev of error
-			double delta = error - mean;
-			mean += delta/(double)n;
-			M2 += delta*(error - mean);
+		// average relative error
+		sum_ei += error;
+		sum_ri += riq;
 
-			//sum error
-			sum_error += error;
+		// stdev of error
+		double delta = error - mean;
+		mean += delta/(double)n;
+		M2 += delta*(error - mean);
 
-			//precision and recall
-			int pv, pf, nf;
-			if (rhq >= riq) {
-				pv = riq;
-				pf = rhq-riq;
-				nf = 0;
-			}
-			else {
-				pv = rhq;
-				pf = 0;
-				nf = riq-rhq;
-			}
-			double p = pv==0 && pf==0 ? 1.0 : pv / (double)(pv+pf);
-			double r = pv==0 && nf==0 ? 1.0 : pv / (double)(pv+nf);
-			accuracy += (p+r)/2.0;
-			//printf(" %.2f", (p+r)/2.0);
-			//printf(" %d:%d", rhq, riq);
-			//printf(" %d", error);
+		// sum error
+		sum_error += error;
 
-			if (isnan(p+r)) 
-				printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
-			
-			g_list_free(results);
-			GEOSGeom_destroy(win);
-
-			print_progress_gauge(n, cells);
+		// precision and recall
+		int pv, pf, nf;
+		if (rhq >= riq) {
+			pv = riq;
+			pf = rhq-riq;
+			nf = 0;
 		}
+		else {
+			pv = rhq;
+			pf = 0;
+			nf = riq-rhq;
+		}
+		double p = pv==0 && pf==0 ? 1.0 : pv / (double)(pv+pf);
+		double r = pv==0 && nf==0 ? 1.0 : pv / (double)(pv+nf);
+		accuracy += (p+r)/2.0;
+		//printf(" %.2f", (p+r)/2.0);
+		//printf(" %d:%d", rhq, riq);
+		//printf(" %d", error);
+
+		if (isnan(p+r))
+			printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
+
+		g_list_free(results);
+
+		print_progress_gauge(n, cells);
+
 		//printf("\n");
 	}
 	
@@ -161,7 +154,7 @@ int main(int argc, char* argv[]) {
 }
 
 dataset *read_geos(char *shpfile) {
-	dataset *results = dataset_create_mem("", 1);
+	dataset *results = dataset_create_mem(basename(shpfile), 1);
 
 	ogr_ds = OGROpen(shpfile, false, NULL);
 	if (ogr_ds == NULL) {

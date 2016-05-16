@@ -5,7 +5,7 @@ INCLUDES= \
 LIBS=-L/opt/local/lib
 
 all: geosext.o
-	gcc -ggdb -O0 -c $(INCLUDES) main.c histogram.c auxs/*.c 
+	gcc -ggdb -O0 -c $(INCLUDES) *.c auxs/*.c 
 	g++ -ggdb -O0 *.o -o main $(LIBS) -lgdal -lgeos -lgeos_c
 
 

@@ -625,3 +625,49 @@ void histogram_print_estimative(char *name, multiway_histogram_estimate *estimat
 	printf("stdev  %10.1f %10.1f\n\n", to_stdev, io_stdev);
 }
 
+double histogram_search_hist(dataset_histogram *dh, Envelope query) {
+	double result = 0.0;
+
+	int xini = (query.MinX - dh->mbr.MinX) / dh->xsize;
+	int xfim = (query.MaxX - dh->mbr.MinX) / dh->xsize;
+	int yini = (query.MinY - dh->mbr.MinY) / dh->ysize;
+	int yfim = (query.MaxY - dh->mbr.MinY) / dh->ysize;
+
+	xfim = MIN(xfim, dh->xqtd-1);
+	yfim = MIN(yfim, dh->yqtd-1);
+	xini = MAX(xini, 0);
+	yini = MAX(yini, 0);
+
+	const double epsilon = 1e-100;
+	if (query.MaxX - dh->xtics[xfim] < epsilon && xfim > 0) {
+		xfim--;
+	}
+	if (query.MaxY - dh->ytics[yfim] < epsilon && yfim > 0) {
+		yfim--;
+	}
+	if (xfim < xini)
+		xini = xfim;
+	if (yfim < yini)
+		yini = yfim;
+
+	for(int x = xini; x <= xfim; x++) {
+		Envelope rs;
+		rs.MinX = dh->xtics[x];
+		rs.MaxX = dh->xtics[x+1];
+
+		for(int y = yini; y <= yfim; y++) {
+			rs.MinY = dh->ytics[y];
+			rs.MaxY = dh->ytics[y+1];
+
+			histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
+			if (ENVELOPE_INTERSECTS(query, rs)) {
+				Envelope inters = EnvelopeIntersection(query, rs);
+				double int_area = ENVELOPE_AREA(inters);
+				double bucket_area = ENVELOPE_AREA(rs);
+				double fraction = int_area / bucket_area;
+				result += fraction * c->cardin;
+			}
+		}
+	}
+	return result;
+}
