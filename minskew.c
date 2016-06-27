@@ -2,12 +2,6 @@
 #include <float.h>
 #include "minskew.h"
 
-typedef struct {
-	double mean;
-	double variance;
-	int n;
-} variance_result;
-
 void get_ini_fim(dataset_histogram *dh, Envelope ev, int *xini, int *xfim, int *yini, int *yfim) {
 	*xini = (ev.MinX - dh->mbr.MinX) / dh->xsize;
 	*xfim = (ev.MaxX - dh->mbr.MinX) / dh->xsize;

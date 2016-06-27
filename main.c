@@ -13,6 +13,7 @@
 #include "rtree-star.h"
 #include "histogram.h"
 #include "minskew.h"
+#include "dataset_specs.h"
 
 dataset *read_geos(char *shpfile);
 
@@ -23,8 +24,8 @@ int main(int argc, char* argv[]) {
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
 
-	if (argc < 4) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp queries.shp\n", argv[0]);
+	if (argc < 3) {
+		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp [queries.shp]\n", argv[0]);
 		return 1;
 	}
 
@@ -51,6 +52,8 @@ int main(int argc, char* argv[]) {
 	histogram_generate(ds, hm, 0);
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
+
+	print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
 	GList *minskewh = minskew_generate_hist(ds, 5000);
@@ -79,6 +82,11 @@ int main(int argc, char* argv[]) {
 
 	dataset_histogram *hist = &ds->metadata.hist;
 	int cells = hist->xqtd*hist->yqtd;
+
+
+	// the user specified a query?
+	if (argc < 4)
+		goto finish;
 
 	rtree_window_stat stats;
 	dataset *queries = read_geos(argv[3]);
@@ -146,7 +154,8 @@ int main(int argc, char* argv[]) {
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error);
-	
+
+finish:	
 	OGR_DS_Destroy(ogr_ds);
 	finishGEOS();
 
