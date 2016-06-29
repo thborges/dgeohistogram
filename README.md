@@ -9,9 +9,13 @@ make # to build the sources
 
 You will need at least libgeos++-dev version 3.5. If your linux distribution does not provide it, compile from sources.
 Download http://download.osgeo.org/geos/geos-3.5.0.tar.bz2
+
 tar xf geos-3.5.0.tar.bz2
+
 ./configure --prefix=/usr/
+
 make
-makeinstall
+
+make install (as root)
 
 
