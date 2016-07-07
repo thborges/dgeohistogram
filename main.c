@@ -56,8 +56,13 @@ int main(int argc, char* argv[]) {
 	print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
-	GList *minskewh = minskew_generate_hist(ds, 5000);
+	GList *minskewh = minskew_generate_hist(ds, 500);
 	minskew_print_hist(ds, minskewh);
+
+
+	// the user specified a query?
+	if (argc < 4)
+		goto finish;
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -82,11 +87,6 @@ int main(int argc, char* argv[]) {
 
 	dataset_histogram *hist = &ds->metadata.hist;
 	int cells = hist->xqtd*hist->yqtd;
-
-
-	// the user specified a query?
-	if (argc < 4)
-		goto finish;
 
 	rtree_window_stat stats;
 	dataset *queries = read_geos(argv[3]);
