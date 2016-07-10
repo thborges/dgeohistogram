@@ -7,7 +7,9 @@ extern "C" {
 
 #include <geos_c.h>
 #include <assert.h>
-#include <sys/queue.h>
+#ifndef WIN32
+#	include <sys/queue.h>
+#endif
 #include "lru-buffer.h"
 #include <ogrext.h>
 #include "utils.h"

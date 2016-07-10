@@ -82,7 +82,7 @@ typedef struct {
 	UT_hash_handle hh;
 } dataset_segment;
 
-typedef enum { CARDIN, POINTS, PLACES } histogram_type;
+typedef enum { HTP_CARDIN, HTP_POINTS, HTP_PLACES } histogram_type;
 
 typedef struct {
 	double cardin;

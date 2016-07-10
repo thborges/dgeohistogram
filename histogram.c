@@ -531,9 +531,9 @@ void histogram_print(dataset *ds, histogram_type type) {
 		for(int y = 0; y < hist->yqtd; y++) {
 			double value;
 			switch (type) {
-				case CARDIN: value = hist->hcells[x*hist->yqtd + y].cardin; break;
-				case POINTS: value = hist->hcells[x*hist->yqtd + y].points; break;
-				case PLACES: value = hist->hcells[x*hist->yqtd + y].place; break;
+				case HTP_CARDIN: value = hist->hcells[x*hist->yqtd + y].cardin; break;
+				case HTP_POINTS: value = hist->hcells[x*hist->yqtd + y].points; break;
+				case HTP_PLACES: value = hist->hcells[x*hist->yqtd + y].place; break;
 			}
  
 			fprintf(f, "%10.5f %10.5f %lf\n", hist->xtics[x],

@@ -10,7 +10,11 @@
 
 #include <geos_c.h>
 #include <ogr_api.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+#	include <winsock2.h>
+#else
+#	include <arpa/inet.h>
+#endif
 
 GEOSGeometry* convertOGRToGEOS(OGRGeometryH *geo);
 

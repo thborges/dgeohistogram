@@ -68,7 +68,7 @@ GList *g_list_remove_link(GList *list, GList *link);
 GList *g_list_delete_link(GList *list, GList *link);
 GList *g_list_find(GList *lst, void *data);
 GList *g_list_remove(GList *lst, void *data);
-GList *g_list_concat(GList *lst, GList *lst2);
+GList *g_list_concat(GList *lst, GList *pLst2);
 
 unsigned g_list_length(GList *lst);
 
