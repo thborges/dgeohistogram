@@ -3,7 +3,12 @@
 #include <float.h>
 #include <unistd.h>
 #include <signal.h>
-#include <execinfo.h>
+#ifdef WIN32
+#	define	backtrace(x, y) 0
+#	define	backtrace_symbols_fd(x, y, z)
+#else
+#	include <execinfo.h>
+#endif
 
 #ifdef __MACH__
 #include <sys/time.h>

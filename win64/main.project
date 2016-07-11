@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="main" InternalType="Console">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
+    </Plugin>
+  </Plugins>
+  <Description/>
+  <Dependencies/>
+  <VirtualDirectory Name="src">
+    <File Name="../histogram.c"/>
+    <File Name="../histogram.h"/>
+    <File Name="../main.c"/>
+    <VirtualDirectory Name="auxs">
+      <File Name="../auxs/dataset.c"/>
+      <File Name="../auxs/dataset.h"/>
+      <File Name="../auxs/geosext.cpp"/>
+      <File Name="../auxs/geosext.h"/>
+      <File Name="../auxs/glibwrap.c"/>
+      <File Name="../auxs/glibwrap.h"/>
+      <File Name="../auxs/ogrext.cpp"/>
+      <File Name="../auxs/ogrext.h"/>
+      <File Name="../auxs/uthash.h"/>
+      <File Name="../auxs/utils.c"/>
+      <File Name="../auxs/utils.h"/>
+      <File Name="../auxs/wkbconvert.c"/>
+      <File Name="../auxs/wkbconvert.h"/>
+      <File Name="../auxs/lru-buffer.c"/>
+      <File Name="../auxs/lru-buffer.h"/>
+      <File Name="../auxs/rtree.c"/>
+      <File Name="../auxs/rtree.h"/>
+      <File Name="../auxs/rtree-distributor.c"/>
+      <File Name="../auxs/rtree-distributor.h"/>
+      <File Name="../auxs/rtree-lazy.h"/>
+      <File Name="../auxs/rtree-reinsert.c"/>
+      <File Name="../auxs/rtree-reinsert.h"/>
+      <File Name="../auxs/rtree-star.c"/>
+      <File Name="../auxs/rtree-star.h"/>
+      <File Name="../auxs/rtree-wquery.c"/>
+    </VirtualDirectory>
+    <File Name="../dataset_specs.c"/>
+    <File Name="../dataset_specs.h"/>
+    <File Name="../minskew.c"/>
+    <File Name="../minskew.h"/>
+  </VirtualDirectory>
+  <Settings Type="Executable">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="../"/>
+        <IncludePath Value="../auxs"/>
+        <IncludePath Value="./geos-3.5.0/capi"/>
+        <IncludePath Value="./geos-3.5.0/include"/>
+        <IncludePath Value="./gdal-2.1.0/ogr"/>
+        <IncludePath Value="./gdal-2.1.0/port"/>
+        <IncludePath Value="./gdal-2.1.0/gcore"/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+        <LibraryPath Value="./geos-3.5.0/capi/.libs"/>
+        <LibraryPath Value="./geos-3.5.0/src/.libs"/>
+        <LibraryPath Value="./gdal-2.1.0/.libs"/>
+        <Library Value="gdal"/>
+        <Library Value="geos"/>
+        <Library Value="geos_c"/>
+        <Library Value="ws2_32"/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="MinGW ( mingw64 )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g;-O0;-Wall" C_Options="-g;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(WorkspacePath)/bin/$(ProjectName)_Debug" IntermediateDirectory="./Debug" Command="./$(ProjectName)_Debug" CommandArguments="mbrc poly.shp" UseSeparateDebugArgs="no" DebugArguments="mbrc poly.shp" WorkingDirectory="$(WorkspacePath)/bin" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <BuildSystem Name="Default"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="MinGW ( mingw64 )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-O3;-Wall" C_Options="-O3;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+        <Preprocessor Value="NDEBUG"/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(WorkspacePath)/bin/$(ProjectName)_Release" IntermediateDirectory="./Release" Command="./$(ProjectName)_Release" CommandArguments="mbrc ne_10m_coastline.shp" UseSeparateDebugArgs="no" DebugArguments="mbrc ne_10m_coastline.shp" WorkingDirectory="$(WorkspacePath)/bin" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <BuildSystem Name="Default"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+</CodeLite_Project>

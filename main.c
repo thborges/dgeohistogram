@@ -4,7 +4,11 @@
 #include <geos_c.h>
 #include <cpl_conv.h>
 #include <time.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+#	include <winsock2.h>
+#else
+#	include <arpa/inet.h>
+#endif
 #include <locale.h>
 #include "dataset.h"
 #include "glibwrap.h"
@@ -51,7 +55,7 @@ int main(int argc, char* argv[]) {
 	// chamar a função que cria o histograma
 	histogram_generate(ds, hm, 0);
 	histogram_print_geojson(ds);
-	histogram_print(ds, CARDIN);
+	histogram_print(ds, HTP_CARDIN);
 
 	print_dataset_specs(&ds->metadata.hist);
 
@@ -208,7 +212,7 @@ dataset *read_geos(char *shpfile) {
 	clock_t cf = clock();
 	double runtime_diff_us = (cf-cs) * 1000. / CLOCKS_PER_SEC;
 
-	printf("%4s|%4s|%'10d|%10s|%10s|%10s|%10s|%10s|%10s|%10.1f| %s\n", "N", "N", results->metadata.count, "N", "N", "N", "N", "N", "N", runtime_diff_us, shpfile);
+	printf("%4s|%4s|%10d|%10s|%10s|%10s|%10s|%10s|%10s|%10.1f| %s\n", "N", "N", results->metadata.count, "N", "N", "N", "N", "N", "N", runtime_diff_us, shpfile);
 
 	return results;
 }

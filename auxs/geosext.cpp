@@ -107,9 +107,16 @@ public:
 raw_buffer::int_type raw_buffer::overflow(raw_buffer::int_type c) {
     int old_size = current_size;
     current_size += current_size;
-    buff = (char_type*)realloc(buff, sizeof(char_type)*current_size);
-    if (!buff)
+    char_type* pNewBuffer = (char_type*)realloc(buff, sizeof(char_type)*current_size);
+    if (pNewBuffer){
+        buff = pNewBuffer;
+    }else{
+        if(buff){
+            free(buff);
+            buff = NULL;
+        }
         return traits_type::eof();
+    }
     setp(&buff[0], &buff[current_size]);
     pbump(old_size);
     *pptr() = traits_type::to_char_type(c);

@@ -480,7 +480,7 @@ dataset* dataset_create_mem(const char *name, unsigned short geocount) {
 
 dataset_leaf *dataset_add_seg(dataset *dh, dataset_segment *seg) {
 
-	if (seg == NULL) printf("Segment %s_%d_%d is null\n", dh->metadata.name, (unsigned short)seg->sid, seg->sid<<16);
+	if (seg == NULL) printf("Segment %s is null\n", dh->metadata.name /*, (unsigned short)seg->sid, seg->sid<<16*/);
 	assert(seg != NULL);
 
 	unsigned next = (seg->fillingpage->data->used+1);

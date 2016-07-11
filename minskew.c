@@ -125,6 +125,11 @@ GList *minskew_generate_hist(dataset *ds, int buckets_num) {
 			}
 		}
 
+		if(chosen == NULL){
+			printf("[WARN]" __FILE__ ":%u (chosen == NULL) [Bucket: %d / %d]\n", __LINE__, buckets, buckets_num);
+			break;
+		}
+
 		// split the chosen bucket
 
 		minskew_bucket *chosen_bucket = (minskew_bucket *)chosen->data;
