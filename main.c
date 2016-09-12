@@ -20,12 +20,14 @@ dataset *read_geos(char *shpfile);
 OGRDataSourceH ogr_ds;
 
 int main(int argc, char* argv[]) {
+
 	//srand(time(NULL));
+
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp [queries.shp]\n", argv[0]);
+		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -53,7 +55,7 @@ int main(int argc, char* argv[]) {
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
 
-	print_dataset_specs(&ds->metadata.hist);
+	//print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
 	GList *minskewh = minskew_generate_hist(ds, 500);
@@ -63,6 +65,8 @@ int main(int argc, char* argv[]) {
 	// the user specified a query?
 	if (argc < 4)
 		goto finish;
+
+	double query_size = atof(argv[3]);
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -74,7 +78,7 @@ int main(int argc, char* argv[]) {
 		read++;
 		GEOSGeometryH geo = dataset_get_leaf_geo(ds, iter.item);
 		rtree_append(rtree, geo);
-		print_progress_gauge(read, ds->metadata.count);
+		//print_progress_gauge(read, ds->metadata.count);
 	}
 
 	double accuracy = 0.0;
@@ -89,13 +93,37 @@ int main(int argc, char* argv[]) {
 	int cells = hist->xqtd*hist->yqtd;
 
 	rtree_window_stat stats;
-	dataset *queries = read_geos(argv[3]);
-	dataset_iter it;
-	dataset_foreach(it, queries) {
+	double width = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
+	double height = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
+	double wsize = width * query_size;
+	double hsize = height * query_size;
+	//int qtd = (width / wsize) * (height/hsize) / 2.0;
+	int qtd = 500;
+
+	//printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
+	//print_geojson_header();
+
+	while (n < qtd) {
 		n++;
 
-		GEOSGeometryH geoquery = dataset_get_leaf_geo(queries, it.item);
-		Envelope query = it.item->mbr;
+		Envelope query;
+		query.MinX = ds->metadata.hist.mbr.MinX;
+		query.MinY = ds->metadata.hist.mbr.MinY;
+		query.MinX += width * (rand()/(double)RAND_MAX);
+		query.MinY += height * (rand()/(double)RAND_MAX);
+		query.MaxX = query.MinX + wsize;
+		query.MaxY = query.MinY + hsize;
+		//print_geojson_mbr(query, "0");
+
+	    char wkt[512];
+    	sprintf(wkt, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
+        	query.MinX, query.MinY,
+        	query.MaxX, query.MinY,
+        	query.MaxX, query.MaxY,
+        	query.MinX, query.MaxY,
+        	query.MinX, query.MinY);
+		
+		GEOSGeometryH geoquery = GEOSGeomFromWKT(wkt);
 
 		memset(&stats, 0, sizeof(rtree_window_stat));
 		GList *results = rtree_window_search(rtree, geoquery, &stats);
@@ -104,8 +132,10 @@ int main(int argc, char* argv[]) {
 		int riq = g_list_length(results);
 
 		// histogram estimate cardinality
-		//int rhq = histogram_search_hist(&ds->metadata.hist, query);
-		int rhq = minskew_search_hist(minskewh, query);
+		int rhq = histogram_search_hist(&ds->metadata.hist, query);
+		//int rhq = minskew_search_hist(minskewh, query);
+
+		printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
 
 		int error = abs(rhq-riq);
 
@@ -145,15 +175,20 @@ int main(int argc, char* argv[]) {
 
 		g_list_free(results);
 
-		print_progress_gauge(n, cells);
+		//print_progress_gauge(n, cells);
 
 		//printf("\n");
 	}
+	//print_geojson_footer();
 	
-	printf("Average Relative Error: %f\nStdevp error: %f\nError sum: %f\n", 
+	printf("\nSize\tARE\tSTD\tSUM\tMethod\tName\n");
+	fprintf(stderr, "%3.2f\t%f\t%f\t%f\t%s\t%s\n",
+		query_size, 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
-		sum_error);
+		sum_error,
+		argv[1],
+		ds->metadata.name);
 
 finish:	
 	OGR_DS_Destroy(ogr_ds);
@@ -202,13 +237,13 @@ dataset *read_geos(char *shpfile) {
 		OGR_F_Destroy(feature);
 
 		read++;
-		print_progress_gauge(read, layer_count);
+		//print_progress_gauge(read, layer_count);
 	}
 
 	clock_t cf = clock();
 	double runtime_diff_us = (cf-cs) * 1000. / CLOCKS_PER_SEC;
 
-	printf("%4s|%4s|%'10d|%10s|%10s|%10s|%10s|%10s|%10s|%10.1f| %s\n", "N", "N", results->metadata.count, "N", "N", "N", "N", "N", "N", runtime_diff_us, shpfile);
+	//printf("%4s|%4s|%'10d|%10s|%10s|%10s|%10s|%10s|%10s|%10.1f| %s\n", "N", "N", results->metadata.count, "N", "N", "N", "N", "N", "N", runtime_diff_us, shpfile);
 
 	return results;
 }

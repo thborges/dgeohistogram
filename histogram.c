@@ -8,6 +8,13 @@
 #include <float.h>
 #include "histogram.h"
 
+const char *HistogramHashMethodName[4]  = {
+	"mbrc",
+	"cent",
+	"areaf",
+	"areafs",
+};
+
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd) {
 	assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
 	dh->xqtd = xqtd;
@@ -95,7 +102,8 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 			double fraction = (objarea == 0.0) ? 1.0 : intarea / objarea;
 
 			histogram_cell *cell = &dh->hcells[x*dh->yqtd +y];
-			cell->cardin += 1.0;//fraction;
+			//cell->cardin += 1.0;//fraction;
+			cell->cardin += fraction;
 			cell->points += points; //object is replicated
 		}
 	}
@@ -122,7 +130,6 @@ void envelope_update(Envelope *e, double X, double Y) {
 	e->MaxY = MAX(e->MaxY, Y);
 }
 
-//inline __attribute__((always_inline))
 void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
 	// proportional to cover area
 
@@ -135,7 +142,89 @@ void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datas
 	// is a candidate for split?
 	int xspan = xfim - xini;
 	int yspan = yfim - yini;
-	if (xspan > 2 || yspan > 2) { // more than two cells?
+	if (xspan >= 2 || yspan >= 2) { // more than two cells?
+		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
+
+		Envelope split1 = l->mbr;
+		Envelope split2 = l->mbr;
+		double filled_space = DBL_MAX;
+		
+		const GEOSGeometry *linearRing;
+		const GEOSCoordSequence *coordSeq;
+		int numGeom = GEOSGetNumGeometries(geo);
+		for(int n = 0; n < numGeom; n++) {
+			const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
+			if (GEOSGeomTypeId(ngeo) == GEOS_POLYGON)
+				linearRing = GEOSGetExteriorRing(ngeo);
+			else
+				linearRing = ngeo;
+
+			int numPoints = GEOSGeomGetNumPoints(linearRing);
+	        coordSeq = GEOSGeom_getCoordSeq(linearRing);
+
+			double xCoord, yCoord;
+       		GEOSCoordSeq_getX(coordSeq, 0, &xCoord);
+	        GEOSCoordSeq_getY(coordSeq, 0, &yCoord);
+
+			Envelope e1 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+			envelope_update(&e1, xCoord, yCoord);
+
+			for (int p=1; p < numPoints-1; p++) {
+				double xCoord, yCoord;
+       			GEOSCoordSeq_getX(coordSeq, p, &xCoord);
+	        	GEOSCoordSeq_getY(coordSeq, p, &yCoord);
+				envelope_update(&e1, xCoord, yCoord);
+	
+				Envelope e2 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+				envelope_update(&e2, xCoord, yCoord);
+				for(int p2=p+1; p2 < numPoints; p2++) {
+	       			GEOSCoordSeq_getX(coordSeq, p2, &xCoord);
+		        	GEOSCoordSeq_getY(coordSeq, p2, &yCoord);
+					envelope_update(&e2, xCoord, yCoord);
+				}
+
+				double fs = (ENVELOPE_AREA(e1) + ENVELOPE_AREA(e2)) / objarea;
+				if (fs < filled_space) {
+					split1 = e1;
+					split2 = e2;
+					filled_space = fs;
+				}
+			}
+		}
+		
+		objarea = ENVELOPE_AREA(split1) + ENVELOPE_AREA(split2);
+		hash_envelope_area_fraction(dh, split1, objarea, l->points);
+		hash_envelope_area_fraction(dh, split2, objarea, l->points);
+
+		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
+			GEOSGeom_destroy(geo);
+
+		print_geojson_header();
+		print_geojson_mbr(l->mbr, "orig");
+		print_geojson_mbr(split1, "e1");
+		print_geojson_mbr(split2, "e2");
+		print_geojson_footer();
+	}
+	else {
+		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
+	}
+}
+
+
+//inline __attribute__((always_inline))
+void fill_hist_cell_area_fraction_with_split_old(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+	// proportional to cover area
+
+	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
+	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
+	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
+	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
+	double objarea = ENVELOPE_AREA(l->mbr);
+
+	// is a candidate for split?
+	int xspan = xfim - xini;
+	int yspan = yfim - yini;
+	if (xspan >= 2 || yspan >= 2) { // more than two cells?
 		int xsplit = xspan > yspan;
 		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
 		
@@ -200,7 +289,7 @@ void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datas
 		hash_envelope_area_fraction(dh, e1, objarea, l->points);
 		hash_envelope_area_fraction(dh, e2, objarea, l->points);
 
-		if (l->gid != -1) // free because of the call to dataset_get_leaf_geo
+		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);
 
 		/*print_geojson_header();
@@ -220,7 +309,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 	dataset_histogram *dh = &ds->metadata.hist;
 	dh->xsize = psizex;
 	dh->ysize = psizey;
-	printf("Generating histogram of size: %d x %d\n", dh->xqtd, dh->yqtd);
+	//printf("Generating histogram of size: %d x %d\n", dh->xqtd, dh->yqtd);
 
 	// X
 	double xini = ds->metadata.hist.mbr.MinX;
@@ -351,13 +440,22 @@ void histogram_generate(dataset *ds, enum HistogramHashMethod hm, enum JoinPredi
 
 	histogram_build_metadata(ds, pcheck);
 
-	//histogram_generate_fix(ds, 50, 50, pcheck);
+	//if (hm == HHASH_MBRCENTER)
+	//	histogram_generate_fix(ds, 50, 50, hm, pcheck);
+	//	histogram_generate_fix(ds, 75, 75, hm, pcheck);
+		histogram_generate_fix(ds, 100, 100, hm, pcheck);
+	//  histogram_generate_fix(ds, 150, 150, hm, pcheck);
+	//  histogram_generate_fix(ds, 200, 200, hm, pcheck);
+
+	//else
 	//histogram_generate_hw(ds, ds->metadata.x_average, ds->metadata.y_average, pcheck);
 	
-	histogram_generate_hw(ds, 
-		ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
-		ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
-		hm, pcheck);
+	//  histogram_generate_hw(ds, 
+	//	ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
+	//	ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
+	//	hm, pcheck);
+	printf("Generated histogram %d x %d, %s.\n", ds->metadata.hist.xqtd,
+		ds->metadata.hist.yqtd, HistogramHashMethodName[hm]);
 }
 
 

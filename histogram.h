@@ -27,6 +27,8 @@ enum HistogramHashMethod {
 	HHASH_AREAFRACSPLIT,
 };
 
+extern const char *HistogramHashMethodName[4];
+
 typedef struct {
 	double to_pnts;
 	double io_objs;

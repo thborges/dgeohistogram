@@ -52,10 +52,10 @@ int get_thread_num();
 #ifdef __MACH__
 #include <sys/time.h>
 //clock_gettime is not implemented on OSX
-int clock_gettime(int /*clk_id*/, struct timespec* t);
+//int clock_gettime(int /*clk_id*/, struct timespec* t);
 #endif
-#define CLOCK_REALTIME 0
-#define CLOCK_PROCESS_CPUTIME_ID 2
+//#define CLOCK_REALTIME 0
+//#define CLOCK_PROCESS_CPUTIME_ID 2
 
 double runtime_diff_ms(struct timespec *start, struct timespec *end);
 void print_progress_gauge(unsigned read, unsigned total);
