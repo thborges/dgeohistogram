@@ -130,7 +130,7 @@ void envelope_update(Envelope *e, double X, double Y) {
 	e->MaxY = MAX(e->MaxY, Y);
 }
 
-void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
 	// proportional to cover area
 
 	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
@@ -139,10 +139,14 @@ void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datas
 	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
 	double objarea = ENVELOPE_AREA(l->mbr);
 
+	int splitted = 0;
+
 	// is a candidate for split?
 	int xspan = xfim - xini;
 	int yspan = yfim - yini;
 	if (xspan >= 2 || yspan >= 2) { // more than two cells?
+		splitted = 1;
+
 		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
 
 		Envelope split1 = l->mbr;
@@ -199,15 +203,17 @@ void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datas
 		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);
 
-		print_geojson_header();
+		/*print_geojson_header();
 		print_geojson_mbr(l->mbr, "orig");
 		print_geojson_mbr(split1, "e1");
 		print_geojson_mbr(split2, "e2");
-		print_geojson_footer();
+		print_geojson_footer();*/
 	}
 	else {
 		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
 	}
+	return splitted;
+
 }
 
 
@@ -323,6 +329,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 		dh->ytics[i] = yini + (psizey * i);
 	dh->ytics[dh->yqtd] = ds->metadata.hist.mbr.MaxY;
 
+	int splitted = 0;
 	dataset_iter di;
 	dataset_foreach(di, ds) {
 		dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
@@ -341,13 +348,15 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 				break;
 
 			case HHASH_AREAFRACSPLIT:
-				fill_hist_cell_area_fraction_with_split(l, ds, dh);
+				splitted += fill_hist_cell_area_fraction_with_split(l, ds, dh);
 				break;
 
 			default:
 				printf("Histogram method not defined.\n");
 		}
 	}
+	if (hm == HHASH_AREAFRACSPLIT)
+		printf("Areafs splitted objects: %d\n", splitted);
 }
 
 void histogram_generate_avg(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
@@ -373,7 +382,7 @@ void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMe
 	double psizex = x;
 	double psizey = y;
 
-	const int MAX = 100;
+	const int MAX = 1000;
 	
 	if ((rangex / psizex) > MAX)
 		psizex = rangex / MAX;
@@ -436,26 +445,25 @@ void histogram_build_metadata(dataset *ds, enum JoinPredicateCheck pcheck) {
 	}
 }
 
-void histogram_generate(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
+void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck) {
 
 	histogram_build_metadata(ds, pcheck);
 
-	//if (hm == HHASH_MBRCENTER)
-	//	histogram_generate_fix(ds, 50, 50, hm, pcheck);
-	//	histogram_generate_fix(ds, 75, 75, hm, pcheck);
-		histogram_generate_fix(ds, 100, 100, hm, pcheck);
-	//  histogram_generate_fix(ds, 150, 150, hm, pcheck);
-	//  histogram_generate_fix(ds, 200, 200, hm, pcheck);
+	if (spec.sm == HSPLIT_FIX)
+		histogram_generate_fix(ds, spec.xqtd, spec.yqtd, spec.hm, pcheck);
+	else if (spec.sm == HSPLIT_AVG)
+		histogram_generate_hw(ds, ds->metadata.x_average, ds->metadata.y_average, spec.hm, pcheck);
+	else if (spec.sm == HSPLIT_AVG_STD)
+		histogram_generate_hw(ds, 
+			ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
+			ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
+			spec.hm, pcheck);
+	else {
+		fprintf(stderr, "Histogram Split Method not found.\n");
+	}
 
-	//else
-	//histogram_generate_hw(ds, ds->metadata.x_average, ds->metadata.y_average, pcheck);
-	
-	//  histogram_generate_hw(ds, 
-	//	ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
-	//	ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
-	//	hm, pcheck);
 	printf("Generated histogram %d x %d, %s.\n", ds->metadata.hist.xqtd,
-		ds->metadata.hist.yqtd, HistogramHashMethodName[hm]);
+		ds->metadata.hist.yqtd, HistogramHashMethodName[spec.hm]);
 }
 
 

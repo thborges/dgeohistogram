@@ -15,6 +15,8 @@
 #include "minskew.h"
 #include "dataset_specs.h"
 
+char *dataset_name;
+
 dataset *read_geos(char *shpfile);
 
 OGRDataSourceH ogr_ds;
@@ -27,7 +29,7 @@ int main(int argc, char* argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -47,26 +49,55 @@ int main(int argc, char* argv[]) {
 		printf("Method %s does not exists.\n", argv[1]);
 		exit(1);
 	}
+
+	int argatu = 2;
+	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
+	int xqtd = 0, yqtd = 0;
+	if (strcmp(argv[argatu], "fix") == 0) {
+		sm = HSPLIT_FIX;
+		argatu++;
+		xqtd = atoi(argv[argatu++]);
+		yqtd = atoi(argv[argatu++]);
+	}
+	else if (strcmp(argv[argatu], "avgstd") == 0) {
+		argatu++;
+		sm = HSPLIT_AVG_STD;
+	}
+	else if (strcmp(argv[argatu], "avg") == 0) {
+		argatu++;
+		sm = HSPLIT_AVG;
+	}
+	else {
+		printf("Method %s does not exists.\n", argv[argatu]);
+		exit(1);
+	}
 	
-	dataset *ds = read_geos(argv[2]);
+	dataset_name = argv[argatu++];
+	dataset *ds = read_geos(dataset_name);
+
+	HistogramGenerateSpec spec;
+	spec.hm = hm;
+	spec.sm = sm;
+	spec.xqtd = xqtd;
+	spec.yqtd = yqtd;
 
 	// chamar a função que cria o histograma
-	histogram_generate(ds, hm, 0);
+	histogram_generate(ds, spec, 0);
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
 
 	//print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
-	GList *minskewh = minskew_generate_hist(ds, 500);
-	minskew_print_hist(ds, minskewh);
+	//GList *minskewh = minskew_generate_hist(ds, 500);
+	//minskew_print_hist(ds, minskewh);
 
 
 	// the user specified a query?
-	if (argc < 4)
+	if (argc < argatu)
 		goto finish;
 
-	double query_size = atof(argv[3]);
+	double query_size = atof(argv[argatu++]);
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -135,7 +166,7 @@ int main(int argc, char* argv[]) {
 		int rhq = histogram_search_hist(&ds->metadata.hist, query);
 		//int rhq = minskew_search_hist(minskewh, query);
 
-		printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
+		//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
 
 		int error = abs(rhq-riq);
 
@@ -182,7 +213,7 @@ int main(int argc, char* argv[]) {
 	//print_geojson_footer();
 	
 	printf("\nSize\tARE\tSTD\tSUM\tMethod\tName\n");
-	fprintf(stderr, "%3.2f\t%f\t%f\t%f\t%s\t%s\n",
+	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
 		query_size, 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),

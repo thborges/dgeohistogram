@@ -27,8 +27,21 @@ enum HistogramHashMethod {
 	HHASH_AREAFRACSPLIT,
 };
 
+enum HistogramSplitMethod {
+	HSPLIT_FIX,
+	HSPLIT_AVG,
+	HSPLIT_AVG_STD,
+};
+
 extern const char *HistogramHashMethodName[4];
 
+typedef struct {
+	enum HistogramHashMethod hm;
+	enum HistogramSplitMethod sm;
+	int xqtd;
+	int yqtd;
+} HistogramGenerateSpec;
+	
 typedef struct {
 	double to_pnts;
 	double io_objs;
@@ -37,11 +50,10 @@ typedef struct {
 	double inters;
 } multiway_histogram_estimate;
 
-void histogram_generate(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck);
+void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck);
 void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck);
 void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck);
 void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck);
-void histogram_generate(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck);
 void histogram_distribute(dataset *ds);
 void histogram_print(dataset *ds, histogram_type type);
 void histogram_print_geojson(dataset *ds);
