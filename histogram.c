@@ -151,6 +151,104 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 
 		Envelope split1 = l->mbr;
 		Envelope split2 = l->mbr;
+		Envelope split3 = l->mbr;
+		double filled_space = DBL_MAX;
+		
+		const GEOSGeometry *linearRing;
+		const GEOSCoordSequence *coordSeq;
+		int numGeom = GEOSGetNumGeometries(geo);
+		for(int n = 0; n < numGeom; n++) {
+			const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
+			if (GEOSGeomTypeId(ngeo) == GEOS_POLYGON)
+				linearRing = GEOSGetExteriorRing(ngeo);
+			else
+				linearRing = ngeo;
+
+			int numPoints = GEOSGeomGetNumPoints(linearRing);
+	        coordSeq = GEOSGeom_getCoordSeq(linearRing);
+
+			double xCoord, yCoord;
+       		GEOSCoordSeq_getX(coordSeq, 0, &xCoord);
+	        GEOSCoordSeq_getY(coordSeq, 0, &yCoord);
+
+			Envelope e1 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+			envelope_update(&e1, xCoord, yCoord);
+
+			for (int p=1; p < numPoints-1; p++) {
+				double xCoord, yCoord;
+       			GEOSCoordSeq_getX(coordSeq, p, &xCoord);
+	        	GEOSCoordSeq_getY(coordSeq, p, &yCoord);
+				envelope_update(&e1, xCoord, yCoord);
+	
+				Envelope e2 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+				envelope_update(&e2, xCoord, yCoord);
+				for(int p2=p+1; p2 < numPoints; p2++) {
+	       			GEOSCoordSeq_getX(coordSeq, p2, &xCoord);
+		        	GEOSCoordSeq_getY(coordSeq, p2, &yCoord);
+					envelope_update(&e2, xCoord, yCoord);
+
+					// terceiro ponto
+					Envelope e3 = {DBL_MAX, DBL_MAX, -DBL_MAX, -DBL_MAX};
+					envelope_update(&e3, xCoord, yCoord);
+
+					for(int p3=p2+1; p3 < numPoints; p3++) {
+	       				GEOSCoordSeq_getX(coordSeq, p3, &xCoord);
+		        		GEOSCoordSeq_getY(coordSeq, p3, &yCoord);
+						envelope_update(&e3, xCoord, yCoord);	
+					}
+
+					double fs = (ENVELOPE_AREA(e1) + ENVELOPE_AREA(e2) + ENVELOPE_AREA(e3)) / objarea;
+					if (fs < filled_space) {
+						split1 = e1;
+						split2 = e2;
+						split3 = e3;
+						filled_space = fs;
+					}
+
+				}
+
+			}
+		}
+		
+		objarea = ENVELOPE_AREA(split1) + ENVELOPE_AREA(split2) + ENVELOPE_AREA(split3);
+		hash_envelope_area_fraction(dh, split1, objarea, l->points);
+		hash_envelope_area_fraction(dh, split2, objarea, l->points);
+		hash_envelope_area_fraction(dh, split3, objarea, l->points);
+
+		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
+			GEOSGeom_destroy(geo);
+
+		print_geojson_header();
+		print_geojson_mbr(l->mbr, "orig");
+		print_geojson_mbr(split1, "e1");
+		print_geojson_mbr(split2, "e2");
+		print_geojson_mbr(split3, "e3");
+		print_geojson_footer();
+	}
+	else {
+		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
+	}
+
+	return splitted;
+}
+
+/* void fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+	// proportional to cover area
+
+	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
+	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
+	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
+	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
+	double objarea = ENVELOPE_AREA(l->mbr);
+
+	// is a candidate for split?
+	int xspan = xfim - xini;
+	int yspan = yfim - yini;
+	if (xspan >= 2 || yspan >= 2) { // more than two cells?
+		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
+
+		Envelope split1 = l->mbr;
+		Envelope split2 = l->mbr;
 		double filled_space = DBL_MAX;
 		
 		const GEOSGeometry *linearRing;
@@ -214,7 +312,7 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 	}
 	return splitted;
 
-}
+} */
 
 
 //inline __attribute__((always_inline))
