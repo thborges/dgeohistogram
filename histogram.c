@@ -301,11 +301,11 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);
 
-		/*print_geojson_header();
+		print_geojson_header();
 		print_geojson_mbr(l->mbr, "orig");
 		print_geojson_mbr(split1, "e1");
 		print_geojson_mbr(split2, "e2");
-		print_geojson_footer();*/
+		print_geojson_footer();
 	}
 	else {
 		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
