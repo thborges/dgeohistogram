@@ -87,6 +87,8 @@ typedef enum { CARDIN, POINTS, PLACES } histogram_type;
 typedef struct {
 	double cardin;
 	double points;
+	double avgwidth;
+	double avgheight;
 	unsigned place;
 	unsigned copies;
 } histogram_cell;

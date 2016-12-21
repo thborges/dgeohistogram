@@ -105,6 +105,10 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 			//cell->cardin += 1.0;//fraction;
 			cell->cardin += fraction;
 			cell->points += points; //object is replicated
+
+			//TODO: calculate avg online
+			cell->avgwidth += (inters.MaxX - inters.MinX);
+			cell->avgheight += (inters.MaxY - inters.MinY);
 		}
 	}
 }
@@ -443,6 +447,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 
 			case HHASH_AREAFRAC:
 				fill_hist_cell_area_fraction(l, ds, dh);
+
 				break;
 
 			case HHASH_AREAFRACSPLIT:
@@ -453,6 +458,17 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 				printf("Histogram method not defined.\n");
 		}
 	}
+	if (hm == HHASH_AREAFRAC) {
+		//TODO: Remove when implement avg online for avgwidth and avgheigt 
+		for(int x = 0; x < dh->xqtd; x++) {
+			for(int y = 0; y < dh->yqtd; y++) {
+				histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
+				c->avgwidth = c->avgwidth / c->cardin;
+				c->avgheight = c->avgheight / c->cardin;
+			}
+		}
+	}
+
 	if (hm == HHASH_AREAFRACSPLIT)
 		printf("Areafs splitted objects: %d\n", splitted);
 }
@@ -782,6 +798,8 @@ void histogram_print_geojson(dataset *ds) {
 			fprintf(f, "\"card\": %f,", hist->hcells[x*hist->yqtd + y].cardin);
 			fprintf(f, "\"points\": %f,", hist->hcells[x*hist->yqtd + y].points);
 			fprintf(f, "\"place\": %d,", hist->hcells[x*hist->yqtd + y].place);
+			fprintf(f, "\"avgwidth\": %f,", hist->hcells[x*hist->yqtd + y].avgwidth);
+			fprintf(f, "\"avgheight\": %f,", hist->hcells[x*hist->yqtd + y].avgheight);
 			fprintf(f, "}},\n");
 		}
 	}
