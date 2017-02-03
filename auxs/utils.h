@@ -44,9 +44,12 @@ float stdevs(size_t data[], size_t start, size_t n);
 double stdevd(double data[], size_t start, size_t n);
 double stdevd_ex(void *data, size_t start, size_t n, double (*getv)(const void *, const int n));
 float maxs(size_t data[], size_t start, size_t n);
-void print_geojson_mbr(const Envelope e, char *id);
+void print_geojson_mbr(const Envelope e, char *id, FILE *file);
+void print_geojson_footer(FILE *file);
+void print_geojson_header(FILE *file);
+/*void print_geojson_mbr(const Envelope e, char *id);
 void print_geojson_footer();
-void print_geojson_header(); 
+void print_geojson_header();*/
 int get_thread_num();
 
 #ifdef __MACH__

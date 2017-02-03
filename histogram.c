@@ -118,7 +118,7 @@ void fill_hist_cell_area_fraction(dataset_leaf *l, dataset *ds, dataset_histogra
 	// proportional to cover area
 
 	//printf("GID %lld: ", l->gid);
-
+	
 	double objarea = ENVELOPE_AREA(l->mbr);
 	hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
 
@@ -137,7 +137,7 @@ void envelope_update(Envelope *e, double X, double Y) {
 int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
 	// proportional to cover area
 	//split object in 4 MBRs
-	
+		
 	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
 	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
 	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
@@ -237,7 +237,6 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 
 			}
 			
-			
 		}
 		
 		objarea = ENVELOPE_AREA(split1) + ENVELOPE_AREA(split2) + ENVELOPE_AREA(split3) + ENVELOPE_AREA(split4);
@@ -248,19 +247,40 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 
 		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);
-
-		print_geojson_header();
+		
+		//print geojson of splitted object on mbrs/splitted#NUMERO.geojson
+		char filename[100];
+		sprintf(filename, "mbrs/splitted%d.geojson", splitted);
+		FILE *file;
+		file = fopen(filename, "w+");
+		
+		print_geojson_header(file);
+		print_geojson_mbr(l->mbr, "orig", file);
+		print_geojson_mbr(split1, "e1", file);
+		print_geojson_mbr(split2, "e2", file);
+		print_geojson_mbr(split3, "e3", file);
+		print_geojson_mbr(split4, "e4", file);
+		print_geojson_footer(file);
+		
+		/*print geojson of splitted object directly on terminal, to activate it's necessary remove
+		the comment line from utils.h and utils.c*/
+		/*print_geojson_header();
 		print_geojson_mbr(l->mbr, "orig");
 		print_geojson_mbr(split1, "e1");
 		print_geojson_mbr(split2, "e2");
-		print_geojson_mbr(split3, "e3");
-		print_geojson_mbr(split4, "e4");
-		print_geojson_footer();
+		print_geojson_mbr(split2, "e3");
+		print_geojson_mbr(split2, "e4");
+		print_geojson_footer();*/
+		
+		fclose(file);
+					
 	}
 	else {
 		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
 	}
-
+	
+	
+	
 	return splitted;
 }
 
