@@ -18,3 +18,4 @@ geosext.o:
 
 clean:
 	rm *.o
+	rm main

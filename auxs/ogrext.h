@@ -61,7 +61,7 @@ mbr.MaxY += sizeh
 
 #define ENVELOPE_INIT(mbr) mbr = emptymbr
 
-#define ENVELOPE_AREA(mbr) ((mbr.MaxX - mbr.MinX) * (mbr.MaxY - mbr.MinY))
+#define ENVELOPE_AREA(mbr) (((mbr).MaxX - (mbr).MinX) * ((mbr).MaxY - (mbr).MinY))
 
 #define ENVELOPE_PERIMETER(mbr) (2*(mbr.MaxX - mbr.MinX) + 2*(mbr.MaxY - mbr.MinY))
 
