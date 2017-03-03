@@ -62,11 +62,12 @@ double stdevd_ex(void *data, size_t start, size_t n, double (*getv)(const void *
 
 }
 
-void print_geojson_header(FILE *file) {
+//Print each split in geojson files
+void print_geojson_header_file(FILE *file) {
 	fprintf(file, "{\"type\": \"FeatureCollection\", \"features\": [\n");
 }
 
-void print_geojson_mbr(const Envelope e, char *id, FILE *file) {
+void print_geojson_mbr_file(const Envelope e, char *id, FILE *file) {
 	fprintf(file, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
 	fprintf(file, "[%f, %f],", e.MinX, e.MinY);
 	fprintf(file, "[%f, %f],", e.MaxX, e.MinY);
@@ -76,11 +77,12 @@ void print_geojson_mbr(const Envelope e, char *id, FILE *file) {
 	fprintf(file, "]]}, \"properties\": {\"name\": \"%s\"}},\n", id);
 }
 
-void print_geojson_footer(FILE *file) {
+void print_geojson_footer_file(FILE *file) {
 	fprintf(file, "]}\n");
 }
 
-/*void print_geojson_header() {
+//Print each split in console
+void print_geojson_header() {
 	fprintf(stderr, "{\"type\": \"FeatureCollection\", \"features\": [\n");
 }
 
@@ -96,7 +98,7 @@ void print_geojson_mbr(const Envelope e, char *id) {
 
 void print_geojson_footer() {
 	fprintf(stderr, "]}\n");
-}*/
+}
 
 int get_thread_num() {
 	char *thread_num_str = getenv("THREAD_NUM");

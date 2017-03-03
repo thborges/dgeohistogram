@@ -21,9 +21,11 @@ dataset *read_geos(char *shpfile);
 
 OGRDataSourceH ogr_ds;
 
+int splitMethod = 3;
+
 int main(int argc, char* argv[]) {
 
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);

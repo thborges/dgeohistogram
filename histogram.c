@@ -134,7 +134,7 @@ void envelope_update(Envelope *e, double X, double Y) {
 	e->MaxY = MAX(e->MaxY, Y);
 }
 
-float divisao_com_4(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2, Envelope *split3, Envelope *split4) {
+void divisao_com_4(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2, Envelope *split3, Envelope *split4) {
 	
 	const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
 
@@ -204,10 +204,29 @@ float divisao_com_4(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, 
 		}
 	}
 	
-	return objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2) + ENVELOPE_AREA(*split3) + ENVELOPE_AREA(*split4);		
+	objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2) + ENVELOPE_AREA(*split3) + ENVELOPE_AREA(*split4);
+
+	hash_envelope_area_fraction(dh, *split1, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split2, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split3, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split4, objarea, l->points);
+        		
+    //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
+	char filename[100];
+	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	FILE *file;
+	file = fopen(filename, "w+");
+	print_geojson_header_file(file);
+	print_geojson_mbr_file(l->mbr, "orig", file);
+	print_geojson_mbr_file(*split1, "e1", file);
+	print_geojson_mbr_file(*split2, "e2", file);
+	print_geojson_mbr_file(*split3, "e2", file);
+	print_geojson_mbr_file(*split4, "e4", file);
+	print_geojson_footer_file(file);
+	fclose(file);		
 }	
 
-float divisao_com_3(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2, Envelope *split3) {
+void divisao_com_3(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2, Envelope *split3) {
 	
 	const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
 
@@ -265,10 +284,27 @@ float divisao_com_3(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, 
 		}	
 	}
 	
-	return objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2) + ENVELOPE_AREA(*split3);
+	objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2) + ENVELOPE_AREA(*split3);
+
+	hash_envelope_area_fraction(dh, *split1, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split2, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split3, objarea, l->points);
+        		
+    //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
+	char filename[100];
+	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	FILE *file;
+	file = fopen(filename, "w+");
+	print_geojson_header_file(file);
+	print_geojson_mbr_file(l->mbr, "orig", file);
+	print_geojson_mbr_file(*split1, "e1", file);
+	print_geojson_mbr_file(*split2, "e2", file);
+	print_geojson_mbr_file(*split3, "e2", file);
+	print_geojson_footer_file(file);
+	fclose(file);
 }
 
-float divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2) {
+void divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, const GEOSGeometry *linearRing, int numGeom, int xspan, int yspan, const GEOSCoordSequence *coordSeq, double objarea, GEOSGeometryH geo, double filled_space, Envelope *split1, Envelope *split2) {
 
 	const GEOSGeometry *ngeo = GEOSGetGeometryN(geo, n);
 
@@ -316,8 +352,25 @@ float divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, 
 		}
 	}
 	
-	return objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2);
+	objarea = ENVELOPE_AREA(*split1) + ENVELOPE_AREA(*split2);
+
+	hash_envelope_area_fraction(dh, *split1, objarea, l->points);
+    hash_envelope_area_fraction(dh, *split2, objarea, l->points);
+        		
+    //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
+	char filename[100];
+	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	FILE *file;
+	file = fopen(filename, "w+");
+	print_geojson_header_file(file);
+	print_geojson_mbr_file(l->mbr, "orig", file);
+	print_geojson_mbr_file(*split1, "e1", file);
+	print_geojson_mbr_file(*split2, "e2", file);
+	print_geojson_footer_file(file);
+	fclose(file);
 }
+
+
 
 int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
 	
@@ -325,9 +378,12 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
 	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
 	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
+
 	double objarea = ENVELOPE_AREA(l->mbr);
 
 	int splitted = 0;
+
+	//int splitMet = &splitMethod;
 	
 	int xspan = xfim - xini;
 	int yspan = yfim - yini;
@@ -336,6 +392,8 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 	if (xspan >= 2 || yspan >= 2) { // more than two cells?
 		
 		splitted = 1;
+
+		int splitMet = 2;
 
 		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
 
@@ -348,10 +406,32 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 		const GEOSGeometry *linearRing;
 		const GEOSCoordSequence *coordSeq;
 		int numGeom = GEOSGetNumGeometries(geo);
-		
+
 		for(int n = 0; n < numGeom; n++) {
+
+			if(splitMet == 2) {
+				//printf("Spliting with 2 MBRS\n");
+				divisao_com_2(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2);
+			}
+
+			if(splitMet == 3) {
+				printf("Spliting with 3 MBRS\n");
+				divisao_com_3(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2, &split3);
+			}
+
+			if(splitMet == 4) {
+				//printf("Spliting with 4 MBRS\n");
+				divisao_com_4(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2, &split3, &split4);
+			}
+
+			else {
+				//printf("No valid split method set!\n");
+			}
+		}
+
+
 		
-			float splitted2 = divisao_com_2(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2);
+			/*float splitted2 = divisao_com_2(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2);
 			
 			float menor = splitted2;
 			int divisao = 2;
@@ -390,29 +470,28 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 			sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
 			FILE *file;
 			file = fopen(filename, "w+");
-			print_geojson_header(file);
-			print_geojson_mbr(l->mbr, "orig", file);
-			print_geojson_mbr(split1, "e1", file);
-			print_geojson_mbr(split2, "e2", file);
+			print_geojson_header_file(file);
+			print_geojson_mbr_file(l->mbr, "orig", file);
+			print_geojson_mbr_file(split1, "e1", file);
+			print_geojson_mbr_file(split2, "e2", file);
 
         	if (divisao == 3) {
             	hash_envelope_area_fraction(dh, split3, objarea, l->points);
             	
-				print_geojson_mbr(split3, "e3", file);	
+				print_geojson_mbr_file(split3, "e3", file);	
             }
             
 	        if (divisao == 4) {
 	            hash_envelope_area_fraction(dh, split4, objarea, l->points);
 	            
-				print_geojson_mbr(split3, "e3", file);
-				print_geojson_mbr(split4, "e4", file);
+				print_geojson_mbr_file(split3, "e3", file);
+				print_geojson_mbr_file(split4, "e4", file);
 					
 	        }
 	        
-	        print_geojson_footer(file);
-			fclose(file);
-	
-		}	
+	        print_geojson_footer_file(file);
+			fclose(file);*/
+			
 		
 		if (l->gid != -1) {// free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);

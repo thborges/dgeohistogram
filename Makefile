@@ -19,3 +19,7 @@ geosext.o:
 clean:
 	rm *.o
 	rm main
+	rm mbrs/*.geojson
+	rm histogram/*.geojson
+	rm histogram/*.dat
+	
