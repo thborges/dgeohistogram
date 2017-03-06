@@ -372,7 +372,7 @@ void divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, c
 
 
 
-int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
+int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh, int *split_method_point) {
 	
 	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
 	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
@@ -393,8 +393,6 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 		
 		splitted = 1;
 
-		int splitMet = 2;
-
 		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
 
 		Envelope split1 = l->mbr;
@@ -409,23 +407,19 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 
 		for(int n = 0; n < numGeom; n++) {
 
-			if(splitMet == 2) {
+			if(*split_method_point == 2) {
 				//printf("Spliting with 2 MBRS\n");
 				divisao_com_2(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2);
 			}
 
-			if(splitMet == 3) {
-				printf("Spliting with 3 MBRS\n");
+			if(*split_method_point == 3) {
+				//printf("Spliting with 3 MBRS\n");
 				divisao_com_3(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2, &split3);
 			}
 
-			if(splitMet == 4) {
+			if(*split_method_point == 4) {
 				//printf("Spliting with 4 MBRS\n");
 				divisao_com_4(n, l, ds, dh, linearRing, numGeom, xspan, yspan, coordSeq, objarea, geo, filled_space, &split1, &split2, &split3, &split4);
-			}
-
-			else {
-				//printf("No valid split method set!\n");
 			}
 		}
 
@@ -597,7 +591,7 @@ void fill_hist_cell_area_fraction_with_split_old(dataset_leaf *l, dataset *ds, d
 	}
 }
 
-void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
+void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int *split_method_point) {
 
 	dataset_histogram *dh = &ds->metadata.hist;
 	dh->xsize = psizex;
@@ -636,7 +630,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 				break;
 
 			case HHASH_AREAFRACSPLIT:
-				splitted += fill_hist_cell_area_fraction_with_split(l, ds, dh);
+				splitted += fill_hist_cell_area_fraction_with_split(l, ds, dh, split_method_point);
 				break;
 
 			default:
@@ -658,7 +652,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 		printf("Areafs splitted objects: %d\n", splitted);
 }
 
-void histogram_generate_avg(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
+void histogram_generate_avg(dataset *ds, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int *split_method_point) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -669,11 +663,11 @@ void histogram_generate_avg(dataset *ds, enum HistogramHashMethod hm, enum JoinP
 	dataset_histogram *dh = &ds->metadata.hist;
 	histogram_alloc(dh, ceil(rangex / psizex), ceil(rangey / psizey));
 
-	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck, split_method_point);
 
 };
 
-void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
+void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int *split_method_point) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -692,11 +686,11 @@ void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMe
 	dataset_histogram *dh = &ds->metadata.hist;
 	histogram_alloc(dh, ceil(rangex / psizex), ceil(rangey / psizey));
 
-	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck, split_method_point);
 
 };
 
-void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck) {
+void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int *split_method_point) {
 
 	double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -707,7 +701,7 @@ void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramH
 	dataset_histogram *dh = &ds->metadata.hist;
 	histogram_alloc(dh, fsizex, fsizey);
 
-	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck);
+	histogram_generate_cells_fix(ds, psizex, psizey, hm, pcheck, split_method_point);
 	
 };
 
@@ -744,19 +738,19 @@ void histogram_build_metadata(dataset *ds, enum JoinPredicateCheck pcheck) {
 	}
 }
 
-void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck) {
+void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, int *split_method_point) {
 
 	histogram_build_metadata(ds, pcheck);
 
 	if (spec.sm == HSPLIT_FIX)
-		histogram_generate_fix(ds, spec.xqtd, spec.yqtd, spec.hm, pcheck);
+		histogram_generate_fix(ds, spec.xqtd, spec.yqtd, spec.hm, pcheck, split_method_point);
 	else if (spec.sm == HSPLIT_AVG)
-		histogram_generate_hw(ds, ds->metadata.x_average, ds->metadata.y_average, spec.hm, pcheck);
+		histogram_generate_hw(ds, ds->metadata.x_average, ds->metadata.y_average, spec.hm, pcheck, split_method_point);
 	else if (spec.sm == HSPLIT_AVG_STD)
 		histogram_generate_hw(ds, 
 			ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x), 
 			ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
-			spec.hm, pcheck);
+			spec.hm, pcheck, split_method_point);
 	else {
 		fprintf(stderr, "Histogram Split Method not found.\n");
 	}

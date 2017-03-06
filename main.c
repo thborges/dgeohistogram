@@ -17,11 +17,11 @@
 
 char *dataset_name;
 
+int *split_method_point;
+
 dataset *read_geos(char *shpfile);
 
 OGRDataSourceH ogr_ds;
-
-int splitMethod = 3;
 
 int main(int argc, char* argv[]) {
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] [split 2,3,4] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -73,6 +73,21 @@ int main(int argc, char* argv[]) {
 		printf("Method %s does not exists.\n", argv[argatu]);
 		exit(1);
 	}
+
+	int split_method = atoi(argv[argatu++]);
+	//printf("Read user entry of split method! %d\n", split_method);
+
+	//test if a valid split method was chosen
+	if(((split_method != 2) && (split_method != 3)) && (split_method != 4)) {
+		printf("No valid split method entered.\n");
+		exit(1);
+	}
+
+	else {
+		split_method_point = &split_method;
+		//printf("------test pointer------%p\n", split_method_point);
+		//printf("------test pointer------%p\n", &split_method);
+	}
 	
 	dataset_name = argv[argatu++];
 	dataset *ds = read_geos(dataset_name);
@@ -84,7 +99,7 @@ int main(int argc, char* argv[]) {
 	spec.yqtd = yqtd;
 
 	// chamar a função que cria o histograma
-	histogram_generate(ds, spec, 0);
+	histogram_generate(ds, spec, 0, split_method_point);
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
 
@@ -100,6 +115,9 @@ int main(int argc, char* argv[]) {
 		goto finish;
 
 	double query_size = atof(argv[argatu++]);
+
+	
+	
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -214,14 +232,34 @@ int main(int argc, char* argv[]) {
 	}
 	//print_geojson_footer();
 	
-	printf("\nSize\tARE\tSTD\tSUM\tMethod\tName\n");
-	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
+	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tSplit.Qnt\tName\n");
+	printf("%3.2f\t%f\t%f\t%f\t%s\t%d\t\t%s\n",
 		query_size, 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
 		argv[1],
+		split_method,
 		ds->metadata.name);
+
+	//print result to csv file data.csv in dgeohistogram
+	char filename[100] = "data.csv";
+	FILE *file;
+	file = fopen(filename, "a");
+
+	
+  		fprintf(file, "%3.2f,%f,%f,%f,%s,%d,%s\n", 
+		query_size, 
+		sum_ei / (double)sum_ri,
+		sqrt(M2/(double)n),
+		sum_error,
+		argv[1],
+		split_method,
+		ds->metadata.name);
+		fclose(file);
+	
+
+	
 
 finish:	
 	OGR_DS_Destroy(ogr_ds);
