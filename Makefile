@@ -1,3 +1,4 @@
+
 INCLUDES= \
 	-D_GNU_SOURCE \
 	-I/opt/local/include \
@@ -19,7 +20,8 @@ geosext.o:
 clean:
 	rm *.o
 	rm main
+
+clean_files:
 	rm mbrs/*.geojson
 	rm histogram/*.geojson
 	rm histogram/*.dat
-	
