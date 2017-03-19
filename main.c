@@ -22,8 +22,8 @@ dataset *read_geos(char *shpfile);
 OGRDataSourceH ogr_ds;
 
 int main(int argc, char* argv[]) {
-
-	//srand(time(NULL));
+	//necessario para ser correto
+	srand(time(NULL));
 
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
@@ -81,10 +81,32 @@ int main(int argc, char* argv[]) {
 	spec.xqtd = xqtd;
 	spec.yqtd = yqtd;
 
+
+
+
+
 	// chamar a função que cria o histograma
 	histogram_generate(ds, spec, 0);
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
+
+	printf("width: %f height: %f \n", ds->metadata.hist.xsize, ds->metadata.hist.ysize);
+
+	//colocando os parametros em um arquivo
+	char filename[100];
+
+	sprintf(filename, "histogram/hist-%s-%dx%d-parametros.txt", ds->metadata.name, xqtd, xqtd);
+	FILE *parametros = fopen(filename, "wb");
+	if (parametros == NULL) {
+		perror("Error printing histogram");
+		exit(1);
+	}
+	fprintf(parametros, "const int MaxLin = %d;\n", xqtd );
+	fprintf(parametros, "const int MaxCol = %d;\n", xqtd );
+	fprintf(parametros, "const double limitanteLargura = %lf;\n",ds->metadata.hist.xsize );
+	fprintf(parametros, "const double limitanteAltura = %lf;\n",ds->metadata.hist.ysize );
+
+	fclose(parametros);
 
 	//print_dataset_specs(&ds->metadata.hist);
 
@@ -97,7 +119,16 @@ int main(int argc, char* argv[]) {
 	if (argc < argatu)
 		goto finish;
 
-	double query_size = atof(argv[argatu++]);
+	//variando para os tamanhos de janela
+	int count = 6;
+	for (int i = 0; i < count; ++i)
+	{
+		
+	
+
+	// double query_size = atof(argv[argatu++]);
+	double query_size[6] = {0.05, 0.10, 0.20, 0.30, 0.40, 0.50};
+
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -111,6 +142,8 @@ int main(int argc, char* argv[]) {
 		rtree_append(rtree, geo);
 		//print_progress_gauge(read, ds->metadata.count);
 	}
+
+	
 
 	double accuracy = 0.0;
 	double sum_ei = 0.0;
@@ -126,13 +159,46 @@ int main(int argc, char* argv[]) {
 	rtree_window_stat stats;
 	double width = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double height = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
-	double wsize = width * query_size;
-	double hsize = height * query_size;
+
+	// double wsize = width * query_size;
+	// double hsize = height * query_size;
+	double wsize = width * query_size[i];
+	double hsize = height * query_size[i];
+
+
 	//int qtd = (width / wsize) * (height/hsize) / 2.0;
 	int qtd = 500;
 
 	//printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
 	//print_geojson_header();
+	//declarando os arquivos que irao pegar o local das consultas e os resultados
+	char filenamequery[100];
+	char filename1[100];
+	char filename2[100];
+	//hist-$@.shp-$(NXN)x$(NXN)-$(QUERYSIZE)-resultados.txt
+
+	sprintf(filenamequery, "histogram/consulta-%.2f.txt", query_size[i]);
+
+
+	sprintf(filename1, "histogram/hist-%s-%dx%d-%.2f-resultados.txt", ds->metadata.name, xqtd, xqtd, query_size[i]);
+	// sprintf(filename2, "histogram/hist-%s-%dx%d-resultadosCompare.txt", ds->metadata.name, xqtd, xqtd);
+
+
+	FILE *queries = fopen(filenamequery, "wb");
+
+	FILE *resultqueries = fopen(filename1, "wb");
+	// FILE *resultqueriesCompare = fopen(filename2, "wb");
+
+	// FILE *resultadoconsultaN = fopen("resultadoconsultaN.txt", "w+");
+		if (queries == NULL || resultqueries == NULL || queries == NULL )
+		{
+    		printf("Error opening file!\n");
+    		exit(1);
+		}
+		fprintf(resultqueries,"real\testimada\n");
+		// fprintf(resultqueriesCompare,"estimada\n");
+
+
 
 	while (n < qtd) {
 		n++;
@@ -146,13 +212,31 @@ int main(int argc, char* argv[]) {
 		query.MaxY = query.MinY + hsize;
 		//print_geojson_mbr(query, "0");
 
-	    char wkt[512];
+		// printf("MinX:%.10f MaxX:%.10lf\n",query.MinX, query.MaxX );
+
+		char wkt[512];
     	sprintf(wkt, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
         	query.MinX, query.MinY,
         	query.MaxX, query.MinY,
         	query.MaxX, query.MaxY,
         	query.MinX, query.MaxY,
         	query.MinX, query.MinY);
+
+    	fprintf(queries, "%.10f %.10f %.10f %.10f",
+        	query.MinX, query.MinY,
+        	query.MaxX, query.MaxY);
+
+    	fprintf(queries,"\n");
+
+
+
+    	// printf("POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
+     //    	query.MinX, query.MinY,
+     //    	query.MaxX, query.MinY,
+     //    	query.MaxX, query.MaxY,
+     //    	query.MinX, query.MaxY,
+     //    	query.MinX, query.MinY);
+    	// printf("\n");
 		
 		GEOSGeometryH geoquery = GEOSGeomFromWKT(wkt);
 
@@ -166,8 +250,15 @@ int main(int argc, char* argv[]) {
 		int rhq = histogram_search_hist(&ds->metadata.hist, query);
 		//int rhq = minskew_search_hist(minskewh, query);
 
-		//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
 
+		// printf("Query %d: riq: %d rhq: %d\n",n, riq, rhq);
+		// fprintf(resultadoconsultaN,"Query %d: e: %d\n", n, rhq);
+
+
+		fprintf(resultqueries,"%d\t%d\n", riq, rhq);
+		// fprintf(resultqueriesCompare,"%d\n", rhq);
+
+		// fprintf(resultqueries, "%d %d %d\n", n, riq, rhq);
 		int error = abs(rhq-riq);
 
 		// average relative error
@@ -209,17 +300,38 @@ int main(int argc, char* argv[]) {
 		//print_progress_gauge(n, cells);
 
 		//printf("\n");
+
 	}
-	//print_geojson_footer();
-	
-	printf("\nSize\tARE\tSTD\tSUM\tMethod\tName\n");
-	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
-		query_size, 
+	fclose(queries);
+	fclose(resultqueries);
+
+	printf("\nSize\tARE\tSTD\tSUM\tMethod\tName\tMean\n");
+	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\t%f\n",
+		query_size[i], 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
 		argv[1],
-		ds->metadata.name);
+		ds->metadata.name,
+		mean);
+
+	}
+	//print_geojson_footer();
+	
+	// fclose(resultadoconsultaN);
+	
+
+
+
+// fprintf(resultqueries,"%3.2f %f %f %f %s %s\n",
+// 		query_size, 
+// 		sum_ei / (double)sum_ri,
+// 		sqrt(M2/(double)n),
+// 		sum_error,
+// 		argv[1],
+// 		ds->metadata.name);
+	
+	// fclose(resultqueriesCompare);
 
 finish:	
 	OGR_DS_Destroy(ogr_ds);

@@ -102,13 +102,14 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 			double fraction = (objarea == 0.0) ? 1.0 : intarea / objarea;
 
 			histogram_cell *cell = &dh->hcells[x*dh->yqtd +y];
-			//cell->cardin += 1.0;//fraction;
-			cell->cardin += fraction;
+			cell->cardin += 1.0;//fraction; aquiiiiiiiiiiiiiiii
+			//cell->cardin += fraction;
 			cell->points += points; //object is replicated
 
 			//TODO: calculate avg online
 			cell->avgwidth += (inters.MaxX - inters.MinX);
 			cell->avgheight += (inters.MaxY - inters.MinY);
+			// printf("cell->avgheight: %f\n", cell->avgheight);
 		}
 	}
 }
@@ -463,8 +464,11 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 		for(int x = 0; x < dh->xqtd; x++) {
 			for(int y = 0; y < dh->yqtd; y++) {
 				histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
-				c->avgwidth = c->avgwidth / c->cardin;
-				c->avgheight = c->avgheight / c->cardin;
+
+				c->avgwidth = c->avgwidth / (c->cardin == 0? 1 : c->cardin );
+				c->avgheight = c->avgheight / (c->cardin == 0? 1 : c->cardin );
+		
+
 			}
 		}
 	}
@@ -788,18 +792,18 @@ void histogram_print_geojson(dataset *ds) {
 			e.MaxY = hist->ytics[y+1];
 
 			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-			fprintf(f, "[%f, %f],", e.MinX, e.MinY);
-			fprintf(f, "[%f, %f],", e.MaxX, e.MinY);
-			fprintf(f, "[%f, %f],", e.MaxX, e.MaxY);
-			fprintf(f, "[%f, %f],", e.MinX, e.MaxY);
-			fprintf(f, "[%f, %f]",  e.MinX, e.MinY);
+			fprintf(f, "[%.10f, %.10f],", e.MinX, e.MinY);
+			fprintf(f, "[%.10f, %.10f],", e.MaxX, e.MinY);
+			fprintf(f, "[%.10f, %.10f],", e.MaxX, e.MaxY);
+			fprintf(f, "[%.10f, %.10f],", e.MinX, e.MaxY);
+			fprintf(f, "[%.10f, %.10f]",  e.MinX, e.MinY);
 			fprintf(f, "]]}, 'properties': {");
 			fprintf(f, "\"name\": \"%d.%d\",", x, y);
 			fprintf(f, "\"card\": %f,", hist->hcells[x*hist->yqtd + y].cardin);
 			fprintf(f, "\"points\": %f,", hist->hcells[x*hist->yqtd + y].points);
 			fprintf(f, "\"place\": %d,", hist->hcells[x*hist->yqtd + y].place);
-			fprintf(f, "\"avgwidth\": %f,", hist->hcells[x*hist->yqtd + y].avgwidth);
-			fprintf(f, "\"avgheight\": %f,", hist->hcells[x*hist->yqtd + y].avgheight);
+			fprintf(f, "\"avgwidth\": %.10f,", hist->hcells[x*hist->yqtd + y].avgwidth);
+			fprintf(f, "\"avgheight\": %.10f,", hist->hcells[x*hist->yqtd + y].avgheight);
 			fprintf(f, "}},\n");
 		}
 	}
@@ -850,10 +854,15 @@ void histogram_print_estimative(char *name, multiway_histogram_estimate *estimat
 double histogram_search_hist(dataset_histogram *dh, Envelope query) {
 	double result = 0.0;
 
+
+	// printf("mbr.MinX:%lf mbr.MinY:%lf\n", dh->mbr.MinX,dh->mbr.MinY);
 	int xini = (query.MinX - dh->mbr.MinX) / dh->xsize;
 	int xfim = (query.MaxX - dh->mbr.MinX) / dh->xsize;
 	int yini = (query.MinY - dh->mbr.MinY) / dh->ysize;
 	int yfim = (query.MaxY - dh->mbr.MinY) / dh->ysize;
+
+	// printf("xfim:%d xqtd:%d\n", xfim,dh->xqtd-1);
+	// printf("yfim:%d yqtd:%d\n", yfim,dh->yqtd-1);
 
 	xfim = MIN(xfim, dh->xqtd-1);
 	yfim = MIN(yfim, dh->yqtd-1);
@@ -861,6 +870,10 @@ double histogram_search_hist(dataset_histogram *dh, Envelope query) {
 	yini = MAX(yini, 0);
 
 	const double epsilon = 1e-100;
+
+	// printf("\nxtics:%lf, ytics:%lf\n",
+	// 	dh->xtics[xfim],
+	// 	dh->ytics[yfim]);
 	if (query.MaxX - dh->xtics[xfim] < epsilon && xfim > 0) {
 		xfim--;
 	}
@@ -877,17 +890,31 @@ double histogram_search_hist(dataset_histogram *dh, Envelope query) {
 		rs.MinX = dh->xtics[x];
 		rs.MaxX = dh->xtics[x+1];
 
+		// printf("\n%lf, %lf\n",
+		// dh->xtics[x],
+		// dh->xtics[x+1]);
+
 		for(int y = yini; y <= yfim; y++) {
 			rs.MinY = dh->ytics[y];
 			rs.MaxY = dh->ytics[y+1];
 
+				// printf("\n%lf, %lf\n",
+				// 	dh->ytics[y],
+				// 	dh->ytics[y+1]);
+			// printf("x:%d y:%d\n", x,y);
 			histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
 			if (ENVELOPE_INTERSECTS(query, rs)) {
 				Envelope inters = EnvelopeIntersection(query, rs);
 				double int_area = ENVELOPE_AREA(inters);
+				// printf("int_area:%lf\n", int_area);
 				double bucket_area = ENVELOPE_AREA(rs);
+				// printf("bucket_area:%lf\n", bucket_area);
 				double fraction = int_area / bucket_area;
+				// printf("fraction:%lf\n", fraction);
 				result += fraction * c->cardin;
+				// printf("card:%lf\n", c->cardin);
+
+				// printf("result:%lf\n", result);
 			}
 		}
 	}
