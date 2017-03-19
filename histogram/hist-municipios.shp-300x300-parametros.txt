@@ -1,4 +1,0 @@
-const int MaxLin = 300;
-const int MaxCol = 300;
-const double limitanteLargura = 0.150528;
-const double limitanteAltura = 0.130093;
