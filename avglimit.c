@@ -26,7 +26,7 @@ void ValidaQtdObjetos(dataset_histogram *dh) {
 	if (qtdObjetos == 0) {
 		for (int x = 0; x < dh->xqtd; x++) {
 					for (int y = 0; y < dh->yqtd; y++) {
-				celula *c = GET_CELL(original, x, y);
+				// celula *c = GET_CELL(original, x, y);
 
 				// qtdObjetos += c->card;
 				qtdObjetos += GET_HISTOGRAM_CELL(dh, i, j)->cardin;
@@ -40,7 +40,7 @@ void ValidaQtdObjetos(dataset_histogram *dh) {
 		double qtdObjAftMethodo = 0;
 		for (int x = 0; x < dh->xqtd; x++) {
 					for (int y = 0; y < dh->yqtd; y++) {
-				celula *c = GET_CELL(original, x, y);
+				// celula *c = GET_CELL(original, x, y);
 
 				// qtdObjAftMethodo += c->card;
 				qtdObjAftMethodo += GET_HISTOGRAM_CELL(dh, i, j)->cardin;
@@ -87,7 +87,7 @@ void get_ini_fim(dataset_histogram *dh, Envelope ev, int *xini, int *xfim, int *
  * modo == 1 - coluna
  *
  */
-histogram* metodoSimples(histogram *original, int modo, int xinicial,
+void metodoSimples(dataset_histogram *dh, int modo, int xinicial,
 		int yinicial) {
 	//declaracao das estruturas auxiliares
 
@@ -96,7 +96,7 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 	//Modo linha
 	if (modo == 0) {
 		int contCelzero = 0;
-		for (int x = 0; x < original->qtd_colunas; ++x) {
+		for (int x = 0; x < dh->xqtd; ++x) {
 			celula *origi = GET_CELL(original, x, xinicial);
 
 			somaMedias += origi->alturaMedia;
@@ -109,7 +109,7 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 //		 printf("Antes somaMedias: %f\n", somaMedias);
 		// somaMedias = somaMedias / ((original->qtd_colunas - contCelzero) == 0 ? 1 : (original->qtd_colunas - contCelzero));
 
-		somaMedias = somaMedias / original->qtd_colunas;
+		somaMedias = somaMedias / dh->xqtd;
 		 // printf("Antes somaMedias: %f\n", somaMedias);
 		 		
 
@@ -176,10 +176,10 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 
 			int cont = 0;
 
-			for (int x = 0; x < original->qtd_colunas; x++) {
+			for (int x = 0; x < dh->xqtd; x++) {
 				//ignorando a linha que foi mergada com a anterior
 
-				for (int y = 0; y < original->qtd_linhas; y++) {
+				for (int y = 0; y < dh->yqtd; y++) {
 
 					if ((xinicial + 1) != y) {
 						celula *origi = GET_CELL(original, x, y);
@@ -212,7 +212,7 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 //	-----------------------------------
 	else {
 		int contCelzero = 0;
-		for (int y = 0; y < original->qtd_linhas; ++y) {
+		for (int y = 0; y < dh->yqtd; ++y) {
 			celula *origi = GET_CELL(original, yinicial, y);
 
 			somaMedias += origi->larguraMedia;
@@ -223,7 +223,7 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 		// 		/ ((original->qtd_linhas - contCelzero) == 0 ?
 		// 				1 : (original->qtd_linhas - contCelzero));
 
-		somaMedias = somaMedias / original->qtd_linhas;
+		somaMedias = somaMedias / dh->yqtd;
 
 		//preciso calcular assim
 		//medo o tamanho fixo inicial, faço uma diferença entre xfim - xini e divido este valor pelo limitanteLargura
@@ -238,7 +238,7 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 //		if (somaMedias >= (limitanteLargura * limite) || somaMedias < epsilon) {
 		if ((somaMedias - ((origi->xfim - origi->xini) * limite )) > epsilon) {
 
-			for (int k = 0; k < original->qtd_linhas; ++k) {
+			for (int k = 0; k < dh->yqtd; ++k) {
 
 				celula *origi = GET_CELL(original, yinicial, k);
 				celula *origiProx = GET_CELL(original, yinicial + 1, k);
@@ -293,13 +293,13 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 
 			int cont = 0;
 
-			for (int x = 0; x < original->qtd_colunas; x++) {
+			for (int x = 0; x < dh->xqtd; x++) {
 				//ignorando a coluna que foi mergada com a anterior
 
 				if ((yinicial + 1) == x) {
 					x++;
 				}
-				for (int y = 0; y < original->qtd_linhas; y++) {
+				for (int y = 0; y < dh->yqtd; y++) {
 
 					celula *origi = GET_CELL(original, x, y);
 
@@ -321,12 +321,12 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 
 			free(original);
 
-			return (mod);
+			// return (mod);
 		}
 
 	}
 
-	return (original);
+	// return (original);
 
 }
 
@@ -335,11 +335,11 @@ histogram* metodoSimples(histogram *original, int modo, int xinicial,
 void avglimitRUn(dataset_histogram *dh) {
 
 
-	histogram* h1 = importarHistograma();
+	// histogram* h1 = importarHistograma();
 
 
 
-	ValidaQtdObjetos(h1);
+	ValidaQtdObjetos(dh);
 
 
 
@@ -349,14 +349,14 @@ Parte para passar por todos
 //	//Linha
 	int merge = MaxCol;
 	int xinicial = 0;
-	int qtd_lin = h1->qtd_linhas - 1;
+	int qtd_lin = dh->yqtd - 1;
 
 	for (int cont = 0; cont < qtd_lin; cont++) {
-		h1 = metodoSimples(h1, 0, xinicial, 0);
+		metodoSimples(dh, 0, xinicial, 0);
 
 //		 printf("qtd: %d \n", h1->qtd_linhas);
 
-		if (h1->qtd_linhas != merge) {
+		if (dh->yqtd != merge) {
 
 			xinicial--;
 			merge--;
@@ -373,14 +373,14 @@ Parte para passar por todos
 	merge = MaxLin;
 	int yinicial = 0;
 	// -1 para nao comparar a ultima com ??
-	int qtd_col = h1->qtd_colunas - 1;
+	int qtd_col = dh->xqtd - 1;
 
 	for (int cont = 0; cont < qtd_col; cont++) {
-		h1 = metodoSimples(h1, 1, 0, yinicial);
+		metodoSimples(ds, 1, 0, yinicial);
 
 		// printf("qtd: %d \n", h1->qtd_colunas);
 
-		if (h1->qtd_colunas != merge) {
+		if (dh->xqtd != merge) {
 
 			yinicial--;
 			merge--;
@@ -394,14 +394,14 @@ Parte para passar por todos
 	}
 
 
-	ValidaQtdObjetos(h1);
+	ValidaQtdObjetos(dh);
 
-	printf("%dx%d\n",h1->qtd_colunas,h1->qtd_linhas);
+	printf("%dx%d\n",dh->xqtd,dh->yqtd);
 
 
-	free(h1);
+	// free(h1);
 
-	return 0;
+	// return 0;
 }
 
 
