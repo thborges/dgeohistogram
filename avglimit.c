@@ -97,9 +97,15 @@ void metodoSimples(dataset_histogram *dh, int modo, int xinicial,
 	if (modo == 0) {
 		int contCelzero = 0;
 		for (int x = 0; x < dh->xqtd; ++x) {
-			celula *origi = GET_CELL(original, x, xinicial);
 
-			somaMedias += origi->alturaMedia;
+			// GET_HISTOGRAM_CELL(dh, x, xinicial)->cardin
+			// dh->hcells[x*dh->yqtd + y].avgheight
+
+			somaMedias += GET_HISTOGRAM_CELL(dh, x, xinicial)->avgheight;
+
+			// celula *origi = GET_CELL(original, x, xinicial);
+
+			// somaMedias += origi->alturaMedia;
 // 			if (origi->alturaMedia < epsilon){
 // //				printf("col: %d lin: %d tem alturaZero: %f\n", x,xinicial, origi->alturaMedia);
 // 				contCelzero++;
@@ -120,7 +126,7 @@ void metodoSimples(dataset_histogram *dh, int modo, int xinicial,
 		if ( (somaMedias - ((origi->yfim - origi->yini) * limite)) > epsilon ) {
  			// printf("entrou ");
 
-			for (int k = 0; k < original->qtd_colunas; ++k) {
+			for (int k = 0; k < dh->xqtd; ++k) {
 
 				celula *origi = GET_CELL(original, k, xinicial);
 				celula *origiProx = GET_CELL(original, k, xinicial + 1);
@@ -201,7 +207,7 @@ void metodoSimples(dataset_histogram *dh, int modo, int xinicial,
 
 			}
 
-			free(original);
+			// free(original);
 
 			return (mod);
 		}
