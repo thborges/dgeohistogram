@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
 #include <math.h>
 #include <float.h>
 #include "histogram.h"
@@ -14,28 +11,26 @@ double qtdObjetos = 0;
 #define MAX(a,b) ((a) > (b) ? a : b)
 #define MIN(a,b) ((a) < (b) ? a : b)
 
-void ValidaQtdObjetos(histogram *original);
-void printCelula(histogram *original);
-void printCelulaFile(histogram *original, FILE * fp);
-double histogram_search_hist(histogram *original, Envelope query);
-
-histogram* metodoSimples(histogram *original, int modo, int xinicial,
-		int yinicial);
-
 
 
 bool doubleEqual(double a, double b) {
 	return fabs(a - b) < epsilon;
 }
 
-void ValidaQtdObjetos(histogram *original) {
+// void ValidaQtdObjetos(histogram *original) {
+void ValidaQtdObjetos(dataset_histogram *dh) {
+
+
+	//GET_HISTOGRAM_CELL(dh, i, j)->cardin;
 
 	if (qtdObjetos == 0) {
-		for (int x = 0; x < original->qtd_colunas; x++) {
-					for (int y = 0; y < original->qtd_linhas; y++) {
+		for (int x = 0; x < dh->xqtd; x++) {
+					for (int y = 0; y < dh->yqtd; y++) {
 				celula *c = GET_CELL(original, x, y);
 
-				qtdObjetos += c->card;
+				// qtdObjetos += c->card;
+				qtdObjetos += GET_HISTOGRAM_CELL(dh, i, j)->cardin;
+
 
 			}
 
@@ -43,11 +38,14 @@ void ValidaQtdObjetos(histogram *original) {
 
 	} else {
 		double qtdObjAftMethodo = 0;
-		for (int x = 0; x < original->qtd_colunas; x++) {
-					for (int y = 0; y < original->qtd_linhas; y++) {
+		for (int x = 0; x < dh->xqtd; x++) {
+					for (int y = 0; y < dh->yqtd; y++) {
 				celula *c = GET_CELL(original, x, y);
 
-				qtdObjAftMethodo += c->card;
+				// qtdObjAftMethodo += c->card;
+				qtdObjAftMethodo += GET_HISTOGRAM_CELL(dh, i, j)->cardin;
+
+
 
 			}
 
