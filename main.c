@@ -13,6 +13,7 @@
 #include "rtree-star.h"
 #include "histogram.h"
 #include "minskew.h"
+#include "avglimit.h"
 #include "dataset_specs.h"
 
 char *dataset_name;
