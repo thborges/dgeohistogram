@@ -57,31 +57,38 @@ void fill_hist_cell_mbr_center(dataset_leaf *l, dataset *ds, dataset_histogram *
 	int yp = (y - ds->metadata.hist.mbr.MinY) / dh->ysize;
 	histogram_cell *cell = &ds->metadata.hist.hcells[xp*ds->metadata.hist.yqtd +yp];
 	cell->cardin++;
-
 	cell->points += l->points;
+
+	//TODO: calculate avg online
+	double delta_x = MIN(l->mbr.MaxX - l->mbr.MinX, dh->xsize);
+	double delta_y = MIN(l->mbr.MaxY - l->mbr.MinY, dh->ysize);
+	cell->avgwidth += delta_x;
+	cell->avgheight += delta_y;
+}
+
+void get_xini_xfim(dataset_histogram *dh, Envelope query, 
+	int *xini, int *xfim, int *yini, int *yfim) {
+
+	// prevent values of x and y out of histogram bounds
+	query = EnvelopeIntersection2(query, dh->mbr);
+
+	*xini = (query.MinX - dh->mbr.MinX) / dh->xsize;
+	*xfim = (query.MaxX - dh->mbr.MinX) / dh->xsize;
+	*yini = (query.MinY - dh->mbr.MinY) / dh->ysize;
+	*yfim = (query.MaxY - dh->mbr.MinY) / dh->ysize;
+   
+	if (*xfim == dh->xqtd) (*xfim)--;
+	if (*yfim == dh->yqtd) (*yfim)--;
+
+	assert(*xini >= 0 && *xfim < dh->xqtd && "x is out of histogram bounds.");
+	assert(*yini >= 0 && *yfim < dh->yqtd && "y is out of histogram bounds.");
 }
 
 //inline __attribute__((always_inline))
 void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double objarea, double points) {
 
-	int xini = (ev.MinX - dh->mbr.MinX) / dh->xsize;
-	int xfim = (ev.MaxX - dh->mbr.MinX) / dh->xsize;
-	int yini = (ev.MinY - dh->mbr.MinY) / dh->ysize;
-	int yfim = (ev.MaxY - dh->mbr.MinY) / dh->ysize;
-
-	const double epsilon = 1e-100;
-	if (ev.MaxX - dh->xtics[xfim] < epsilon && xini > 0) {
-		//printf("l.MaxX %.10f, cell.MaxX %.10f\n", l->mbr.MaxX, dh->xtics[xfim]);
-		xfim--;
-	}
-	if (ev.MaxY - dh->ytics[yfim] < epsilon && yini > 0) {
-		//printf("l.MaxY %.10f, cell.MaxY %.10f\n", l->mbr.MaxY, dh->ytics[yfim]);
-		yfim--;
-	}
-	if (xfim < xini)
-		xini = xfim;
-	if (yfim < yini)
-		yini = yfim;
+	int xini, xfim, yini, yfim;
+	get_xini_xfim(dh, ev, &xini, &xfim, &yini, &yfim);	
 
 	//printf("%d %d %d %d\n", xini, xfim, yini, yfim);
 
@@ -137,10 +144,9 @@ void envelope_update(Envelope *e, double X, double Y) {
 int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
 	// proportional to cover area
 
-	int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
-	int xfim = (l->mbr.MaxX - dh->mbr.MinX) / dh->xsize;
-	int yini = (l->mbr.MinY - dh->mbr.MinY) / dh->ysize;
-	int yfim = (l->mbr.MaxY - dh->mbr.MinY) / dh->ysize;
+	int xini, xfim, yini, yfim;
+	get_xini_xfim(dh, l->mbr, &xini, &xfim, &yini, &yfim);	
+
 	double objarea = ENVELOPE_AREA(l->mbr);
 
 	int splitted = 0;
@@ -222,12 +228,12 @@ int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, datase
 		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
 			GEOSGeom_destroy(geo);
 
-		print_geojson_header();
+/*		print_geojson_header();
 		print_geojson_mbr(l->mbr, "orig");
 		print_geojson_mbr(split1, "e1");
 		print_geojson_mbr(split2, "e2");
 		print_geojson_mbr(split3, "e3");
-		print_geojson_footer();
+		print_geojson_footer();*/
 	}
 	else {
 		hash_envelope_area_fraction(dh, l->mbr, objarea, l->points);
@@ -458,11 +464,12 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 				printf("Histogram method not defined.\n");
 		}
 	}
-	if (hm == HHASH_AREAFRAC) {
-		//TODO: Remove when implement avg online for avgwidth and avgheigt 
-		for(int x = 0; x < dh->xqtd; x++) {
-			for(int y = 0; y < dh->yqtd; y++) {
-				histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
+
+	//TODO: Remove when implement avg online for avgwidth and avgheigt 
+	for(int x = 0; x < dh->xqtd; x++) {
+		for(int y = 0; y < dh->yqtd; y++) {
+			histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
+			if (c->cardin > 0.0) {
 				c->avgwidth = c->avgwidth / c->cardin;
 				c->avgheight = c->avgheight / c->cardin;
 			}
@@ -848,31 +855,17 @@ void histogram_print_estimative(char *name, multiway_histogram_estimate *estimat
 }
 
 double histogram_search_hist(dataset_histogram *dh, Envelope query) {
+
+	#define ZU(x,y) (x<y?0:x)
+	//#define ZU(x,y) (x)
+
+	// prevent values of x and y out of histogram bounds
+	int xini, xfim, yini, yfim;
+	get_xini_xfim(dh, query, &xini, &xfim, &yini, &yfim);	
+
 	double result = 0.0;
-
-	int xini = (query.MinX - dh->mbr.MinX) / dh->xsize;
-	int xfim = (query.MaxX - dh->mbr.MinX) / dh->xsize;
-	int yini = (query.MinY - dh->mbr.MinY) / dh->ysize;
-	int yfim = (query.MaxY - dh->mbr.MinY) / dh->ysize;
-
-	xfim = MIN(xfim, dh->xqtd-1);
-	yfim = MIN(yfim, dh->yqtd-1);
-	xini = MAX(xini, 0);
-	yini = MAX(yini, 0);
-
-	const double epsilon = 1e-100;
-	if (query.MaxX - dh->xtics[xfim] < epsilon && xfim > 0) {
-		xfim--;
-	}
-	if (query.MaxY - dh->ytics[yfim] < epsilon && yfim > 0) {
-		yfim--;
-	}
-	if (xfim < xini)
-		xini = xfim;
-	if (yfim < yini)
-		yini = yfim;
-
-	for(int x = xini; x <= xfim; x++) {
+	int x;
+	for(x = xini; x <= xfim; x++) {
 		Envelope rs;
 		rs.MinX = dh->xtics[x];
 		rs.MaxX = dh->xtics[x+1];
@@ -883,13 +876,38 @@ double histogram_search_hist(dataset_histogram *dh, Envelope query) {
 
 			histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
 			if (ENVELOPE_INTERSECTS(query, rs)) {
+
 				Envelope inters = EnvelopeIntersection(query, rs);
-				double int_area = ENVELOPE_AREA(inters);
+				double query_x = inters.MaxX - inters.MinX;
+				double query_y = inters.MaxY - inters.MinY;
+				double univ_x = rs.MaxX - rs.MinX;
+				double univ_y = rs.MaxY - rs.MinY;
+				double avg_x = c->avgwidth;
+				double avg_y = c->avgheight;
+
+				// observing that objects generally doesn't overlap in both axis,
+				// 	reduce the probability of intersection in one of them
+				if (c->avgwidth > c->avgheight)
+					avg_x = MIN(univ_x/c->cardin, avg_x);
+				else
+					avg_y = MIN(univ_y/c->cardin, avg_y);
+
+
+				double fraction = MIN(1.0, (ZU(avg_x, query_x) + query_x)/univ_x) 
+								* MIN(1.0, (ZU(avg_y, query_y) + query_y)/univ_y);
+				/*double fraction = MIN(1.0, (query_x)/univ_x) 
+								* MIN(1.0, (query_y)/univ_y);*/
+				assert(fraction <= 1.0 && "fraction should not be higher than 1.0");
+
+				result += c->cardin * fraction;
+
+				/*double int_area = ENVELOPE_AREA(inters);
 				double bucket_area = ENVELOPE_AREA(rs);
 				double fraction = int_area / bucket_area;
-				result += fraction * c->cardin;
+				result += fraction * c->cardin;*/
 			}
 		}
 	}
 	return result;
+
 }
