@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] [split 2,3,4] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] [split 2,3,4 or 1 to ignore split] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 	//printf("Read user entry of split method! %d\n", split_method);
 
 	//test if a valid split method was chosen
-	if(((split_method != 2) && (split_method != 3)) && (split_method != 4)) {
+	if( ( ((split_method != 2) && (split_method != 3)) && (split_method != 4)) && (split_method != 1)) {
 		printf("No valid split method entered.\n");
 		exit(1);
 	}

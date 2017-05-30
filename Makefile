@@ -18,10 +18,10 @@ geosext.o:
 	g++ -ggdb -O0 -std=c++11 -c $(INCLUDES) auxs/*.cpp
 
 clean:
-	rm *.o
-	rm main
+	rm -f *.o
+	rm -f main
 
 clean_files:
-	rm mbrs/*.geojson
-	rm histogram/*.geojson
-	rm histogram/*.dat
+	rm -f mbrs/*.geojson
+	rm -f histogram/*.geojson
+	rm -f histogram/*.dat
