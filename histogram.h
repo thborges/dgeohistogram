@@ -60,7 +60,8 @@ void histogram_print_geojson(dataset *ds);
 int histogram_join_cardinality(dataset *dr, dataset *ds);
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd);
 void histogram_print_estimative(char *name, multiway_histogram_estimate *estimate, int servers);
-double histogram_search_hist(dataset_histogram *dh, Envelope query);
+double histogram_search_hist_mp(dataset_histogram *dh, Envelope query);
+double histogram_search_hist_wao(dataset_histogram *dh, Envelope query);
 
 #ifdef __cplusplus
 }

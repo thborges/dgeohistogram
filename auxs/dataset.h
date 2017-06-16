@@ -89,6 +89,7 @@ typedef struct {
 	double points;
 	double avgwidth;
 	double avgheight;
+	double objcount;
 	unsigned place;
 	unsigned copies;
 } histogram_cell;

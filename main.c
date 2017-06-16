@@ -11,6 +11,7 @@
 #include "ogrext.h"
 #include "rtree.h"
 #include "rtree-star.h"
+#include "rtree-lazy.h"
 #include "histogram.h"
 #include "minskew.h"
 #include "dataset_specs.h"
@@ -23,7 +24,7 @@ OGRDataSourceH ogr_ds;
 
 int main(int argc, char* argv[]) {
 
-		srand(time(NULL));
+		//srand(time(NULL));
 
 		OGRRegisterAll();
 		initGEOS(geos_messages, geos_messages);
@@ -75,6 +76,8 @@ int main(int argc, char* argv[]) {
 		dataset_name = argv[argatu++];
 		dataset *ds = read_geos(dataset_name);
 
+		srand(ds->metadata.count);
+
 		HistogramGenerateSpec spec;
 		spec.hm = hm;
 		spec.sm = sm;
@@ -83,7 +86,7 @@ int main(int argc, char* argv[]) {
 
 		// chamar a função que cria o histograma
 		histogram_generate(ds, spec, 0);
-		histogram_print_geojson(ds);
+		//histogram_print_geojson(ds);
 		//histogram_print(ds, CARDIN);
 
 		printf("Histogram cell width: %f, height %f\n", ds->metadata.hist.xsize, ds->metadata.hist.ysize);
@@ -98,7 +101,7 @@ int main(int argc, char* argv[]) {
 
 		// cria uma r*
 		rtree_root *rtree = NULL;
-		rtree = rtree_new_rstar(30, 10);
+		rtree = rtree_new_r0(30, 10);
 
 		unsigned read = 0;
 		dataset_iter_seg iter;
@@ -108,13 +111,25 @@ int main(int argc, char* argv[]) {
 				rtree_append(rtree, geo);
 				//print_progress_gauge(read, ds->metadata.count);
 		}
+		printf("Dataset cardinality: %d\n", read);
 
 
 		dataset_histogram *hist = &ds->metadata.hist;
 		int cells = hist->xqtd*hist->yqtd;
 
+		/* check cardinality sum based on cardin */
+		double sum_cardin = 0;
+		for(int xi = 0; xi < hist->xqtd; xi++) {
+			for(int yi = 0; yi < hist->yqtd; yi++) {
+				histogram_cell *c = GET_HISTOGRAM_CELL(hist, xi, yi);
+				sum_cardin += c->cardin;
+			}
+		}
+		printf("Histogram cardin: %f\n", sum_cardin);
+	
+
 		printf("\nSize\tARE     \tSTD     \tSUM     \tMethod\tName\n");
-		double query_sizes[] = {.01, .025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3};
+		double query_sizes[] = {.001, .002, .005, .01, .025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3};
 		for(int qi = 0; qi < sizeof(query_sizes)/sizeof(double); qi++) {
 				query_size = query_sizes[qi];
 
@@ -132,7 +147,7 @@ int main(int argc, char* argv[]) {
 				double wsize = width * query_size;
 				double hsize = height * query_size;
 				//int qtd = (width / wsize) * (height/hsize) / 2.0;
-				int qtd = 1000;
+				int qtd = 100;
 
 				//printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
 				//print_geojson_header();
@@ -177,7 +192,11 @@ int main(int argc, char* argv[]) {
 						}
 
 						// histogram estimate cardinality
-						int rhq = histogram_search_hist(&ds->metadata.hist, query);
+						int rhq;
+						if (hm == HHASH_MBRCENTER) 
+							rhq = histogram_search_hist_mp(&ds->metadata.hist, query);
+						else
+							rhq = histogram_search_hist_wao(&ds->metadata.hist, query);
 						//int rhq = minskew_search_hist(minskewh, query);
 
 						//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
@@ -224,7 +243,7 @@ int main(int argc, char* argv[]) {
 				}
 				//print_geojson_footer();
 
-				printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
+				printf("%4.3f\t%f\t%f\t%f\t%s\t%s\n",
 								query_size, 
 								sum_ei / (double)sum_ri,
 								sqrt(M2/(double)n),
