@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
 	//print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
-	//GList *minskewh = minskew_generate_hist(ds, 500);
-	//minskew_print_hist(ds, minskewh);
+	GList *minskewh = minskew_generate_hist(ds, 500);
+	minskew_print_hist(ds, minskewh);
 
 
 	// the user specified a query?
@@ -183,8 +183,8 @@ int main(int argc, char* argv[]) {
 		int riq = g_list_length(results);
 
 		// histogram estimate cardinality
-		int rhq = histogram_search_hist(&ds->metadata.hist, query);
-		//int rhq = minskew_search_hist(minskewh, query);
+		//int rhq = histogram_search_hist(&ds->metadata.hist, query);
+		int rhq = minskew_search_hist(minskewh, query);
 
 		//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
 
