@@ -213,7 +213,7 @@ void divisao_com_4(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, c
         		
     //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
 	char filename[100];
-	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	sprintf(filename, "mbrs/splitted%lld.geojson", l->gid);
 	FILE *file;
 	file = fopen(filename, "w+");
 	print_geojson_header_file(file);
@@ -292,7 +292,7 @@ void divisao_com_3(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, c
         		
     //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
 	char filename[100];
-	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	sprintf(filename, "mbrs/splitted%lld.geojson", l->gid);
 	FILE *file;
 	file = fopen(filename, "w+");
 	print_geojson_header_file(file);
@@ -359,7 +359,7 @@ void divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, c
         		
     //print geojson of splitted object on mbrs/splitted#NUMERO.geojson
 	char filename[100];
-	sprintf(filename, "mbrs/splitted%d.geojson", l->gid);
+	sprintf(filename, "mbrs/splitted%lld.geojson", l->gid);
 	FILE *file;
 	file = fopen(filename, "w+");
 	print_geojson_header_file(file);
