@@ -13,7 +13,12 @@
 #include "rtree-star.h"
 #include "histogram.h"
 #include "minskew.h"
+#include "ehist.h"
 #include "dataset_specs.h"
+
+//#define MINSKEW_HIST
+#define EULER_HIST
+//#define GRID_HIST
 
 char *dataset_name;
 
@@ -106,12 +111,19 @@ int main(int argc, char* argv[]) {
 	//print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
+	#ifdef MINSKEW_HIST
 	GList *minskewh = minskew_generate_hist(ds, 500);
 	minskew_print_hist(ds, minskewh);
+	#endif
 
+	// create euler histogram
+	#ifdef EULER_HIST 
+	euler_histogram *eh = eh_generate_hist(ds, spec, 0);
+	euler_print_hist(ds, eh);
+	#endif
 
 	// the user specified a query?
-	if (argc < argatu)
+	if (argc <= argatu)
 		goto finish;
 
 	double query_size = atof(argv[argatu++]);
@@ -183,8 +195,15 @@ int main(int argc, char* argv[]) {
 		int riq = g_list_length(results);
 
 		// histogram estimate cardinality
-		//int rhq = histogram_search_hist(&ds->metadata.hist, query);
+		#ifdef GRID_HIST
+		int rhq = histogram_search_hist(&ds->metadata.hist, query);
+		#endif
+		#ifdef MINSKEW_HIST
 		int rhq = minskew_search_hist(minskewh, query);
+		#endif
+		#ifdef EULER_HIST
+		int rhq = euler_search_hist(eh, query);
+		#endif
 
 		//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
 

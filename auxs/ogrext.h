@@ -133,6 +133,7 @@ char ENVELOPE_INTERSECTS(const Envelope mbr1, const Envelope mbr2) {
 }
 
 #define ENVELOPE_CONTAINS(o, i) (i.MinX >= o.MinX && i.MaxX <= o.MaxX && i.MinY >= o.MinY && i.MaxY <= o.MaxY)
+#define ENVELOPE_CONTAINSP(e, x, y) (x >= e.MinX && x <= e.MaxX && y >= e.MinY && y <= e.MaxY)
 
 #ifdef __cplusplus
 }
