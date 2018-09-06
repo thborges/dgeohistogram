@@ -54,7 +54,7 @@ void geos_messages(const char *fmt, ...) {
     va_list(ap);
 	va_start(ap, fmt);
 	fprintf(stderr, "error: GEOS: ");
-	fprintf(stderr, fmt, ap);
+	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
 }

@@ -1,11 +1,10 @@
 
-#include <libgen.h>
-#include <ogr_api.h>
-#include <geos_c.h>
 #include <cpl_conv.h>
 #include <time.h>
 #include <arpa/inet.h>
 #include <locale.h>
+#include <libgen.h>
+
 #include "dataset.h"
 #include "glibwrap.h"
 #include "ogrext.h"
@@ -16,48 +15,62 @@
 #include "ehist.h"
 #include "dataset_specs.h"
 
-//#define MINSKEW_HIST
-#define EULER_HIST
-//#define GRID_HIST
-
 char *dataset_name;
-
-int *split_method_point;
 
 dataset *read_geos(char *shpfile);
 
 OGRDataSourceH ogr_ds;
 
+enum HistogramType {
+	HTGRID,
+	HTMINSKEW,
+	HTEULER
+};
+
 int main(int argc, char* argv[]) {
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	OGRRegisterAll();
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] [split 2,3,4 or 1 to ignore split] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [grid minskew euler] [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
-	enum HistogramHashMethod hm = HHASH_AREAFRAC;
-	if (strcmp(argv[1], "mbrc") == 0)
-		hm = HHASH_MBRCENTER;
-	else
-	if (strcmp(argv[1], "centr") == 0)
-		hm = HHASH_CENTROID;
-	else
-	if (strcmp(argv[1], "areaf") == 0)
-		hm = HHASH_AREAFRAC;
-	else
-	if (strcmp(argv[1], "areafs") == 0)
-		hm = HHASH_AREAFRACSPLIT;
+	enum HistogramType ht = HTGRID;
+	if (strcmp(argv[1], "grid") == 0)
+		ht = HTGRID;
+	else if (strcmp(argv[1], "minskew") == 0)
+		ht = HTMINSKEW;
+	else if(strcmp(argv[1], "euler") == 0)
+		ht = HTEULER;
 	else {
-		printf("Method %s does not exists.\n", argv[1]);
+		printf("Histogram type %s does not exists.\n", argv[1]);
 		exit(1);
 	}
 
-	int argatu = 2;
+	enum HistogramHashMethod hm = HHASH_AREAFRAC;
+	if (ht == HTGRID || ht == HTMINSKEW) {
+		if (strcmp(argv[2], "mbrc") == 0)
+			hm = HHASH_MBRCENTER;
+		else
+		if (strcmp(argv[2], "centr") == 0)
+			hm = HHASH_CENTROID;
+		else
+		if (strcmp(argv[2], "areaf") == 0)
+			hm = HHASH_AREAFRAC;
+		else
+		if (strcmp(argv[2], "areafs") == 0)
+			hm = HHASH_AREAFRACSPLIT;
+		else {
+			printf("Hash method %s does not exists.\n", argv[2]);
+			exit(1);
+		}
+	}
+
+	int argatu = 3;
 	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
 	int xqtd = 0, yqtd = 0;
 	if (strcmp(argv[argatu], "fix") == 0) {
@@ -79,20 +92,8 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	int split_method = atoi(argv[argatu++]);
-	//printf("Read user entry of split method! %d\n", split_method);
-
-	//test if a valid split method was chosen
-	if( ( ((split_method != 2) && (split_method != 3)) && (split_method != 4)) && (split_method != 1)) {
-		printf("No valid split method entered.\n");
-		exit(1);
-	}
-
-	else {
-		split_method_point = &split_method;
-		//printf("------test pointer------%p\n", split_method_point);
-		//printf("------test pointer------%p\n", &split_method);
-	}
+	// split disabled
+	int split_qtd = 1;
 	
 	dataset_name = argv[argatu++];
 	dataset *ds = read_geos(dataset_name);
@@ -104,27 +105,29 @@ int main(int argc, char* argv[]) {
 	spec.yqtd = yqtd;
 
 	// chamar a função que cria o histograma
-	histogram_generate(ds, spec, 0, split_method_point);
+	histogram_generate(ds, spec, CHECKR, split_qtd);
 	histogram_print_geojson(ds);
 	histogram_print(ds, CARDIN);
 
 	//print_dataset_specs(&ds->metadata.hist);
 
 	// create min skew histogram
-	#ifdef MINSKEW_HIST
-	GList *minskewh = minskew_generate_hist(ds, 500);
-	minskew_print_hist(ds, minskewh);
-	#endif
+	GList *minskewh = NULL;
+	if (ht == HTMINSKEW) {
+		minskewh = minskew_generate_hist(ds, 300);
+		minskew_print_hist(ds, minskewh);
+	}
 
 	// create euler histogram
-	#ifdef EULER_HIST 
-	euler_histogram *eh = eh_generate_hist(ds, spec, 0);
-	euler_print_hist(ds, eh);
-	#endif
+	euler_histogram *eh = NULL;
+	if (ht == HTEULER) {
+		eh = eh_generate_hist(ds, spec, CHECKR);
+		euler_print_hist(ds, eh);
+	}
 
 	// the user specified a query?
 	if (argc <= argatu)
-		goto finish;
+		return 0;
 
 	double query_size = atof(argv[argatu++]);
 
@@ -195,17 +198,15 @@ int main(int argc, char* argv[]) {
 		int riq = g_list_length(results);
 
 		// histogram estimate cardinality
-		#ifdef GRID_HIST
-		int rhq = histogram_search_hist(&ds->metadata.hist, query);
-		#endif
-		#ifdef MINSKEW_HIST
-		int rhq = minskew_search_hist(minskewh, query);
-		#endif
-		#ifdef EULER_HIST
-		int rhq = euler_search_hist(eh, query);
-		#endif
+		int rhq = 0;
+		if (ht == HTGRID)
+			rhq = histogram_search_hist(&ds->metadata.hist, query);
+		else if (ht == HTMINSKEW)
+			rhq = minskew_search_hist(minskewh, query);
+		else if (ht == HTEULER)
+			rhq = euler_search_hist(eh, query);
 
-		//printf("Query %d: r: %d, e: %d\n", n, riq, rhq);
+		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
 
 		int error = abs(rhq-riq);
 
@@ -251,35 +252,28 @@ int main(int argc, char* argv[]) {
 	}
 	//print_geojson_footer();
 	
-	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tSplit.Qnt\tName\n");
-	printf("%3.2f\t%f\t%f\t%f\t%s\t%d\t\t%s\n",
+	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
+	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
 		query_size, 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
 		argv[1],
-		split_method,
 		ds->metadata.name);
 
 	//print result to csv file data.csv in dgeohistogram
 	char filename[100] = "data.csv";
 	FILE *file;
 	file = fopen(filename, "a");
-
-	
-  		fprintf(file, "%3.2f,%f,%f,%f,%s,%d,%s\n", 
+  	fprintf(file, "%3.2f,%f,%f,%f,%s,%s\n", 
 		query_size, 
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
 		argv[1],
-		split_method,
 		ds->metadata.name);
-		fclose(file);
+	fclose(file);
 	
-
-	
-
 finish:	
 	OGR_DS_Destroy(ogr_ds);
 	finishGEOS();
@@ -320,6 +314,7 @@ dataset *read_geos(char *shpfile) {
 				dataset_leaf *leaf = dataset_add(results);
 				long long gid = OGR_F_GetFID(feature);
 				Envelope mbr = OGRGetEnvelope(geometry);
+				//printf("%lf %lf %lf %lf\n", mbr.MinX, mbr.MinY, mbr.MaxX, mbr.MaxY);
 				dataset_fill_leaf_id(leaf, 0, gid, &mbr);
 				leaf[0].points = OGRGetNumPoints(geometry);
 			}

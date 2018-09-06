@@ -9,7 +9,7 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 	eh->xtics = g_new(double, eh->xqtd+1);
 	eh->ytics = g_new(double, eh->yqtd+1);
 	eh->faces = g_new0(euler_face, eh->xqtd * eh->yqtd);
-	eh->edges = g_new0(euler_edge, xqtd * (yqtd+1) + yqtd * (xqtd+1));
+	eh->edges = g_new0(euler_edge, (xqtd * yqtd) + yqtd + xqtd);
 	eh->vertexes = g_new0(euler_vertex, xqtd * yqtd + xqtd + yqtd + 1);
 
 	eh->xsize = psizex;
@@ -43,7 +43,8 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 			if (i < eh->xqtd) {
 				eh->edges[e].mbr.MinX = eh->xtics[i];
 				eh->edges[e].mbr.MaxX = eh->xtics[i+1];
-				eh->edges[e].mbr.MinY = eh->edges[e].mbr.MaxY = eh->ytics[j];
+				eh->edges[e].mbr.MinY = eh->ytics[j];
+				eh->edges[e].mbr.MaxY = eh->ytics[j]+1e-10;
 				e++;
 			}
 
@@ -52,7 +53,8 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 			if (j < eh->yqtd) {
 				eh->edges[e].mbr.MinY = eh->ytics[j];
 				eh->edges[e].mbr.MaxY = eh->ytics[j+1];
-				eh->edges[e].mbr.MinX = eh->edges[e].mbr.MaxX = eh->xtics[i];
+				eh->edges[e].mbr.MinX = eh->xtics[i];
+				eh->edges[e].mbr.MaxX = eh->xtics[i]+1e-10;
 				e++;
 			}
 		}
@@ -65,28 +67,40 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 	dataset_foreach(di, ds) {
 		dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
 		Envelope ev = l->mbr;
+		GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);	
 
 		int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize;
 		int xfim = (ev.MaxX - eh->mbr.MinX) / eh->xsize;
 		int yini = (ev.MinY - eh->mbr.MinY) / eh->ysize;
 		int yfim = (ev.MaxY - eh->mbr.MinY) / eh->ysize;
-		xfim++;
-		yfim++;
+		if (xfim < eh->xqtd) xfim++;
+		if (yfim < eh->yqtd) yfim++; 
 
 		for(int x = xini; x <= xfim; x++) {
 			Envelope rs;
 			rs.MinX = eh->xtics[x];
 			if (x < eh->xqtd)
 				rs.MaxX = eh->xtics[x+1];
+			else
+				rs.MaxX = rs.MinX + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
 
 			for(int y = yini; y <= yfim; y++) {
 				rs.MinY = eh->ytics[y];
 				if (y < eh->yqtd)
 					rs.MaxY = eh->ytics[y+1];
+				else
+					rs.MaxY = rs.MinY + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
+
+				GEOSGeometryH clipped = GEOSClipByRect(geo, rs.MinX, rs.MinY, rs.MaxX, rs.MaxY);
+				if (clipped == NULL)
+					continue;
+				Envelope ev2;
+				GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
+				GEOSGeom_destroy(clipped);
 
 				// face
 				if (x < eh->xqtd && y < eh->yqtd) {
-					if (ENVELOPE_INTERSECTS(ev, rs)) {
+					if (ENVELOPE_INTERSECTS(ev2, rs)) {
 						euler_face *face = &eh->faces[x*eh->yqtd +y];
 						face->cardin += 1;
 					}
@@ -94,13 +108,13 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 
 				// vertex
 				int v = x * (eh->yqtd+1) + y;
-				if (ENVELOPE_CONTAINSP(ev, eh->vertexes[v].x, eh->vertexes[v].y))
+				if (ENVELOPE_CONTAINSP(ev2, eh->vertexes[v].x, eh->vertexes[v].y))
 					eh->vertexes[v].cardin += 1;
 
 				// horizontal edge
 				if (x < eh->xqtd) {
 					int e = x * (2*eh->yqtd+1) + 2*y;
-					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev))
+					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
 						eh->edges[e].cardin += 1;
 				}
 
@@ -111,11 +125,14 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 						e = x * (2*eh->yqtd+1) + y;
 					else
 						e = x * (2*eh->yqtd+1) + 2*y + 1;
-					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev))
+					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
 						eh->edges[e].cardin += 1;
 				}
 			}
 		}
+
+		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
+			GEOSGeom_destroy(geo);
 	}
 }
 
@@ -175,9 +192,11 @@ euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum 
 }
 
 
-int euler_search_hist(euler_histogram *eh, Envelope query) {
+int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
 	int result = 0;
+
+	Envelope query = EnvelopeIntersection(query2, eh->mbr);
 
 	int xini = (query.MinX - eh->mbr.MinX) / eh->xsize;
 	int xfim = (query.MaxX - eh->mbr.MinX) / eh->xsize;
@@ -199,7 +218,12 @@ int euler_search_hist(euler_histogram *eh, Envelope query) {
 			if (x < eh->xqtd && y < eh->yqtd) {
 				if (ENVELOPE_INTERSECTS(query, rs)) {
 					euler_face *face = &eh->faces[x*eh->yqtd +y];
-					result += face->cardin;
+
+					Envelope inters = EnvelopeIntersection(query, rs);
+					double int_area = ENVELOPE_AREA(inters);
+					double face_area = ENVELOPE_AREA(rs);
+					double fraction = int_area / face_area;
+					result += fraction * face->cardin;
 				}
 			}
 
@@ -211,8 +235,12 @@ int euler_search_hist(euler_histogram *eh, Envelope query) {
 			// horizontal edge
 			if (x < eh->xqtd) {
 				int e = x * (2*eh->yqtd+1) + 2*y;
-				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query))
-					result -= eh->edges[e].cardin;
+				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)) {
+					Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
+					double int_length = inters.MaxX - inters.MinX;
+					double fraction = int_length / (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
+					result -= fraction * eh->edges[e].cardin;
+				}
 			}
 
 			// vertical edge
@@ -222,8 +250,12 @@ int euler_search_hist(euler_histogram *eh, Envelope query) {
 					e = x * (2*eh->yqtd+1) + y;
 				else
 					e = x * (2*eh->yqtd+1) + 2*y + 1;
-				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query))
-					result -= eh->edges[e].cardin;
+				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)) {
+					Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
+					double int_length = inters.MaxY - inters.MinY;
+					double fraction = int_length / (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
+					result -= fraction * eh->edges[e].cardin;
+				}
 			}
 		}
 	}

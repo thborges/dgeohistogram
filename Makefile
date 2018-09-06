@@ -9,16 +9,26 @@ LIBS= \
 	-L/opt/local/lib \
 	-L/usr/lib
 
-all: geosext.o
-	gcc -std=c11 -ggdb -O0 -c $(INCLUDES) *.c auxs/*.c 
-	g++ -std=c++11 -ggdb -O0 *.o -o main $(LIBS) -lgdal -lgeos -lgeos_c
+DEBUG=-ggdb -O0
+#DEBUG=-O2
 
+DEPEND_CPP=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
+DEPEND_C=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(wildcard *.c)) 
 
-geosext.o: 
-	g++ -ggdb -O0 -std=c++11 -c $(INCLUDES) auxs/*.cpp
+all: main
+
+main: $(DEPEND_CPP) $(DEPEND_C)
+	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) -o main $(LIBS) -lgdal -lgeos -lgeos_c
+
+%.o: %.c
+	gcc -std=c11 $(DEBUG) $(INCLUDES) -c $< -o $@
+
+%.o: %.cpp
+	g++ -std=c++11 $(DEBUG) $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -f *.o
+	rm -f auxs/*.o
 	rm -f main
 
 clean_files:
