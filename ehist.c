@@ -103,6 +103,8 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 					if (ENVELOPE_INTERSECTS(ev2, rs)) {
 						euler_face *face = &eh->faces[x*eh->yqtd +y];
 						face->cardin += 1;
+						//double delta_x = ev2.MaxX - ev2.MinX;
+						//face->avg_x += (delta_x - face->avg_x) / face->cardin;
 					}
 				}
 
