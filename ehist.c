@@ -133,8 +133,8 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 			}
 		}
 
-		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
-			GEOSGeom_destroy(geo);
+		//if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
+		//	GEOSGeom_destroy(geo);
 	}
 }
 

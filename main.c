@@ -163,23 +163,40 @@ int main(int argc, char* argv[]) {
 	double height = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
 	double wsize = width * query_size;
 	double hsize = height * query_size;
-	//int qtd = (width / wsize) * (height/hsize) / 2.0;
-	int qtd = 500;
 
-	//printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
-	//print_geojson_header();
+	// quantidade de consultas para cobrir o dataset, considerando
+	// uma distribuicao uniforme
+	int qtd = ceil((width / wsize) * (height/hsize));
+	int qtdqx = (width / wsize);
+	//int qtd = 500;
 
+	printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
+	
+	#define PRINT_QUERY_GEOJSON
+	#ifdef PRINT_QUERY_GEOJSON
+	FILE *fqueries = fopen("queries.geojson", "w");
+	print_geojson_header_file(fqueries);
+	#endif
+
+	int qryno = 0;
 	while (n < qtd) {
 		n++;
 
 		Envelope query;
-		query.MinX = ds->metadata.hist.mbr.MinX;
+		/*query.MinX = ds->metadata.hist.mbr.MinX;
 		query.MinY = ds->metadata.hist.mbr.MinY;
 		query.MinX += width * (rand()/(double)RAND_MAX);
 		query.MinY += height * (rand()/(double)RAND_MAX);
 		query.MaxX = query.MinX + wsize;
+		query.MaxY = query.MinY + hsize;*/
+		query.MinX = ds->metadata.hist.mbr.MinX + (qryno / qtdqx) * wsize;
+		query.MinY = ds->metadata.hist.mbr.MinY + (qryno % qtdqx) * hsize;
+		query.MaxX = query.MinX + wsize;
 		query.MaxY = query.MinY + hsize;
-		//print_geojson_mbr(query, "0");
+		
+		#ifdef PRINT_QUERY_GEOJSON
+		print_geojson_mbr_file(query, "0", fqueries);
+		#endif
 
 	    char wkt[512];
     	sprintf(wkt, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
@@ -245,12 +262,16 @@ int main(int argc, char* argv[]) {
 			printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
 
 		g_list_free(results);
+		qryno++;
 
 		//print_progress_gauge(n, cells);
 
 		//printf("\n");
 	}
-	//print_geojson_footer();
+	#ifdef PRINT_QUERY_GEOJSON
+	print_geojson_footer_file(fqueries);
+	fclose(fqueries);
+	#endif
 	
 	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
 	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
