@@ -2,6 +2,9 @@
 #include "histogram.h"
 #include "ehist.h"
 
+#define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
+#define GET_HORZ_EDGE(x, y) (x * (2*eh->yqtd+1) + 2*y)
+
 void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psizex, double psizey) {
 	assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
 	eh->xqtd = xqtd;
@@ -10,7 +13,7 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 	eh->ytics = g_new(double, eh->yqtd+1);
 	eh->faces = g_new0(euler_face, eh->xqtd * eh->yqtd);
 	eh->edges = g_new0(euler_edge, ((xqtd+1) * yqtd) + ((yqtd+1) * xqtd));
-	eh->vertexes = g_new0(euler_vertex, (xqtd+1) * (yqtd + 1));
+	eh->vertexes = g_new0(euler_vertex, (xqtd+1) * (yqtd+1));
 
 	eh->xsize = psizex;
 	eh->ysize = psizey;
@@ -30,7 +33,6 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 
 	// edges and vertexes
 	int v = 0;
-	int e = 0;
 	for(int i = 0; i <= eh->xqtd; i++) { // x
 		for(int j = 0; j <= eh->yqtd; j++) { // y
 
@@ -41,21 +43,21 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 
 			// horizontal edge at vertex v
 			if (i < eh->xqtd) {
+				int e = GET_HORZ_EDGE(i, j);
 				eh->edges[e].mbr.MinX = eh->xtics[i];
 				eh->edges[e].mbr.MaxX = eh->xtics[i+1];
 				eh->edges[e].mbr.MinY = eh->ytics[j];
 				eh->edges[e].mbr.MaxY = eh->ytics[j]+1e-10;
-				e++;
 			}
 
 
 			// vertical edge at vertex v
 			if (j < eh->yqtd) {
+				int e = GET_VERT_EDGE(i, j);
 				eh->edges[e].mbr.MinY = eh->ytics[j];
 				eh->edges[e].mbr.MaxY = eh->ytics[j+1];
 				eh->edges[e].mbr.MinX = eh->xtics[i];
 				eh->edges[e].mbr.MaxX = eh->xtics[i]+1e-10;
-				e++;
 			}
 		}
 	}
@@ -116,26 +118,22 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 
 				// horizontal edge
 				if (x < eh->xqtd) {
-					int e = x * (2*eh->yqtd+1) + 2*y;
+					int e = GET_HORZ_EDGE(x, y);
 					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
 						eh->edges[e].cardin += 1;
 				}
 
 				// vertical edge
 				if (y < eh->yqtd) {
-					int e;
-					if (x == eh->xqtd) // last column right border
-						e = x * (2*eh->yqtd+1) + y;
-					else
-						e = x * (2*eh->yqtd+1) + 2*y + 1;
+					int e = GET_VERT_EDGE(x, y);
 					if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
 						eh->edges[e].cardin += 1;
 				}
 			}
 		}
 
-		//if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
-		//	GEOSGeom_destroy(geo);
+		if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
+			GEOSGeom_destroy(geo);
 	}
 }
 
@@ -197,7 +195,7 @@ euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum 
 
 int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
-	int result = 0;
+	double result = 0;
 
 	Envelope query = EnvelopeIntersection(query2, eh->mbr);
 
@@ -241,7 +239,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
 			// horizontal edge
 			if (x < eh->xqtd) {
-				int e = x * (2*eh->yqtd+1) + 2*y;
+				int e = GET_HORZ_EDGE(x, y);
 				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
 					if(eh->edges[e].mbr.MinY != query.MinY && eh->edges[e+1].mbr.MinY != query.MaxY) {
 						Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
@@ -255,11 +253,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
 			// vertical edge
 			if (y < eh->yqtd) {
-				int e;
-				if (x == eh->xqtd) // last column right border
-					e = x * (2*eh->yqtd+1) + y;
-				else
-					e = x * (2*eh->yqtd+1) + 2*y + 1;
+				int e = GET_VERT_EDGE(x, y);
 				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
 					if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e+1].mbr.MinX != query.MaxX) {
 						Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
@@ -272,7 +266,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 		}
 	}
 
-	return result;
+	return round(result);
 }
 
 void euler_print_hist(dataset *ds, euler_histogram *eh) {
@@ -290,7 +284,6 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 	
 	fprintf(f, "{'type': 'FeatureCollection', 'features': [\n");
 
-	int e = 0;
 	int v = 0;
 	Envelope env;
 	for(int x = 0; x <= eh->xqtd; x++) {
@@ -306,24 +299,24 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			// face
 			if (x < eh->xqtd && y < eh->yqtd) {
 				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-				fprintf(f, "[%f, %f],", env.MinX, env.MinY);
-				fprintf(f, "[%f, %f],", env.MaxX, env.MinY);
-				fprintf(f, "[%f, %f],", env.MaxX, env.MaxY);
-				fprintf(f, "[%f, %f],", env.MinX, env.MaxY);
-				fprintf(f, "[%f, %f]",  env.MinX, env.MinY);
+				fprintf(f, "[%lf, %lf],", env.MinX, env.MinY);
+				fprintf(f, "[%lf, %lf],", env.MaxX, env.MinY);
+				fprintf(f, "[%lf, %lf],", env.MaxX, env.MaxY);
+				fprintf(f, "[%lf, %lf],", env.MinX, env.MaxY);
+				fprintf(f, "[%lf, %lf]",  env.MinX, env.MinY);
 				fprintf(f, "]]}, 'properties': {");
 				fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
-				fprintf(f, "\"card\": %f,", eh->faces[x*eh->yqtd + y].cardin);
+				fprintf(f, "\"card\": %lf,", eh->faces[x*eh->yqtd + y].cardin);
 				fprintf(f, "\"type\": \"face\",");
 				fprintf(f, "}},\n");
 			}
 
 			// vertex
-			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%f, %f]},", 
+			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%lf, %lf]},", 
 				eh->vertexes[v].x, eh->vertexes[v].y);
 			fprintf(f, "'properties': {");
 			fprintf(f, "\"name\": \"v:%d.%d\",", x, y);
-			fprintf(f, "\"card\": %f,", eh->vertexes[v].cardin);
+			fprintf(f, "\"card\": %lf,", eh->vertexes[v].cardin);
 			fprintf(f, "\"type\": \"vertex\",");
 			fprintf(f, "}},\n");
 			v++;
@@ -331,26 +324,26 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			
 			// horizontal edge
 			if (x < eh->xqtd) {
-				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%f, %f], [%f, %f]]},", 
+				int e = GET_HORZ_EDGE(x, y);
+				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%lf, %lf], [%lf, %lf]]},", 
 					eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
 				fprintf(f, "'properties': {");
 				fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
-				fprintf(f, "\"card\": %f,", eh->edges[e].cardin);
+				fprintf(f, "\"card\": %lf,", eh->edges[e].cardin);
 				fprintf(f, "\"type\": \"edgeh\",");
 				fprintf(f, "}},\n");
-				e++;
 			}
 
 			// vertical edge
 			if (y < eh->yqtd) {
-				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%f, %f], [%f, %f]]},", 
+				int e = GET_VERT_EDGE(x, y);
+				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%lf, %lf], [%lf, %lf]]},", 
 					eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
 				fprintf(f, "'properties': {");
 				fprintf(f, "\"name\": \"ev:%d.%d\",", x, y);
-				fprintf(f, "\"card\": %f,", eh->edges[e].cardin);
+				fprintf(f, "\"card\": %lf,", eh->edges[e].cardin);
 				fprintf(f, "\"type\": \"edgev\",");
 				fprintf(f, "}},\n");
-				e++;
 			}
 
 		}
