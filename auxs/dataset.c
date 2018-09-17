@@ -6,8 +6,11 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <ogrext.h>
 #include "dataset.h"
 #include "uthash.h"

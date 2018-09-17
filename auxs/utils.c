@@ -8,14 +8,14 @@
 #ifdef __MACH__
 #include <sys/time.h>
 //clock_gettime is not implemented on OSX
-int clock_gettime(int clk_id, struct timespec* t) {
+/*int clock_gettime(int clk_id, struct timespec* t) {
     struct timeval now;
     int rv = gettimeofday(&now, NULL);
     if (rv) return rv;
     t->tv_sec  = now.tv_sec;
     t->tv_nsec = now.tv_usec * 1000;
     return 0;
-}
+}*/
 #endif
 
 float maxs(size_t data[], size_t start, size_t n) {
@@ -62,18 +62,38 @@ double stdevd_ex(void *data, size_t start, size_t n, double (*getv)(const void *
 
 }
 
+//Print each split in geojson files
+void print_geojson_header_file(FILE *file) {
+	fprintf(file, "{\"type\": \"FeatureCollection\", \"features\": [\n");
+}
+
+void print_geojson_mbr_file(const Envelope e, char *id, FILE *file) {
+	fprintf(file, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
+	fprintf(file, "[%f, %f],", e.MinX, e.MinY);
+	fprintf(file, "[%f, %f],", e.MaxX, e.MinY);
+	fprintf(file, "[%f, %f],", e.MaxX, e.MaxY);
+	fprintf(file, "[%f, %f],", e.MinX, e.MaxY);
+	fprintf(file, "[%f, %f]",  e.MinX, e.MinY);
+	fprintf(file, "]]}, \"properties\": {\"name\": \"%s\"}},\n", id);
+}
+
+void print_geojson_footer_file(FILE *file) {
+	fprintf(file, "]}\n");
+}
+
+//Print each split in console
 void print_geojson_header() {
-	fprintf(stderr, "{'type': 'FeatureCollection', 'features': [\n");
+	fprintf(stderr, "{\"type\": \"FeatureCollection\", \"features\": [\n");
 }
 
 void print_geojson_mbr(const Envelope e, char *id) {
-	fprintf(stderr, "{'type': 'Feature', 'geometry': {'type': 'Polygon', 'coordinates': [[");
+	fprintf(stderr, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
 	fprintf(stderr, "[%f, %f],", e.MinX, e.MinY);
 	fprintf(stderr, "[%f, %f],", e.MaxX, e.MinY);
 	fprintf(stderr, "[%f, %f],", e.MaxX, e.MaxY);
 	fprintf(stderr, "[%f, %f],", e.MinX, e.MaxY);
 	fprintf(stderr, "[%f, %f]",  e.MinX, e.MinY);
-	fprintf(stderr, "]]}, 'properties': {'name': '%s'}},\n", id);
+	fprintf(stderr, "]]}, \"properties\": {\"name\": \"%s\"}},\n", id);
 }
 
 void print_geojson_footer() {
@@ -98,7 +118,7 @@ void print_progress_gauge(unsigned read, unsigned total) {
 	const static char *progress_gauge_empty = "                    ";
 	const static int size = 20;
 	const static int resolution = 100/20;
-	if ((read-1) % (total/100) != 0) return;
+	if (total >= 100 && (read % (total/100) != 0)) return;
 	int percent = ((read*100) / total);
 	int pres = percent / resolution;
 	fprintf(stderr, "  [%.*s%.*s] %3d%%\r", pres, progress_gauge_equal,

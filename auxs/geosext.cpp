@@ -54,7 +54,7 @@ void geos_messages(const char *fmt, ...) {
     va_list(ap);
 	va_start(ap, fmt);
 	fprintf(stderr, "error: GEOS: ");
-	fprintf(stderr, fmt, ap);
+	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
 }
@@ -157,11 +157,12 @@ GEOSWKTWriter *GEOSCreateWKTWritter() {
 }
 
 const char *DgeoGeomToWKT(const GEOSWKTWriter_t *w, const void *buff, const GEOSGeometry *g) {
-	std::string *sbuff = ((std::string*)buff);
+	/*std::string *sbuff = ((std::string*)buff);
 	geos::io::WKTWriter *writerwkt = ((geos::io::WKTWriter*)w);
 	const geos::geom::Geometry* geo = (const geos::geom::Geometry*)g;
 	*sbuff = writerwkt->write(geo);
-	return sbuff->c_str();
+	return sbuff->c_str();*/
+	return NULL;
 }
 
 void GEOSDestroyWKTWritter(GEOSWKTWriter_t *w, void *buff) {

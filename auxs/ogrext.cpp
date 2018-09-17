@@ -66,6 +66,7 @@ Envelope OGRGetEnvelope(OGRGeometryH ogrg) {
 }
 
 int OGRGetNumPoints(OGRGeometryH ogrg) {
+	OGRLinearRing* auxring;
 	int rings, geos, total;
 	int type = wkbFlatten(((OGRGeometry *) ogrg)->getGeometryType());
 	switch (type) {
@@ -73,10 +74,12 @@ int OGRGetNumPoints(OGRGeometryH ogrg) {
 		case wkbLineString:
 			return OGR_G_GetPointCount(ogrg);
 		case wkbPolygon:
-			rings = ((OGRPolygon*)ogrg)->getNumInteriorRings();
-			total = OGR_G_GetPointCount(((OGRPolygon*)ogrg)->getExteriorRing());
-			for(int i = 0; i < rings; i++)
-				total += OGR_G_GetPointCount(((OGRPolygon*)ogrg)->getInteriorRing(i));
+			auxring = ((OGRPolygon*)ogrg)->getExteriorRing();
+			if (auxring != NULL)
+				total = OGR_G_GetPointCount(auxring);
+			auxring = ((OGRPolygon*)ogrg)->getInteriorRing(0);
+			if (auxring != NULL)
+				total += OGR_G_GetPointCount(auxring);
 			return total;
 		case wkbMultiPolygon:
 		case wkbMultiLineString:

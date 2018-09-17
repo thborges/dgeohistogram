@@ -44,18 +44,25 @@ float stdevs(size_t data[], size_t start, size_t n);
 double stdevd(double data[], size_t start, size_t n);
 double stdevd_ex(void *data, size_t start, size_t n, double (*getv)(const void *, const int n));
 float maxs(size_t data[], size_t start, size_t n);
+
+//Print each split in geojson files
+void print_geojson_mbr_file(const Envelope e, char *id, FILE *file);
+void print_geojson_footer_file(FILE *file);
+void print_geojson_header_file(FILE *file);
+
+//Print each split in console
 void print_geojson_mbr(const Envelope e, char *id);
 void print_geojson_footer();
-void print_geojson_header(); 
+void print_geojson_header();
 int get_thread_num();
 
 #ifdef __MACH__
 #include <sys/time.h>
 //clock_gettime is not implemented on OSX
-int clock_gettime(int /*clk_id*/, struct timespec* t);
+//int clock_gettime(int /*clk_id*/, struct timespec* t);
 #endif
-#define CLOCK_REALTIME 0
-#define CLOCK_PROCESS_CPUTIME_ID 2
+//#define CLOCK_REALTIME 0
+//#define CLOCK_PROCESS_CPUTIME_ID 2
 
 double runtime_diff_ms(struct timespec *start, struct timespec *end);
 void print_progress_gauge(unsigned read, unsigned total);

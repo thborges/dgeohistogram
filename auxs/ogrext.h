@@ -61,7 +61,7 @@ mbr.MaxY += sizeh
 
 #define ENVELOPE_INIT(mbr) mbr = emptymbr
 
-#define ENVELOPE_AREA(mbr) ((mbr.MaxX - mbr.MinX) * (mbr.MaxY - mbr.MinY))
+#define ENVELOPE_AREA(mbr) (((mbr).MaxX - (mbr).MinX) * ((mbr).MaxY - (mbr).MinY))
 
 #define ENVELOPE_PERIMETER(mbr) (2*(mbr.MaxX - mbr.MinX) + 2*(mbr.MaxY - mbr.MinY))
 
@@ -133,6 +133,7 @@ char ENVELOPE_INTERSECTS(const Envelope mbr1, const Envelope mbr2) {
 }
 
 #define ENVELOPE_CONTAINS(o, i) (i.MinX >= o.MinX && i.MaxX <= o.MaxX && i.MinY >= o.MinY && i.MaxY <= o.MaxY)
+#define ENVELOPE_CONTAINSP(e, x, y) (x >= e.MinX && x <= e.MaxX && y >= e.MinY && y <= e.MaxY)
 
 #ifdef __cplusplus
 }
