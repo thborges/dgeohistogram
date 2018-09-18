@@ -9,8 +9,8 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 	eh->xtics = g_new(double, eh->xqtd+1);
 	eh->ytics = g_new(double, eh->yqtd+1);
 	eh->faces = g_new0(euler_face, eh->xqtd * eh->yqtd);
-	eh->edges = g_new0(euler_edge, (xqtd * yqtd) + yqtd + xqtd);
-	eh->vertexes = g_new0(euler_vertex, xqtd * yqtd + xqtd + yqtd + 1);
+	eh->edges = g_new0(euler_edge, ((xqtd+1) * yqtd) + ((yqtd+1) * xqtd));
+	eh->vertexes = g_new0(euler_vertex, (xqtd+1) * (yqtd + 1));
 
 	eh->xsize = psizex;
 	eh->ysize = psizey;
