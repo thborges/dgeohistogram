@@ -17,9 +17,10 @@
 
 char *dataset_name;
 
-dataset *read_geos(char *shpfile);
+dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds);
 
-OGRDataSourceH ogr_ds;
+OGRDataSourceH ogr_ds1;
+OGRDataSourceH ogr_ds2;
 
 enum HistogramType {
 	HTGRID,
@@ -35,7 +36,7 @@ int main(int argc, char* argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [grid minskew euler] [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [grid minskew euler] [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file1.shp  file2.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -52,257 +53,67 @@ int main(int argc, char* argv[]) {
 	}
 
 	enum HistogramHashMethod hm = HHASH_AREAFRAC;
-	if (ht == HTGRID || ht == HTMINSKEW) {
-		if (strcmp(argv[2], "mbrc") == 0)
-			hm = HHASH_MBRCENTER;
-		else
-		if (strcmp(argv[2], "centr") == 0)
-			hm = HHASH_CENTROID;
-		else
-		if (strcmp(argv[2], "areaf") == 0)
-			hm = HHASH_AREAFRAC;
-		else
-		if (strcmp(argv[2], "areafs") == 0)
-			hm = HHASH_AREAFRACSPLIT;
-		else {
-			printf("Hash method %s does not exists.\n", argv[2]);
-			exit(1);
-		}
-	}
+	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
 
 	int argatu = 3;
-	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
 	int xqtd = 0, yqtd = 0;
-	if (strcmp(argv[argatu], "fix") == 0) {
+
+
+    	if (strcmp(argv[argatu], "fix") == 0) {
 		sm = HSPLIT_FIX;
 		argatu++;
 		xqtd = atoi(argv[argatu++]);
 		yqtd = atoi(argv[argatu++]);
 	}
-	else if (strcmp(argv[argatu], "avgstd") == 0) {
-		argatu++;
-		sm = HSPLIT_AVG_STD;
-	}
-	else if (strcmp(argv[argatu], "avg") == 0) {
-		argatu++;
-		sm = HSPLIT_AVG;
-	}
-	else {
-		printf("Method %s does not exists.\n", argv[argatu]);
-		exit(1);
-	}
 
-	// split disabled
-	int split_qtd = 1;
-	
-	dataset_name = argv[argatu++];
-	dataset *ds = read_geos(dataset_name);
+    	//histograma a
+    	dataset_name = argv[argatu++];
+        printf("Carregando arquivo: %s\n", dataset_name);
+        dataset *dsA = read_geos(dataset_name, ogr_ds1);
+	//histograma b
+    	dataset_name = argv[argatu++];
+        printf("Carregando arquivo: %s\n", dataset_name);
+        dataset *dsB = read_geos(dataset_name, ogr_ds2);
 
 	HistogramGenerateSpec spec;
-	spec.hm = hm;
-	spec.sm = sm;
-	spec.xqtd = xqtd;
-	spec.yqtd = yqtd;
+        spec.hm = hm;
+        spec.sm = sm;
+        spec.xqtd = xqtd;
+        spec.yqtd = yqtd;
+
+        int split_method = 1;
 
 	// chamar a função que cria o histograma
-	histogram_generate(ds, spec, CHECKR, split_qtd);
-	histogram_print_geojson(ds);
-	histogram_print(ds, CARDIN);
+	printf("Criando hist. euler para: %s\n", dsA->metadata.name);
+	histogram_generate(dsA, spec, 0, split_method);
+	histogram_print_geojson(dsA);
 
-	//print_dataset_specs(&ds->metadata.hist);
+	printf("Criando hist. euler para: %s\n", dsB->metadata.name);
+	histogram_generate(dsB, spec, 0, split_method);
+	histogram_print_geojson(dsB);
 
-	// create min skew histogram
-	GList *minskewh = NULL;
-	if (ht == HTMINSKEW) {
-		minskewh = minskew_generate_hist(ds, 300);
-		minskew_print_hist(ds, minskewh);
-	}
 
-	// create euler histogram
-	euler_histogram *eh = NULL;
+	euler_histogram *ehA = NULL;
+	euler_histogram *ehB = NULL;
+
 	if (ht == HTEULER) {
-		eh = eh_generate_hist(ds, spec, CHECKR);
-		euler_print_hist(ds, eh);
+		ehB = eh_generate_hist(dsB, spec, CHECKR);
+		euler_print_hist(dsB, ehB);
+		ehA = eh_generate_hist(dsA, spec, CHECKR);
+		euler_print_hist(dsA, ehA);
 	}
 
-	// the user specified a query?
-	if (argc <= argatu)
-		return 0;
+	eh_generate_intermed(ehA,ehB);
 
-	double query_size = atof(argv[argatu++]);
-
-	
-	
-
-	// cria uma r*
-	rtree_root *rtree = NULL;
-	rtree = rtree_new_rstar(30, 10);
-
-	unsigned read = 0;
-	dataset_iter_seg iter;
-	dataset_foreach(iter, ds) {
-		read++;
-		GEOSGeometryH geo = dataset_get_leaf_geo(ds, iter.item);
-		rtree_append(rtree, geo);
-		//print_progress_gauge(read, ds->metadata.count);
-	}
-
-	double accuracy = 0.0;
-	double sum_ei = 0.0;
-	double sum_ri = 0.0;
-	double mean = 0.0;
-	double M2 = 0.0;
-	double sum_error = 0.0;
-	int n = 0;
-
-	dataset_histogram *hist = &ds->metadata.hist;
-	int cells = hist->xqtd*hist->yqtd;
-
-	rtree_window_stat stats;
-	double width = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
-	double height = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
-	double wsize = width * query_size;
-	double hsize = height * query_size;
-
-	// quantidade de consultas para cobrir o dataset, considerando
-	// uma distribuicao uniforme
-	int qtd = ceil((width / wsize) * (height/hsize));
-	int qtdqx = (width / wsize);
-	//int qtd = 500;
-
-	printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
-	
-	#define PRINT_QUERY_GEOJSON
-	#ifdef PRINT_QUERY_GEOJSON
-	FILE *fqueries = fopen("queries.geojson", "w");
-	print_geojson_header_file(fqueries);
-	#endif
-
-	int qryno = 0;
-	while (n < qtd) {
-		n++;
-
-		Envelope query;
-		/*query.MinX = ds->metadata.hist.mbr.MinX;
-		query.MinY = ds->metadata.hist.mbr.MinY;
-		query.MinX += width * (rand()/(double)RAND_MAX);
-		query.MinY += height * (rand()/(double)RAND_MAX);
-		query.MaxX = query.MinX + wsize;
-		query.MaxY = query.MinY + hsize;*/
-		query.MinX = ds->metadata.hist.mbr.MinX + (qryno / qtdqx) * wsize;
-		query.MinY = ds->metadata.hist.mbr.MinY + (qryno % qtdqx) * hsize;
-		query.MaxX = query.MinX + wsize;
-		query.MaxY = query.MinY + hsize;
-		
-		#ifdef PRINT_QUERY_GEOJSON
-		print_geojson_mbr_file(query, "0", fqueries);
-		#endif
-
-	    char wkt[512];
-    	sprintf(wkt, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
-        	query.MinX, query.MinY,
-        	query.MaxX, query.MinY,
-        	query.MaxX, query.MaxY,
-        	query.MinX, query.MaxY,
-        	query.MinX, query.MinY);
-		
-		GEOSGeometryH geoquery = GEOSGeomFromWKT(wkt);
-
-		memset(&stats, 0, sizeof(rtree_window_stat));
-		GList *results = rtree_window_search(rtree, geoquery, &stats);
-
-		// real cardinality from rtree
-		int riq = g_list_length(results);
-
-		// histogram estimate cardinality
-		int rhq = 0;
-		if (ht == HTGRID)
-			rhq = histogram_search_hist(&ds->metadata.hist, query);
-		else if (ht == HTMINSKEW)
-			rhq = minskew_search_hist(minskewh, query);
-		else if (ht == HTEULER)
-			rhq = euler_search_hist(eh, query);
-
-		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
-
-		int error = abs(rhq-riq);
-
-		// average relative error
-		sum_ei += error;
-		sum_ri += riq;
-
-		// stdev of error
-		double delta = error - mean;
-		mean += delta/(double)n;
-		M2 += delta*(error - mean);
-
-		// sum error
-		sum_error += error;
-
-		// precision and recall
-		int pv, pf, nf;
-		if (rhq >= riq) {
-			pv = riq;
-			pf = rhq-riq;
-			nf = 0;
-		}
-		else {
-			pv = rhq;
-			pf = 0;
-			nf = riq-rhq;
-		}
-		double p = pv==0 && pf==0 ? 1.0 : pv / (double)(pv+pf);
-		double r = pv==0 && nf==0 ? 1.0 : pv / (double)(pv+nf);
-		accuracy += (p+r)/2.0;
-		//printf(" %.2f", (p+r)/2.0);
-		//printf(" %d:%d", rhq, riq);
-		//printf(" %d", error);
-
-		if (isnan(p+r))
-			printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
-
-		g_list_free(results);
-		qryno++;
-
-		//print_progress_gauge(n, cells);
-
-		//printf("\n");
-	}
-	#ifdef PRINT_QUERY_GEOJSON
-	print_geojson_footer_file(fqueries);
-	fclose(fqueries);
-	#endif
-	
-	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
-	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
-		query_size, 
-		sum_ei / (double)sum_ri,
-		sqrt(M2/(double)n),
-		sum_error,
-		argv[1],
-		ds->metadata.name);
-
-	//print result to csv file data.csv in dgeohistogram
-	char filename[100] = "data.csv";
-	FILE *file;
-	file = fopen(filename, "a");
-  	fprintf(file, "%3.2f,%f,%f,%f,%s,%s\n", 
-		query_size, 
-		sum_ei / (double)sum_ri,
-		sqrt(M2/(double)n),
-		sum_error,
-		argv[1],
-		ds->metadata.name);
-	fclose(file);
-	
-finish:	
-	OGR_DS_Destroy(ogr_ds);
+	OGR_DS_Destroy(ogr_ds1);
+	OGR_DS_Destroy(ogr_ds2);
 	finishGEOS();
 
 	return 0;
 }
 
-dataset *read_geos(char *shpfile) {
+
+dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 	dataset *results = dataset_create_mem(basename(shpfile), 1);
 
 	ogr_ds = OGROpen(shpfile, false, NULL);
@@ -318,7 +129,7 @@ dataset *read_geos(char *shpfile) {
 	results->temp_ogr_layer = layer;
 
 	clock_t cs = clock();
-	
+
 	unsigned read = 0;
 	OGRFeatureH feature;
 	OGRGeometryH geometry;
@@ -353,4 +164,3 @@ dataset *read_geos(char *shpfile) {
 
 	return results;
 }
-
