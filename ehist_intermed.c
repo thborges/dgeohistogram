@@ -15,11 +15,10 @@ euler_histogram* eh_generate_intermed(euler_histogram *ehA,euler_histogram *ehB)
 	ehIntermed->ytics = g_new(double, ehA->yqtd+1);
 	ehIntermed->faces = g_new0(euler_face, ehA->xqtd * ehA->yqtd);
 	ehIntermed->edges = g_new0(euler_edge, ehA->xqtd * (ehA->yqtd+1) + ehA->yqtd * (ehA->xqtd + 1));
-	ehIntermed->vertexes = g_new0(euler_vertex, ehA->xqtd * ehA->yqtd+ + ehA->xqtd + ehA->yqtd + 1);
+	ehIntermed->vertexes = g_new0(euler_vertex, ehA->xqtd * ehA->yqtd + ehA->xqtd + ehA->yqtd + 1);
 
 	ehIntermed->xsize = ehA->xsize;
 	ehIntermed->ysize = ehA->ysize;
-
 
 	//verificar valores intersecao
     for(int i = 0; i <= ehIntermed->xqtd; i++){
@@ -48,17 +47,6 @@ euler_histogram* eh_generate_intermed(euler_histogram *ehA,euler_histogram *ehB)
 
         }
     }
-
-	for(int i = 0; i <= ehIntermed->xqtd; i++){
-        for(int j = 0; j <= ehIntermed->yqtd; j++) {
-
-    		// aresta horizontal
-			if (i < ehIntermed->xqtd) {
-				int e = i * (2*ehA->yqtd+1) + 2*j;
-				printf("aresta cardin ehIntermed %d\n",ehIntermed->edges[e].cardin);
-			}
-		}
-	}
 
     return ehIntermed;
 }
