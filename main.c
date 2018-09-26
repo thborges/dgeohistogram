@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 	//int qtd = 500;
 
 	printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
-	
+	printf("%dx%d\n",xqtd, yqtd );
 	#define PRINT_QUERY_GEOJSON
 	#ifdef PRINT_QUERY_GEOJSON
 	FILE *fqueries = fopen("queries.geojson", "w");
@@ -183,12 +183,12 @@ int main(int argc, char* argv[]) {
 		n++;
 
 		Envelope query;
-		/*query.MinX = ds->metadata.hist.mbr.MinX;
-		query.MinY = ds->metadata.hist.mbr.MinY;
-		query.MinX += width * (rand()/(double)RAND_MAX);
-		query.MinY += height * (rand()/(double)RAND_MAX);
-		query.MaxX = query.MinX + wsize;
-		query.MaxY = query.MinY + hsize;*/
+		// query.MinX = ds->metadata.hist.mbr.MinX;
+		// query.MinY = ds->metadata.hist.mbr.MinY;
+		// query.MinX += width * (rand()/(double)RAND_MAX);
+		// query.MinY += height * (rand()/(double)RAND_MAX);
+		// query.MaxX = query.MinX + wsize;
+		// query.MaxY = query.MinY + hsize;
 		query.MinX = ds->metadata.hist.mbr.MinX + (qryno / qtdqx) * wsize;
 		query.MinY = ds->metadata.hist.mbr.MinY + (qryno % qtdqx) * hsize;
 		query.MaxX = query.MinX + wsize;
