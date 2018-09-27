@@ -205,8 +205,9 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 	int xfim = (query.MaxX - eh->mbr.MinX) / eh->xsize;
 	int yini = (query.MinY - eh->mbr.MinY) / eh->ysize;
 	int yfim = (query.MaxY - eh->mbr.MinY) / eh->ysize;
-	if (xfim < eh->xqtd) xfim++;
+  if (xfim < eh->xqtd) xfim++;
 	if (yfim < eh->yqtd) yfim++; 
+
 
 	for(int x = xini; x <= xfim; x++) {
 		Envelope rs;
@@ -242,7 +243,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 			if (x < eh->xqtd) {
 				int e = x * (2*eh->yqtd+1) + 2*y;
 				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
-					if(eh->edges[e].mbr.MinY != query.MinY && eh->edges[e].mbr.MaxY != query.MaxY) {
+					if(eh->edges[e].mbr.MinY != query.MinY && eh->edges[e+1].mbr.MinY != query.MaxY) {
 						Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
 						double int_length = inters.MaxX - inters.MinX;
 						double fraction = int_length / (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
@@ -260,7 +261,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 				else
 					e = x * (2*eh->yqtd+1) + 2*y + 1;
 				if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
-					if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e].mbr.MaxX != query.MaxX) {
+					if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e+1].mbr.MinX != query.MaxX) {
 						Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
 						double int_length = inters.MaxY - inters.MinY;
 						double fraction = int_length / (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
