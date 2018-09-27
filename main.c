@@ -170,6 +170,7 @@ int main(int argc, char* argv[]) {
 	int qtdqx = (width / wsize);
 	//int qtd = 500;
 
+	printf("MBR: %20.19e %20.19e %20.19e %20.19e\n", hist->mbr.MinX, hist->mbr.MinY, hist->mbr.MaxX, hist->mbr.MaxY);
 	printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
 	printf("%dx%d\n",xqtd, yqtd );
 	#define PRINT_QUERY_GEOJSON

@@ -195,17 +195,18 @@ euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum 
 
 int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
-	double result = 0;
+	if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
+		return 0;
 
-	Envelope query = EnvelopeIntersection(query2, eh->mbr);
+	double result = 0;
+	Envelope query = EnvelopeIntersection2(query2, eh->mbr);
 
 	int xini = (query.MinX - eh->mbr.MinX) / eh->xsize;
 	int xfim = (query.MaxX - eh->mbr.MinX) / eh->xsize;
 	int yini = (query.MinY - eh->mbr.MinY) / eh->ysize;
 	int yfim = (query.MaxY - eh->mbr.MinY) / eh->ysize;
-  if (xfim < eh->xqtd) xfim++;
+	if (xfim < eh->xqtd) xfim++;
 	if (yfim < eh->yqtd) yfim++; 
-
 
 	for(int x = xini; x <= xfim; x++) {
 		Envelope rs;
@@ -299,11 +300,11 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			// face
 			if (x < eh->xqtd && y < eh->yqtd) {
 				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-				fprintf(f, "[%lf, %lf],", env.MinX, env.MinY);
-				fprintf(f, "[%lf, %lf],", env.MaxX, env.MinY);
-				fprintf(f, "[%lf, %lf],", env.MaxX, env.MaxY);
-				fprintf(f, "[%lf, %lf],", env.MinX, env.MaxY);
-				fprintf(f, "[%lf, %lf]",  env.MinX, env.MinY);
+				fprintf(f, "[%.15lf, %.15lf],", env.MinX, env.MinY);
+				fprintf(f, "[%.15lf, %.15lf],", env.MaxX, env.MinY);
+				fprintf(f, "[%.15lf, %.15lf],", env.MaxX, env.MaxY);
+				fprintf(f, "[%.15lf, %.15lf],", env.MinX, env.MaxY);
+				fprintf(f, "[%.15lf, %.15lf]",  env.MinX, env.MinY);
 				fprintf(f, "]]}, 'properties': {");
 				fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
 				fprintf(f, "\"card\": %lf,", eh->faces[x*eh->yqtd + y].cardin);
@@ -312,7 +313,7 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			}
 
 			// vertex
-			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%lf, %lf]},", 
+			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%.15lf, %.15lf]},", 
 				eh->vertexes[v].x, eh->vertexes[v].y);
 			fprintf(f, "'properties': {");
 			fprintf(f, "\"name\": \"v:%d.%d\",", x, y);
@@ -325,7 +326,7 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			// horizontal edge
 			if (x < eh->xqtd) {
 				int e = GET_HORZ_EDGE(x, y);
-				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%lf, %lf], [%lf, %lf]]},", 
+				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},", 
 					eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
 				fprintf(f, "'properties': {");
 				fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
@@ -337,7 +338,7 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 			// vertical edge
 			if (y < eh->yqtd) {
 				int e = GET_VERT_EDGE(x, y);
-				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%lf, %lf], [%lf, %lf]]},", 
+				fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},", 
 					eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
 				fprintf(f, "'properties': {");
 				fprintf(f, "\"name\": \"ev:%d.%d\",", x, y);

@@ -965,11 +965,11 @@ void histogram_print_geojson(dataset *ds) {
 			e.MaxY = hist->ytics[y+1];
 
 			fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-			fprintf(f, "[%f, %f],", e.MinX, e.MinY);
-			fprintf(f, "[%f, %f],", e.MaxX, e.MinY);
-			fprintf(f, "[%f, %f],", e.MaxX, e.MaxY);
-			fprintf(f, "[%f, %f],", e.MinX, e.MaxY);
-			fprintf(f, "[%f, %f]",  e.MinX, e.MinY);
+			fprintf(f, "[%.15lf, %.15lf],", e.MinX, e.MinY);
+			fprintf(f, "[%.15lf, %.15lf],", e.MaxX, e.MinY);
+			fprintf(f, "[%.15lf, %.15lf],", e.MaxX, e.MaxY);
+			fprintf(f, "[%.15lf, %.15lf],", e.MinX, e.MaxY);
+			fprintf(f, "[%.15lf, %.15lf]",  e.MinX, e.MinY);
 			fprintf(f, "]]}, 'properties': {");
 			fprintf(f, "\"name\": \"%d.%d\",", x, y);
 			fprintf(f, "\"card\": %f,", hist->hcells[x*hist->yqtd + y].cardin);

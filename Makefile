@@ -9,7 +9,7 @@ LIBS= \
 	-L/opt/local/lib \
 	-L/usr/lib
 
-DEBUG=-ggdb -O0
+DEBUG=-Wall -ggdb -O0
 #DEBUG=-O2
 
 DEPEND_CPP=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
