@@ -69,11 +69,11 @@ void print_geojson_header_file(FILE *file) {
 
 void print_geojson_mbr_file(const Envelope e, char *id, FILE *file) {
 	fprintf(file, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-	fprintf(file, "[%f, %f],", e.MinX, e.MinY);
-	fprintf(file, "[%f, %f],", e.MaxX, e.MinY);
-	fprintf(file, "[%f, %f],", e.MaxX, e.MaxY);
-	fprintf(file, "[%f, %f],", e.MinX, e.MaxY);
-	fprintf(file, "[%f, %f]",  e.MinX, e.MinY);
+	fprintf(file, "[%.15lf, %.15lf],", e.MinX, e.MinY);
+	fprintf(file, "[%.15lf, %.15lf],", e.MaxX, e.MinY);
+	fprintf(file, "[%.15lf, %.15lf],", e.MaxX, e.MaxY);
+	fprintf(file, "[%.15lf, %.15lf],", e.MinX, e.MaxY);
+	fprintf(file, "[%.15lf, %.15lf]",  e.MinX, e.MinY);
 	fprintf(file, "]]}, \"properties\": {\"name\": \"%s\"}},\n", id);
 }
 
@@ -88,11 +88,11 @@ void print_geojson_header() {
 
 void print_geojson_mbr(const Envelope e, char *id) {
 	fprintf(stderr, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-	fprintf(stderr, "[%f, %f],", e.MinX, e.MinY);
-	fprintf(stderr, "[%f, %f],", e.MaxX, e.MinY);
-	fprintf(stderr, "[%f, %f],", e.MaxX, e.MaxY);
-	fprintf(stderr, "[%f, %f],", e.MinX, e.MaxY);
-	fprintf(stderr, "[%f, %f]",  e.MinX, e.MinY);
+	fprintf(stderr, "[%.15lf, %.15lf],", e.MinX, e.MinY);
+	fprintf(stderr, "[%.15lf, %.15lf],", e.MaxX, e.MinY);
+	fprintf(stderr, "[%.15lf, %.15lf],", e.MaxX, e.MaxY);
+	fprintf(stderr, "[%.15lf, %.15lf],", e.MinX, e.MaxY);
+	fprintf(stderr, "[%.15lf, %.15lf]",  e.MinX, e.MinY);
 	fprintf(stderr, "]]}, \"properties\": {\"name\": \"%s\"}},\n", id);
 }
 
