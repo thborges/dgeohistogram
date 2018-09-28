@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 		euler_print_hist(dsA, ehA);
 	}
 
-	eh_generate_intermed(ehA,ehB);
+    eh_generate_intermed(ehA,ehB);
 
 	OGR_DS_Destroy(ogr_ds1);
 	OGR_DS_Destroy(ogr_ds2);
