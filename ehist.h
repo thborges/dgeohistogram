@@ -38,5 +38,6 @@ euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum 
 int euler_search_hist(euler_histogram *eh, Envelope query);
 void euler_print_hist(dataset *ds, euler_histogram *eh);
 
+int euler_spatial_join(euler_histogram* ehr, euler_histogram ehs);
 #endif
 
