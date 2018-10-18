@@ -13,7 +13,7 @@ DEBUG=-Wall -ggdb -O0
 #DEBUG=-O2
 
 DEPEND_CPP=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
-DEPEND_C=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(wildcard *.c)) 
+DEPEND_C=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(filter-out join.c, $(wildcard *.c))) 
 
 
 DEPEND_CPP_JOIN=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
@@ -24,7 +24,7 @@ all: main
 main: $(DEPEND_CPP) $(DEPEND_C)
 	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) -o main $(LIBS) -lgdal -lgeos -lgeos_c
 
-join: $(DEPEND_CPP) $(DEPEND_C)
+join: $(DEPEND_CPP_JOIN) $(DEPEND_C_JOIN)
 	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C_JOIN) $(DEPEND_CPP_JOIN) -o join $(LIBS) -lgdal -lgeos -lgeos_c
 
 %.o: %.c
