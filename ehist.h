@@ -5,6 +5,15 @@
 #include "histogram.h"
 #include "glibwrap.h"
 
+
+#define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
+#define GET_HORZ_EDGE(x, y) (x * (2*eh->yqtd+1) + 2*y)
+
+#define GET_VERT_EDGE_EHR(x, y) ((x == ehr->xqtd) ? (x * (2*ehr->yqtd+1) + y) : (x * (2*ehr->yqtd+1) + 2*y + 1))
+#define GET_HORZ_EDGE_EHR(x, y) (x * (2*ehs->yqtd+1) + 2*y)
+#define GET_VERT_EDGE_EHS(x, y) ((x == ehs->xqtd) ? (x * (2*ehs->yqtd+1) + y) : (x * (2*ehs->yqtd+1) + 2*y + 1))
+#define GET_HORZ_EDGE_EHS(x, y) (x * (2*ehs->yqtd+1) + 2*y)
+
 typedef struct {
 	double cardin;
     double avg_heigth;

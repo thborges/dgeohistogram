@@ -2,13 +2,6 @@
 #include "histogram.h"
 #include "ehist.h"
 
-#define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE(x, y) (x * (2*eh->yqtd+1) + 2*y)
-
-#define GET_VERT_EDGE_EHR(x, y) ((x == ehr->xqtd) ? (x * (2*ehr->yqtd+1) + y) : (x * (2*ehr->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE_EHR(x, y) (x * (2*ehs->yqtd+1) + 2*y)
-#define GET_VERT_EDGE_EHS(x, y) ((x == ehs->xqtd) ? (x * (2*ehs->yqtd+1) + y) : (x * (2*ehs->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE_EHS(x, y) (x * (2*ehs->yqtd+1) + 2*y)
 
 void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psizex, double psizey) {
 	assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
