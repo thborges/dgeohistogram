@@ -80,19 +80,16 @@ int main (int argc, char* argv[]){
 
     rtree_root *rtree_b = NULL;
     rtree_b = rtree_new_rstar(30, 10);
-    unsigned read = 0;
 
 
     dataset_iter_seg iter_a;
     dataset_foreach(iter_a, ds_a) {
-        read++;
         GEOSGeometryH geo = dataset_get_leaf_geo(ds_a, iter_a.item);
         rtree_append(rtree_a, geo);
     }
 
     dataset_iter_seg iter_b;
     dataset_foreach(iter_b, ds_b) {
-        read++;
         GEOSGeometryH geo = dataset_get_leaf_geo(ds_b, iter_b.item);
         rtree_append(rtree_b, geo);
     }
@@ -107,7 +104,7 @@ int main (int argc, char* argv[]){
 
 
     double a = real_spatial_join_cardin(rtree_a, rtree_b, ehs, ehr);
-    printf("%d\n", a);
+    printf("%f\n", a);
 
     return 0;
 }
@@ -168,45 +165,81 @@ dataset *read_geos(char *shpfile) {
 
 // r_a é a rtree do ehs, r_b é a rtree do ehr
 int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* ehs, euler_histogram* ehr){
-    //printf("size r_a = %d\n", rtree_height(r_a));
-    //printf("size r_b = %d\n", rtree_height(r_b));
+    printf("size r_a = %d\n", rtree_height(r_a));
+    printf("size r_b = %d\n", rtree_height(r_b));
 
     if(!ENVELOPE_INTERSECTS(ehr->mbr, ehs->mbr))
         return 0;
 
     double result = 0;
+	int xds_atu = 0;
 
     double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
     double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
     double xfim = MIN(ehr->mbr.MaxX, ehs->mbr.MaxX);
     double yfim = MIN(ehr->mbr.MaxY, ehs->mbr.MaxY);
-    printf("xini = %e\n\
+    //printf("xini = %e\n\
             yini = %e\n\
             xfim = %e\n\
             yfim = %e\n", xini, yini, xfim, yfim);
 
-    for(int xr = xini; xr <= xfim; xr++){
+
+    int xdr_start = 0;
+    while (xdr_start < ehr->xqtd && ehr->xtics[xdr_start+1] < xini)
+        xdr_start++;
+    int xdr_end = xdr_start+1;
+    while (xdr_end < ehr->xqtd && ehr->xtics[xdr_end] <= xfim)
+        xdr_end++;
+    if (xdr_start == ehr->xqtd)
+        return 0;
+
+    // skip non-intersect area on y
+    int ydr_start = 0;
+    while (ydr_start < ehr->yqtd && ehr->ytics[ydr_start+1] < yini)
+        ydr_start++;
+    int ydr_end = ydr_start+1;
+    while (ydr_end < ehr->yqtd && ehr->ytics[ydr_end] <= yfim)
+        ydr_end++;
+    if (ydr_start == ehr->yqtd)
+        return 0;
+    for(int xr = xdr_start; xr < xdr_end; xr++){
+
+        while(xds_atu < ehs->xqtd && ehs->xtics[xds_atu+1] < ehr->xtics[xr]) // skip when end of s < start of r
+            xds_atu++;
+        int xds_end = xds_atu+1;
+        while(xds_end < ehs->xqtd && ehs->xtics[xds_end] <= ehr->xtics[xr+1]) // increment when end of s < start of r
+            xds_end++;
+
+        int yds_atu = 0;
+
         Envelope er, es;
+
         er.MinX = ehr->xtics[xr];
         er.MaxX = ehr->xtics[xr+1];
-    printf("xr = %d\n", xr);
+        //printf("xr = %d\n", xr);
 
-        for(int yr = yini; yr <= yfim; yr++){
+        for(int yr = ydr_start; yr < ydr_end; yr++){
+
+            while(yds_atu < ehs->yqtd && ehs->ytics[yds_atu+1] < ehr->ytics[yr]) // skip when end of s < start of r
+                yds_atu++;
+            int yds_end = yds_atu+1;
+            while(yds_end < ehs->yqtd && ehs->ytics[yds_end] <= ehr->ytics[yr+1]) // increment when end of s < start of r
+                yds_end++;
+
             er.MinY = ehr->xtics[yr];
             er.MaxY = ehr->xtics[yr+1];
 
-            for(int xs = xini; xs <= xfim; xs++){
+            for(int xs = xds_atu; xs < xds_end; xs++){
                 es.MinX = ehs->xtics[xs];
                 es.MaxX = ehs->xtics[xs+1];
-                    printf("ES = %e %e\n", es.MinX, es.MaxX);
 
-                for(int ys = yini; ys <= yfim; ys++){
+                for(int ys = yds_atu; ys < yds_end; ys++){
                     es.MinY = ehs->xtics[ys];
                     es.MaxY = ehs->xtics[ys+1];
                     if(ENVELOPE_INTERSECTS(er, es)){
 
                         char wkt_es[512];
-                        sprintf(wkt_es, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
+                        sprintf(wkt_es, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                                 es.MinX, es.MinY,
                                 es.MaxX, es.MinY,
                                 es.MaxX, es.MaxY,
@@ -214,13 +247,13 @@ int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* 
                                 es.MinX, es.MinY);
 
                         char wkt_er[512];
-                        sprintf(wkt_er, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
+                        sprintf(wkt_er, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                                 er.MinX, er.MinY,
                                 er.MaxX, er.MinY,
                                 er.MaxX, er.MaxY,
                                 er.MinX, er.MaxY,
                                 er.MinX, er.MinY);
-                        printf("%s\n", wkt_es);
+                     //   printf("%s\n", wkt_es);
 
                         GEOSGeometryH geo_es = GEOSGeomFromWKT(wkt_es);
                         GEOSGeometryH geo_er = GEOSGeomFromWKT(wkt_er);
@@ -257,7 +290,7 @@ int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* 
     }
 
 
-    return round(result);
+    return (result);
 
 
 }
