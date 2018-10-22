@@ -110,7 +110,7 @@ int main (int argc, char* argv[]){
 
 
     //double a = real_spatial_join_cardin(rtree_a, rtree_b, ehs, ehr);
-    int b = real_join_cardinality(ds_a, ds_b, ehr, ehs);
+    int b = euler_join_cardinality(ds_a, ds_b, ehr, ehs);
         
     printf("%d\n", b);
 
