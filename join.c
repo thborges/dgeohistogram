@@ -24,10 +24,12 @@
 char *dataset_a;
 char *dataset_b;
 
-rtree_window_stat stats;
+rtree_window_stat stats1;
+rtree_window_stat stats2;
 dataset *read_geos(char *shpfile);
 int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* ehs, euler_histogram* ehr);
 
+//int histogram_join_cardinality(dataset *dr, dataset *ds);
 OGRDataSourceH ogr_ds;
 
 
@@ -83,9 +85,13 @@ int main (int argc, char* argv[]){
 
 
     dataset_iter_seg iter_a;
+    unsigned read = 0;
     dataset_foreach(iter_a, ds_a) {
+        read++;
         GEOSGeometryH geo = dataset_get_leaf_geo(ds_a, iter_a.item);
         rtree_append(rtree_a, geo);
+        print_progress_gauge(read, ds_a->metadata.count);
+
     }
 
     dataset_iter_seg iter_b;
@@ -103,8 +109,10 @@ int main (int argc, char* argv[]){
     int n = 0;
 
 
-    double a = real_spatial_join_cardin(rtree_a, rtree_b, ehs, ehr);
-    printf("%f\n", a);
+    //double a = real_spatial_join_cardin(rtree_a, rtree_b, ehs, ehr);
+    int b = real_join_cardinality(ds_a, ds_b, ehr, ehs);
+        
+    printf("%d\n", b);
 
     return 0;
 }
@@ -258,13 +266,16 @@ int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* 
                         GEOSGeometryH geo_es = GEOSGeomFromWKT(wkt_es);
                         GEOSGeometryH geo_er = GEOSGeomFromWKT(wkt_er);
 
-                        memset(&stats, 0, sizeof(rtree_window_stat));
+                        memset(&stats1, 0, sizeof(rtree_window_stat));
+                        memset(&stats2, 0, sizeof(rtree_window_stat));
 
-                        GList *results_a = rtree_window_search(r_a, geo_er, &stats);
-                        GList *results_b = rtree_window_search(r_b, geo_es, &stats);
+                        GList *results_a = rtree_window_search(r_a, geo_er, &stats1);
+                        GList *results_b = rtree_window_search(r_b, geo_es, &stats2);
 
-                        //printf("len(results_a) = %d\n", g_list_length(results_a));
-                        //printf("len(results_b) = %d\n", g_list_length(results_b));
+                        if(g_list_length(results_a) > 0 || g_list_length(results_b) > 0  ){
+                            printf("len(results_a) = %d\n", g_list_length(results_a));
+                            printf("len(results_b) = %d\n", g_list_length(results_b));
+                        }
 
                         GList *a;
 
@@ -294,3 +305,153 @@ int real_spatial_join_cardin(rtree_root* r_a, rtree_root* r_b, euler_histogram* 
 
 
 }
+
+int real_join_cardinality(dataset *dr, dataset *ds) {
+    rtree_root *r_a = NULL;
+    r_a = rtree_new_rstar(30, 10);
+
+    rtree_root *r_b = NULL;
+    r_b = rtree_new_rstar(30, 10);
+
+
+    dataset_iter_seg iter_a;
+    unsigned read = 0;
+    dataset_foreach(iter_a, ds) {
+        read++;
+        GEOSGeometryH geo = dataset_get_leaf_geo(dr, iter_a.item);
+        rtree_append(r_a, geo);
+        print_progress_gauge(read, dr->metadata.count);
+
+    }
+
+    dataset_iter_seg iter_b;
+    dataset_foreach(iter_b, dr) {
+        GEOSGeometryH geo = dataset_get_leaf_geo(dr, iter_b.item);
+        rtree_append(r_b, geo);
+    }
+	dataset_histogram *hr = &dr->metadata.hist;
+	dataset_histogram *hs = &ds->metadata.hist;
+	double xini = MAX(hr->xtics[0], hs->xtics[0]);
+	double yini = MAX(hr->ytics[0], hs->ytics[0]);
+	double xend = MIN(dr->metadata.hist.mbr.MaxX, ds->metadata.hist.mbr.MaxX);
+	double yend = MIN(dr->metadata.hist.mbr.MaxY, ds->metadata.hist.mbr.MaxY);
+
+	// skip non-intersect area on x
+	int xdr_start = 0;
+	while (xdr_start < hr->xqtd && hr->xtics[xdr_start+1] < xini)
+		xdr_start++;
+	int xdr_end = xdr_start+1;
+	while (xdr_end < hr->xqtd && hr->xtics[xdr_end] <= xend)
+		xdr_end++;
+	if (xdr_start == hr->xqtd)
+		return 0;
+
+	// skip non-intersect area on y
+	int ydr_start = 0;
+	while (ydr_start < hr->yqtd && hr->ytics[ydr_start+1] < yini)
+		ydr_start++;
+	int ydr_end = ydr_start+1;
+	while (ydr_end < hr->yqtd && hr->ytics[ydr_end] <= yend)
+		ydr_end++;
+	if (ydr_start == hr->yqtd)
+		return 0;
+
+	int xds_atu = 0;
+	float result = 0;
+	for(int xr = xdr_start; xr < xdr_end; xr++) {
+
+		while(xds_atu < hs->xqtd && hs->xtics[xds_atu+1] < hr->xtics[xr]) // skip when end of s < start of r
+			xds_atu++;
+		int xds_end = xds_atu+1;
+		while(xds_end < hs->xqtd && hs->xtics[xds_end] <= hr->xtics[xr+1]) // increment when end of s < start of r
+			xds_end++;
+
+		int yds_atu = 0;
+
+		Envelope er;
+		Envelope es;
+		er.MinX = hr->xtics[xr];
+		er.MaxX = hr->xtics[xr+1];
+
+		for(int yr = ydr_start; yr < ydr_end; yr++) {
+
+			while(yds_atu < hs->yqtd && hs->ytics[yds_atu+1] < hr->ytics[yr]) // skip when end of s < start of r
+				yds_atu++;
+			int yds_end = yds_atu+1;
+			while(yds_end < hs->yqtd && hs->ytics[yds_end] <= hr->ytics[yr+1]) // increment when end of s < start of r
+				yds_end++;
+
+			er.MinY = hr->ytics[yr];
+			er.MaxY = hr->ytics[yr+1];
+			double erarea = ENVELOPE_AREA(er);
+
+			for(int xs = xds_atu; xs < xds_end; xs++) {
+				es.MinX = hs->xtics[xs];
+				es.MaxX = hs->xtics[xs+1];
+
+				for(int ys = yds_atu; ys < yds_end; ys++) {
+
+					es.MinY = hs->ytics[ys];
+					es.MaxY = hs->ytics[ys+1];
+
+
+                    if(ENVELOPE_INTERSECTS(er, es)){
+                        char wkt_es[512];
+                        sprintf(wkt_es, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+                                es.MinX, es.MinY,
+                                es.MaxX, es.MinY,
+                                es.MaxX, es.MaxY,
+                                es.MinX, es.MaxY,
+                                es.MinX, es.MinY);
+
+                        char wkt_er[512];
+                        sprintf(wkt_er, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+                                er.MinX, er.MinY,
+                                er.MaxX, er.MinY,
+                                er.MaxX, er.MaxY,
+                                er.MinX, er.MaxY,
+                                er.MinX, er.MinY);
+                     //   printf("%s\n", wkt_es);
+
+                        GEOSGeometryH geo_es = GEOSGeomFromWKT(wkt_es);
+                        GEOSGeometryH geo_er = GEOSGeomFromWKT(wkt_er);
+
+                        memset(&stats1, 0, sizeof(rtree_window_stat));
+                        memset(&stats2, 0, sizeof(rtree_window_stat));
+
+                        GList *results_a = rtree_window_search(r_a, geo_er, &stats1);
+                        GList *results_b = rtree_window_search(r_b, geo_es, &stats2);
+
+                        if(g_list_length(results_a) > 0 || g_list_length(results_b) > 0  ){
+                            printf("len(results_a) = %d\n", g_list_length(results_a));
+                            printf("len(results_b) = %d\n", g_list_length(results_b));
+                        }
+
+                        GList *a;
+
+                        g_list_foreach(a, results_a){
+                            rtree_leaf* la = (rtree_leaf*)a->data;
+
+                            GList* b;
+                            //printf("TO AQUI2 \n");
+
+                            g_list_foreach(b, results_b){
+                                rtree_leaf* lb = (rtree_leaf*)b->data;
+
+                                if(GEOSIntersects(la->geo, lb->geo))
+                                    result++;
+                                else
+                                    printf("%f\n", result);
+                            }
+                        }
+                    }
+				}
+			}
+		}
+	}
+
+	return (int)result;
+}
+
+
+
