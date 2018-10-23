@@ -122,16 +122,24 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                 // horizontal edge
                 if (x < eh->xqtd) {
                     int e = GET_HORZ_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
+                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
+                        double delta_x = ev2.MaxX - ev2.MinX;
                         eh->edges[e].cardin += 1;
+                        double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
+                        eh->edges[e].avg_projection += fabs(delta_x - edge_size )/eh->edges[e].cardin;
+                    }
                     //eh->avg_projection += 
                 }
 
                 // vertical edge
                 if (y < eh->yqtd) {
                     int e = GET_VERT_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2))
+                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
+                        double delta_x = ev2.MaxY - ev2.MinY;
                         eh->edges[e].cardin += 1;
+                        double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
+                        eh->edges[e].avg_projection += fabs(delta_x - edge_size )/eh->edges[e].cardin;
+                    }
                 }
             }
         }
@@ -441,7 +449,8 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                         //printf("ehr_face->avg_heigth + ehs_face->avg_heigth = %f \n", ehr_face->avg_heigth + ehs_face->avg_heigth) ;
                         if(ehr_face->avg_heigth + ehs_face->avg_heigth >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1){
                             printf("asdfsadf\n");
-                            result += qtdobjr * qtdobjs;
+                            //    result += qtdobjr * qtdobjs;
+                            result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_heigth + ehs_face->avg_heigth) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
                         }
 
                         else{
@@ -450,14 +459,17 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
                             result +=  (qtdobjr * qtdobjs) * p; 
                         }
+
+                        // MP-MODEL
+                        //result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_heigth + ehs_face->avg_heigth) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
                     }
 
                     //vertice
-                      int vr = xr * (ehr->yqtd+1) + yr;	
-                      int vs = xs * (ehs->yqtd+1) + ys;	
-                      if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
-                      result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                      }
+                    int vr = xr * (ehr->yqtd+1) + yr;	
+                    int vs = xs * (ehs->yqtd+1) + ys;	
+                    if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
+                        result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                    }
 
                     //aresta horizontal
                     int ar = GET_HORZ_EDGE_EHR(xr, yr);
@@ -468,9 +480,8 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                         double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
                         double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
 
-                        double p = MIN(1, fraction_ar * ehr->edges[ar].cardin + fraction_as * ehs->edges[as].cardin);
+                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
-                        //printf("aresta p = %f\n", p);
                         double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
                         double cardin_as = ehr->edges[as].cardin * fraction_as;
                         result -=  cardin_ar * cardin_as * p;
@@ -484,12 +495,12 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                         double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
                         double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
 
-                        double p = MIN(1, fraction_ar * ehr->edges[ar].cardin + fraction_as * ehs->edges[as].cardin);
+                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                        printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
                         double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
                         double cardin_as = ehr->edges[as].cardin * fraction_as;
                         result -=  cardin_ar * cardin_as * p;
-                        result -= ehr->edges[ar].cardin * ehs->edges[as].cardin * p;
                     }
 
                 }
