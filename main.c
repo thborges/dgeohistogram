@@ -93,17 +93,22 @@ int main(int argc, char* argv[]) {
 	histogram_print_geojson(dsB);
 
 
+	printf("\n\n");
 	euler_histogram *ehA = NULL;
 	euler_histogram *ehB = NULL;
 
 	if (ht == HTEULER) {
-		ehB = eh_generate_hist(dsB, spec, CHECKR);
-		euler_print_hist(dsB, ehB);
 		ehA = eh_generate_hist(dsA, spec, CHECKR);
-		euler_print_hist(dsA, ehA);
+		euler_print_hist(dsA->metadata.name, ehA);
+		ehB = eh_generate_hist(dsB, spec, CHECKR);
+		euler_print_hist(dsB->metadata.name, ehB);
 	}
 
-    eh_generate_intermed(ehA,ehB);
+    euler_histogram *ehIntermed = NULL;
+    ehIntermed = eh_generate_intermed(dsA,ehA,ehB);
+
+    //escolhe dataset A ou para Intermediario
+    euler_print_hist("intermediario",ehIntermed);
 
 	OGR_DS_Destroy(ogr_ds1);
 	OGR_DS_Destroy(ogr_ds2);

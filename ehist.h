@@ -35,8 +35,11 @@ typedef	struct {
 
 euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck); 
 
+euler_histogram *eh_generate_intermed(dataset *ds,euler_histogram *ehA,euler_histogram *ehB);
+
 int euler_search_hist(euler_histogram *eh, Envelope query);
-void euler_print_hist(dataset *ds, euler_histogram *eh);
+void euler_print_hist(char *name, euler_histogram *eh);
+
 
 #endif
 

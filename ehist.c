@@ -270,13 +270,13 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 	return round(result);
 }
 
-void euler_print_hist(dataset *ds, euler_histogram *eh) {
+void euler_print_hist(char *name, euler_histogram *eh) {
 	char filename[100];
 
 	char *prefix = getenv("HISTOPREFIX");
 	prefix = prefix != NULL ? prefix : "";
 
-	sprintf(filename, "histogram/%seuler-%s.geojson", prefix, ds->metadata.name);
+	sprintf(filename, "histogram/%seuler-%s.geojson", prefix, name);
 	FILE *f = fopen(filename, "wb");
 	if (f == NULL) {
 		perror("Error printing histogram");
