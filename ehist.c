@@ -366,6 +366,37 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
     fclose(f);
 }
 
+/*
+double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelope inters, 
+	histogram_cell *lcell, histogram_cell *rcell, double *qtdobjl_out) {
+	// the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
+
+	// estimate the quantity of objects in LeftDs in the inters window: eqn (1)
+	double ux = el.MaxX - el.MinX;
+	double uy = el.MaxY - el.MinY;
+	double avgl_x = OLD_AVG_LENGTH_X(lcell);
+	double avgl_y = OLD_AVG_LENGTH_Y(lcell);
+	double wx = inters.MaxX - inters.MinX;
+	double wy = inters.MaxY - inters.MinY;
+	double qtdobjl = lcell->cardin * 
+		MIN(1,(avgl_x+wx)/ux) * 
+		MIN(1,(avgl_y+wy)/uy);
+	(*qtdobjl_out) = qtdobjl;
+
+	// estimate the quantity of objects in RightDs in the inters window eqn (1)
+	ux = er.MaxX - er.MinX;
+	uy = er.MaxY - er.MinY;
+	double avgr_x = OLD_AVG_LENGTH_X(rcell);
+	double avgr_y = OLD_AVG_LENGTH_Y(rcell);
+	double qtdobjr = rcell->cardin * 
+		MIN(1,(avgr_x+wx)/ux) * 
+		MIN(1,(avgr_y+wy)/uy);
+
+	// estimate join result cardinality, eqn (2)
+	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
+}*/
+
+
 int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler_histogram* ehs) {
     double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
     double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
@@ -456,8 +487,13 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
                         //intersections = qtdobjr * qtdobjs * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
                         //intersections =  (qtdobjr * qtdobjs) * p; 
+<<<<<<< HEAD
                         //intersections =  (qtdobjr * qtdobjs) * p; 
                         intersections = qtdobjr * qtdobjs;
+=======
+                        intersections =  (qtdobjr * qtdobjs) * 1.0; 
+                        //intersections = qtdobjr * qtdobjs;
+>>>>>>> 4cf3a15ff3f8d8f8696d58fe2af0b51da9405535
 
                         if(intersections< 1.0)
                             intersections = 0;

@@ -1,4 +1,5 @@
 *.o
 main
+join
 *.swp
 *.geojson
