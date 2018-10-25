@@ -108,7 +108,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         double delta_y = ev2.MaxY - ev2.MinY;
                         double area = delta_x * delta_y;
                         face->avg_width += (delta_x - face->avg_width) / face->cardin;
-                        face->avg_heigth += (delta_y - face->avg_heigth) / face->cardin;
+                        face->avg_height += (delta_y - face->avg_height) / face->cardin;
                         face->avg_area += (area - face->avg_area) / face->cardin;
                     }
 
@@ -126,7 +126,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         double delta_x = ev2.MaxX - ev2.MinX;
                         eh->edges[e].cardin += 1;
                         double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
-                        eh->edges[e].avg_projection += fabs(delta_x - edge_size )/eh->edges[e].cardin;
+                        eh->edges[e].avg_projection += ((delta_x/edge_size) - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
                     }
                     //eh->avg_projection += 
                 }
@@ -135,10 +135,10 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                 if (y < eh->yqtd) {
                     int e = GET_VERT_EDGE(x, y);
                     if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
-                        double delta_x = ev2.MaxY - ev2.MinY;
+                        double delta_y = ev2.MaxY - ev2.MinY;
                         eh->edges[e].cardin += 1;
                         double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
-                        eh->edges[e].avg_projection += fabs(delta_x - edge_size )/eh->edges[e].cardin;
+                        eh->edges[e].avg_projection += ((delta_y/edge_size) - eh->edges[e].avg_projection  )/eh->edges[e].cardin;
                     }
                 }
             }
@@ -371,8 +371,6 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
     double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
     double xend = MIN(dr->metadata.hist.mbr.MaxX, ds->metadata.hist.mbr.MaxX);
     double yend = MIN(dr->metadata.hist.mbr.MaxY, ds->metadata.hist.mbr.MaxY);
-
-    // skip non-intersect area on x
     int xdr_start = 0;
     while (xdr_start < ehr->xqtd && ehr->xtics[xdr_start+1] < xini)
         xdr_start++;
@@ -430,78 +428,94 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                     es.MinY = ehs->ytics[ys];
                     es.MaxY = ehs->ytics[ys+1];
 
+                    char i = ENVELOPE_INTERSECTS(er, es);
+                    assert(i != 0);
 
-                    if(ENVELOPE_INTERSECTS(er, es)){
-                        //face
-                        euler_face *ehr_face = &ehr->faces[xr*ehr->yqtd +yr];
-                        euler_face *ehs_face = &ehs->faces[xs*ehs->yqtd +ys];
+                    euler_face *ehr_face = &ehr->faces[xr*ehr->yqtd +yr];
+                    euler_face *ehs_face = &ehs->faces[xs*ehs->yqtd +ys];
 
-                        Envelope inters = EnvelopeIntersection2(er, es);
-                        double int_area = ENVELOPE_AREA(inters);
-                        //double face_area = ENVELOPE_AREA(es);
-                        double ehrfraction = int_area / erarea;
-                        double ehsfraction = int_area / ENVELOPE_AREA(es);
+                    Envelope inters = EnvelopeIntersection2(er, es);
+                    double int_area = ENVELOPE_AREA(inters);
+                    double ehrfraction = int_area / erarea;
+                    double ehsfraction = int_area / ENVELOPE_AREA(es);
 
 
-                        double qtdobjr = ehrfraction * ehr_face->cardin;
-                        double qtdobjs = ehsfraction * ehs_face->cardin;
+                    double qtdobjr =  ehr_face->cardin * ehrfraction ;
+                    double qtdobjs = ehs_face->cardin * ehsfraction;
 
-                        //printf("ehr_face->avg_heigth + ehs_face->avg_heigth = %f \n", ehr_face->avg_heigth + ehs_face->avg_heigth) ;
-                        if(ehr_face->avg_heigth + ehs_face->avg_heigth >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1){
-                            printf("asdfsadf\n");
-                            //    result += qtdobjr * qtdobjs;
-                            result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_heigth + ehs_face->avg_heigth) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
-                        }
+                    double intersections = 0;
+                    double p = 1;
+                    if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
+                        if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
+                            p = qtdobjs*qtdobjr;
+                        else
+                            p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
 
-                        else{
-                            double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_heigth * ehs_face->avg_width+ehs_face->avg_heigth * ehr_face->avg_width;
-                            //printf("face p = %f\n", p);
 
-                            result +=  (qtdobjr * qtdobjs) * p; 
-                        }
+                        //intersections = qtdobjr * qtdobjs * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
+                        //intersections =  (qtdobjr * qtdobjs) * p; 
+                        intersections =  (qtdobjr * qtdobjs) * p; 
+                        //intersections = qtdobjr * qtdobjs;
 
-                        // MP-MODEL
-                        //result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_heigth + ehs_face->avg_heigth) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
+                        if(intersections< 1.0)
+                            intersections = 0;
                     }
+                    result +=  intersections;                 //}
 
-                    //vertice
-                    int vr = xr * (ehr->yqtd+1) + yr;	
-                    int vs = xs * (ehs->yqtd+1) + ys;	
-                    if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
-                        result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                    }
+                //else{
+                // double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
+                //printf("face p = %f\n", p);
 
-                    //aresta horizontal
-                    int ar = GET_HORZ_EDGE_EHR(xr, yr);
-                    int as = GET_HORZ_EDGE_EHS(xs, ys);
-                    if (ENVELOPE_INTERSECTS(er, ehs->edges[as].mbr)){
-                        Envelope inters = EnvelopeIntersection(er, ehs->edges[as].mbr);
-                        double int_length = inters.MaxX - inters.MinX;
-                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
-                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
+                //result +=  (qtdobjr * qtdobjs) * p; 
+                //}
 
-                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                // MP-MODEL
+                //result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
 
-                        double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
-                        double cardin_as = ehr->edges[as].cardin * fraction_as;
-                        result -=  cardin_ar * cardin_as * p;
-                    }
+                //vertice
+                int vr = xr * (ehr->yqtd+1) + yr;	
+                int vs = xs * (ehs->yqtd+1) + ys;	
+                /*
+                   if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
+                   result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                   }*/
 
-                    ar = GET_VERT_EDGE_EHR(xr, yr);
-                    as = GET_VERT_EDGE_EHS(xs, ys);
-                    if (ENVELOPE_INTERSECTS(ehs->edges[as].mbr, er)){
-                        Envelope inters = EnvelopeIntersection(er, ehs->edges[as].mbr);
-                        double int_length = inters.MaxY - inters.MinY;
-                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
-                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
+                if(ehs->vertexes[vs].x == ehr->vertexes[vr].x && ehs->vertexes[vs].y == ehr->vertexes[vr].y ){
+                    result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                }
 
-                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
-                        printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                //aresta horizontal
+                int ar = GET_HORZ_EDGE_EHR(xr, yr);
+                int as = GET_HORZ_EDGE_EHS(xs, ys);
+                if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
+                    printf("ar = %d, as = %d\n", ar, as);
+                    Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
+                    double int_length = inters.MaxX - inters.MinX;
+                    double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
+                    double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
 
-                        double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
-                        double cardin_as = ehr->edges[as].cardin * fraction_as;
-                        result -=  cardin_ar * cardin_as * p;
-                    }
+                    double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+
+                    double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
+                    double cardin_as = ehr->edges[as].cardin * fraction_as;
+                    result -=  cardin_ar * cardin_as * p;
+                }
+
+                ar = GET_VERT_EDGE_EHR(xr, yr);
+                as = GET_VERT_EDGE_EHS(xs, ys);
+                if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
+                    Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
+                    double int_length = inters.MaxY - inters.MinY;
+                    double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
+                    double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
+
+                    double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                    printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+
+                    double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
+                    double cardin_as = ehr->edges[as].cardin * fraction_as;
+                    result -=  cardin_ar * cardin_as * p;
+                }
 
                 }
             }
@@ -511,7 +525,7 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
 
 
-    return (int)result;
+    return round(result);
 }
 
 
@@ -559,10 +573,10 @@ int euler_spatial_join(euler_histogram* ehr, euler_histogram* ehs){
                         double face_area = ENVELOPE_AREA(es);
                         double fraction = int_area / face_area;
                         //result += fraction * face->cardin;
-                        if(ehr_face->avg_heigth + ehs_face->avg_heigth >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
+                        if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
                             result += fraction * ehs_face->cardin;
                         else{
-                            double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_heigth * ehs_face->avg_width+ehs_face->avg_heigth * ehr_face->avg_width;
+                            double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
 
                             result += fraction * ehs_face->cardin * p; 
                         }

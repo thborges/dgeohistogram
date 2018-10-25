@@ -41,41 +41,50 @@ int main (int argc, char* argv[]){
     enum HistogramSplitMethod sm = HSPLIT_FIX;
 
     dataset_a = argv[1];
-    dataset_b = argv[2];
+    dataset_b = argv[4];
     printf("%s, %s\n", dataset_a, dataset_b);
     dataset* ds_a = read_geos(dataset_a);
     dataset* ds_b = read_geos(dataset_b);
 
-    int xqtd = atoi(argv[3]);
-    int yqtd = atoi(argv[4]);
+    int xqtd_a = atoi(argv[2]);
+    int yqtd_a = atoi(argv[3]);
 
-    printf("%d, %d\n", xqtd, yqtd);
-    HistogramGenerateSpec spec;
-    spec.hm = hm;
-    spec.sm = sm;
-    spec.xqtd = xqtd;
-    spec.yqtd = yqtd;
 
+    int xqtd_b = atoi(argv[5]);
+    int yqtd_b = atoi(argv[6]);
+
+
+    HistogramGenerateSpec spec_a;
+    spec_a.hm = hm;
+    spec_a.sm = sm;
+    spec_a.xqtd = xqtd_a;
+    spec_a.yqtd = yqtd_a;
+
+    HistogramGenerateSpec spec_b;
+    spec_b.hm = hm;
+    spec_b.sm = sm;
+    spec_b.xqtd = xqtd_b;
+    spec_b.yqtd = yqtd_b;
     int split_qtd = 1;
 
     // chamar a função que cria o histograma
-    histogram_generate(ds_a, spec, CHECKR, split_qtd);
+    histogram_generate(ds_a, spec_a, CHECKR, split_qtd);
     histogram_print_geojson(ds_a);
     histogram_print(ds_a, CARDIN);
 
-    histogram_generate(ds_b, spec, CHECKR, split_qtd);
+    histogram_generate(ds_b, spec_b, CHECKR, split_qtd);
     histogram_print_geojson(ds_b);
     histogram_print(ds_b, CARDIN);
 
     euler_histogram *ehr = NULL;
     euler_histogram *ehs = NULL;
 
-    ehr = eh_generate_hist(ds_a, spec, CHECKR);
+    ehr = eh_generate_hist(ds_a, spec_a, CHECKR);
     euler_print_hist(ds_a, ehr);
 
-    ehs = eh_generate_hist(ds_b, spec, CHECKR);
+    ehs = eh_generate_hist(ds_b, spec_b, CHECKR);
     euler_print_hist(ds_b, ehs);
-
+/*
     // cria e preenche as r-trees dos dos datasets ds_a e ds_b
     rtree_root *rtree_a = NULL;
     rtree_a = rtree_new_rstar(30, 10);
@@ -108,7 +117,7 @@ int main (int argc, char* argv[]){
     double sum_error = 0.0;
     int n = 0;
 
-
+*/
     //double a = real_spatial_join_cardin(rtree_a, rtree_b, ehs, ehr);
     int b = euler_join_cardinality(ds_a, ds_b, ehr, ehs);
         
