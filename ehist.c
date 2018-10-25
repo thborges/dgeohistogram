@@ -439,23 +439,25 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                     double ehrfraction = int_area / erarea;
                     double ehsfraction = int_area / ENVELOPE_AREA(es);
 
+                    double qtdobjr = euler_search_hist(ehr, inters);
+                    double qtdobjs = euler_search_hist(ehs, inters);
 
-                    double qtdobjr =  ehr_face->cardin * ehrfraction ;
-                    double qtdobjs = ehs_face->cardin * ehsfraction;
+                    //double qtdobjr =  ehr_face->cardin * ehrfraction ;
+                    //double qtdobjs = ehs_face->cardin * ehsfraction;
 
                     double intersections = 0;
                     double p = 1;
                     if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
                         if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
-                            p = qtdobjs*qtdobjr;
+                            p = 1;
                         else
                             p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
 
 
                         //intersections = qtdobjr * qtdobjs * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
                         //intersections =  (qtdobjr * qtdobjs) * p; 
-                        intersections =  (qtdobjr * qtdobjs) * p; 
-                        //intersections = qtdobjr * qtdobjs;
+                        //intersections =  (qtdobjr * qtdobjs) * p; 
+                        intersections = qtdobjr * qtdobjs;
 
                         if(intersections< 1.0)
                             intersections = 0;
