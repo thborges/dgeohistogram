@@ -320,6 +320,10 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
                 fprintf(f, "]]}, 'properties': {");
                 fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
                 fprintf(f, "\"card\": %lf,", eh->faces[x*eh->yqtd + y].cardin);
+                fprintf(f, "\"avg_heigth\": %lf,", eh->faces[x*eh->yqtd + y].avg_height);
+                fprintf(f, "\"avg_width\": %lf,", eh->faces[x*eh->yqtd + y].avg_width);
+                fprintf(f, "\"avg_area\": %lf,", eh->faces[x*eh->yqtd + y].avg_area);
+                fprintf(f, "\"face_area\": %lf,", eh->xtics[0]*eh->ytics[0] );
                 fprintf(f, "\"type\": \"face\",");
                 fprintf(f, "}},\n");
             }
@@ -466,11 +470,11 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
                     Envelope inters = EnvelopeIntersection2(er, es);
                     double int_area = ENVELOPE_AREA(inters);
-                    double ehrfraction = int_area / erarea;
-                    double ehsfraction = int_area / ENVELOPE_AREA(es);
+                    //double ehrfraction = int_area / erarea;
+                    //double ehsfraction = int_area / ENVELOPE_AREA(es);
 
-                    double qtdobjr = euler_search_hist(ehr, inters);
-                    double qtdobjs = euler_search_hist(ehs, inters);
+                    //double qtdobjr = euler_search_hist(ehr, inters);
+                    //double qtdobjs = euler_search_hist(ehs, inters);
 
                     //double qtdobjr =  ehr_face->cardin * ehrfraction ;
                     //double qtdobjs = ehs_face->cardin * ehsfraction;
@@ -478,17 +482,16 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                     double intersections = 0;
                     double p = 1;
                     if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
-                        if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
-                            p = 1;
-                        else
-                            p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
+                        //if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
+                          //  intersections = qtdobjs*qtdobjr *  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
+                        //else
+                            intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
 
 
                         //intersections = qtdobjr * qtdobjs * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
                         //intersections =  (qtdobjr * qtdobjs) * p; 
                         //intersections = qtdobjr * qtdobjs;
 
-                        intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
                         if(intersections< 1.0)
                             intersections = 0;
                     }
@@ -528,8 +531,8 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
                     double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
-                    double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
-                    double cardin_as = ehr->edges[as].cardin * fraction_as;
+                    double cardin_ar = ehr->edges[ar].cardin;
+                    double cardin_as = ehr->edges[as].cardin;
                     result -=  cardin_ar * cardin_as * p;
                 }
 
@@ -544,8 +547,8 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                     double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
                     printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
-                    double cardin_ar = ehr->edges[ar].cardin * fraction_ar;
-                    double cardin_as = ehr->edges[as].cardin * fraction_as;
+                    double cardin_ar = ehr->edges[ar].cardin;
+                    double cardin_as = ehr->edges[as].cardin;
                     result -=  cardin_ar * cardin_as * p;
                 }
 

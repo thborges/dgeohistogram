@@ -106,9 +106,9 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 			cell->cardin += fraction;
 			cell->points += points; //object is replicated
 
-			//TODO: calculate avg online
-			cell->avgwidth += (inters.MaxX - inters.MinX);
-			cell->avgheight += (inters.MaxY - inters.MinY);
+			//TODO: calculate avg online;
+			cell->avgwidth += (inters.MaxX - inters.MinX)/cell->cardin;
+			cell->avgheight += (inters.MaxY - inters.MinY)/cell->cardin;
 		}
 	}
 }
@@ -758,6 +758,37 @@ void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredic
 	printf("Generated histogram %d x %d, %s.\n", ds->metadata.hist.xqtd,
 		ds->metadata.hist.yqtd, HistogramHashMethodName[spec.hm]);
 }
+
+
+double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelope inters, 
+	euler_face *ehr_face, euler_face *ehs_face) {
+	// the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
+
+	// estimate the quantity of objects in LeftDs in the inters window: eqn (1)
+	double ux = el.MaxX - el.MinX;
+	double uy = el.MaxY - el.MinY;
+	double avgl_x = ehr_face->avg_width;
+	double avgl_y = ehr_face->avg_height;
+	double wx = inters.MaxX - inters.MinX;
+	double wy = inters.MaxY - inters.MinY;
+	double qtdobjl = ehr_face->cardin * 
+		MIN(1,(avgl_x+wx)/ux) * 
+		MIN(1,(avgl_y+wy)/uy);
+
+	// estimate the quantity of objects in RightDs in the inters window eqn (1)
+	ux = er.MaxX - er.MinX;
+	uy = er.MaxY - er.MinY;
+	double avgr_x = ehs_face->avg_width;
+	double avgr_y = ehs_face->avg_height;
+	double qtdobjr = ehs_face->cardin * 
+		MIN(1,(avgr_x+wx)/ux) * 
+		MIN(1,(avgr_y+wy)/uy);
+
+	// estimate join result cardinality, eqn (2)
+	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
+}
+
+
 
 int histogram_join_cardinality(dataset *dr, dataset *ds) {
 	dataset_histogram *hr = &dr->metadata.hist;
