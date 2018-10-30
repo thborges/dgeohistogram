@@ -102,13 +102,13 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 			double fraction = (objarea == 0.0) ? 1.0 : intarea / objarea;
 
 			histogram_cell *cell = &dh->hcells[x*dh->yqtd +y];
-			//cell->cardin += 1.0;//fraction;
-			cell->cardin += fraction;
+			cell->cardin += 1.0;//fraction;
+			//cell->cardin += fraction;
 			cell->points += points; //object is replicated
 
 			//TODO: calculate avg online;
-			cell->avgwidth += (inters.MaxX - inters.MinX)/cell->cardin;
-			cell->avgheight += (inters.MaxY - inters.MinY)/cell->cardin;
+			cell->avgwidth += ((inters.MaxX - inters.MinX) - cell->avgwidth)/cell->cardin;
+			cell->avgheight += ((inters.MaxY - inters.MinY) - cell->avgheight)/cell->cardin;
 		}
 	}
 }
@@ -639,13 +639,13 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 	}
 	if (hm == HHASH_AREAFRAC) {
 		//TODO: Remove when implement avg online for avgwidth and avgheigt 
-		for(int x = 0; x < dh->xqtd; x++) {
+		/*for(int x = 0; x < dh->xqtd; x++) {
 			for(int y = 0; y < dh->yqtd; y++) {
 				histogram_cell *c = GET_HISTOGRAM_CELL(dh, x, y);
 				c->avgwidth = c->avgwidth / c->cardin;
 				c->avgheight = c->avgheight / c->cardin;
 			}
-		}
+		}*/
 	}
 
 	if (hm == HHASH_AREAFRACSPLIT)
@@ -759,36 +759,35 @@ void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredic
 		ds->metadata.hist.yqtd, HistogramHashMethodName[spec.hm]);
 }
 
-
-double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelope inters, 
-	euler_face *ehr_face, euler_face *ehs_face) {
+double estimate_intersections_mamoulis_papadias_grade(Envelope el, Envelope er, Envelope inters, 
+	histogram_cell *lcell, histogram_cell *rcell) {
 	// the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
 
 	// estimate the quantity of objects in LeftDs in the inters window: eqn (1)
 	double ux = el.MaxX - el.MinX;
 	double uy = el.MaxY - el.MinY;
-	double avgl_x = ehr_face->avg_width;
-	double avgl_y = ehr_face->avg_height;
+	double avgl_x = lcell->avgwidth;
+	double avgl_y = lcell->avgheight;
 	double wx = inters.MaxX - inters.MinX;
 	double wy = inters.MaxY - inters.MinY;
-	double qtdobjl = ehr_face->cardin * 
+	double qtdobjl = lcell->cardin * 
 		MIN(1,(avgl_x+wx)/ux) * 
 		MIN(1,(avgl_y+wy)/uy);
+       // printf("%qtdobjl = %f\n", qtdobjl);
 
 	// estimate the quantity of objects in RightDs in the inters window eqn (1)
 	ux = er.MaxX - er.MinX;
 	uy = er.MaxY - er.MinY;
-	double avgr_x = ehs_face->avg_width;
-	double avgr_y = ehs_face->avg_height;
-	double qtdobjr = ehs_face->cardin * 
+	double avgr_x = rcell->avgwidth;
+	double avgr_y = rcell->avgheight;
+	double qtdobjr = rcell->cardin * 
 		MIN(1,(avgr_x+wx)/ux) * 
 		MIN(1,(avgr_y+wy)/uy);
+        printf("%qtdobjr = %f\n", qtdobjr);
 
 	// estimate join result cardinality, eqn (2)
 	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
 }
-
-
 
 int histogram_join_cardinality(dataset *dr, dataset *ds) {
 	dataset_histogram *hr = &dr->metadata.hist;
@@ -858,10 +857,6 @@ int histogram_join_cardinality(dataset *dr, dataset *ds) {
 					char i = ENVELOPE_INTERSECTS(er, es);
 					assert(i != 0);
 
-					/*printf("r[%d][%d] %d x s[%d][%d]%d = %d\n",
-						xr, yr, hr->hcells[xr*hr->yqtd + yr],
-						xs, ys, hs->hcells[xs*hs->yqtd + ys],
-						hr->hcells[xr*hr->yqtd + yr] * hs->hcells[xs*hs->yqtd + ys]);*/
 
 					Envelope inters = EnvelopeIntersection2(er, es);
 					double intarea = ENVELOPE_AREA(inters);
@@ -871,21 +866,21 @@ int histogram_join_cardinality(dataset *dr, dataset *ds) {
 					histogram_cell *rcell = &hr->hcells[xr*hr->yqtd + yr];
 					histogram_cell *scell = &hs->hcells[xs*hs->yqtd + ys];
 
-					double qtdobjr = hrfraction * rcell->cardin;
-					double qtdobjs = hsfraction * scell->cardin;
-					double intersections = 0;
+                    double intersections = 0;
 					if (rcell->cardin >= 1 || scell->cardin >= 1) {
-						intersections = qtdobjr * qtdobjs;
+                        intersections = estimate_intersections_mamoulis_papadias_grade(er, es, inters, rcell, scell);
 						if (intersections < 1.0)
 							intersections = 0;
 					}
+                    //printf("inters = %f\n", intersections);
 					result += intersections;
+                    //printf("result = %f\n", result);
 				}
 			}
 		}
 	}
 
-	return (int)result;
+	return round(result);
 }
 
 void histogram_distribute_roundrobin(dataset *ds) {

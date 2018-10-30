@@ -126,7 +126,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         double delta_x = ev2.MaxX - ev2.MinX;
                         eh->edges[e].cardin += 1;
                         double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
-                        eh->edges[e].avg_projection += ((delta_x/edge_size) - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
+                        eh->edges[e].avg_projection += (delta_x- eh->edges[e].avg_projection ) / eh->edges[e].cardin;
                     }
                     //eh->avg_projection += 
                 }
@@ -138,7 +138,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         double delta_y = ev2.MaxY - ev2.MinY;
                         eh->edges[e].cardin += 1;
                         double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
-                        eh->edges[e].avg_projection += ((delta_y/edge_size) - eh->edges[e].avg_projection  )/eh->edges[e].cardin;
+                        eh->edges[e].avg_projection += (delta_y - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
                     }
                 }
             }
@@ -371,32 +371,77 @@ void euler_print_hist(dataset *ds, euler_histogram *eh) {
 }
 
 
+double estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters, 
+        euler_edge *ehr_face, euler_edge *ehs_face) {
+    // the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
+
+    // estimate the quantity of objects in LeftDs in the inters window: eqn (1)
+    double uy = el.MaxY - el.MinY;
+
+    double avgl_y = ehr_face->avg_projection;
+    double wy = inters.MaxY - inters.MinY;
+    double qtdobjl = ehr_face->cardin * 
+        MIN(1,(avgl_y+wy)/uy);
+
+    // estimate the quantity of objects in RightDs in the inters window eqn (1)
+    uy = er.MaxY - er.MinY;
+    double avgr_y = ehs_face->avg_projection;
+    double qtdobjr = ehs_face->cardin * 
+        MIN(1,(avgr_y+wy)/uy);
+
+    // estimate join result cardinality, eqn (2)
+    return qtdobjl * qtdobjr * MIN(1, (avgl_y + avgr_y)/wy);
+}
+
+double estimate_intersections_mp_edges_horz(Envelope el, Envelope er, Envelope inters, 
+        euler_edge *ehr_face, euler_edge *ehs_face) {
+    // the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
+
+    // estimate the quantity of objects in LeftDs in the inters window: eqn (1)
+    double ux = el.MaxX - el.MinX;
+
+    double avgl_x = ehr_face->avg_projection;
+    double wx = inters.MaxX - inters.MinX;
+    double qtdobjl = ehr_face->cardin * 
+        MIN(1,(avgl_x+wx)/ux);
+    printf("qtdobjl = %f\n", qtdobjl);
+
+    // estimate the quantity of objects in RightDs in the inters window eqn (1)
+    ux = er.MaxX - er.MinX;
+    double avgr_x = ehs_face->avg_projection;
+    double qtdobjr = ehs_face->cardin * 
+        MIN(1,(avgr_x+wx)/ux);
+
+    // estimate join result cardinality, eqn (2)
+    return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx);
+}
+
 double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelope inters, 
-	euler_face *ehr_face, euler_face *ehs_face) {
-	// the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
+        euler_face *ehr_face, euler_face *ehs_face) {
+    // the code below follows equations (1) and (2) in Mamoulis, Papadias 2001
 
-	// estimate the quantity of objects in LeftDs in the inters window: eqn (1)
-	double ux = el.MaxX - el.MinX;
-	double uy = el.MaxY - el.MinY;
-	double avgl_x = ehr_face->avg_width;
-	double avgl_y = ehr_face->avg_height;
-	double wx = inters.MaxX - inters.MinX;
-	double wy = inters.MaxY - inters.MinY;
-	double qtdobjl = ehr_face->cardin * 
-		MIN(1,(avgl_x+wx)/ux) * 
-		MIN(1,(avgl_y+wy)/uy);
+    // estimate the quantity of objects in LeftDs in the inters window: eqn (1)
+    double ux = el.MaxX - el.MinX;
+    double uy = el.MaxY - el.MinY;
+    double avgl_x = ehr_face->avg_width;
+    double avgl_y = ehr_face->avg_height;
+    double wx = inters.MaxX - inters.MinX;
+    double wy = inters.MaxY - inters.MinY;
+    double qtdobjl = ehr_face->cardin * 
+        MIN(1,(avgl_x+wx)/ux) * 
+        MIN(1,(avgl_y+wy)/uy);
 
-	// estimate the quantity of objects in RightDs in the inters window eqn (1)
-	ux = er.MaxX - er.MinX;
-	uy = er.MaxY - er.MinY;
-	double avgr_x = ehs_face->avg_width;
-	double avgr_y = ehs_face->avg_height;
-	double qtdobjr = ehs_face->cardin * 
-		MIN(1,(avgr_x+wx)/ux) * 
-		MIN(1,(avgr_y+wy)/uy);
+    // estimate the quantity of objects in RightDs in the inters window eqn (1)
+    ux = er.MaxX - er.MinX;
+    uy = er.MaxY - er.MinY;
+    double avgr_x = ehs_face->avg_width;
+    double avgr_y = ehs_face->avg_height;
+    double qtdobjr = ehs_face->cardin * 
+        MIN(1,(avgr_x+wx)/ux) * 
+        MIN(1,(avgr_y+wy)/uy);
 
-	// estimate join result cardinality, eqn (2)
-	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
+    // estimate join result cardinality, eqn (2)
+    return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
 }
 
 
@@ -478,14 +523,16 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
 
                     //double qtdobjr =  ehr_face->cardin * ehrfraction ;
                     //double qtdobjs = ehs_face->cardin * ehsfraction;
+                    printf("ehr_face[%d][%d].card = %f,\n"
+                            "ehs_face[%d][%d].card = %f\n", xr, yr, ehr_face->cardin, xs, ys, ehs_face->cardin);
 
                     double intersections = 0;
                     double p = 1;
                     if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
                         //if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
-                          //  intersections = qtdobjs*qtdobjr *  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
+                        //  intersections = qtdobjs*qtdobjr *  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
                         //else
-                            intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
+                        intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
 
 
                         //intersections = qtdobjr * qtdobjs * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
@@ -495,62 +542,64 @@ int euler_join_cardinality(dataset *dr, dataset *ds, euler_histogram* ehr, euler
                         if(intersections< 1.0)
                             intersections = 0;
                     }
-                    result +=  intersections;                 //}
+                    result +=  intersections;                 
 
-                //else{
-                // double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
-                //printf("face p = %f\n", p);
+                    //else{
+                    // double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
+                    //printf("face p = %f\n", p);
 
-                //result +=  (qtdobjr * qtdobjs) * p; 
-                //}
+                    //result +=  (qtdobjr * qtdobjs) * p; 
+                    //}
 
-                // MP-MODEL
-                //result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
+                    // MP-MODEL
+                    //result +=  (qtdobjr * qtdobjs) * MIN(1, ehr_face->avg_height + ehs_face->avg_height) * MIN(1, ehr_face->avg_width + ehs_face->avg_width); 
 
-                //vertice
-                int vr = xr * (ehr->yqtd+1) + yr;	
-                int vs = xs * (ehs->yqtd+1) + ys;	
-                /*
-                   if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
-                   result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                   }*/
+                    //vertice
+                    int vr = xr * (ehr->yqtd+1) + yr;	
+                    int vs = xs * (ehs->yqtd+1) + ys;	
+                    /*
+                       if (ENVELOPE_CONTAINSP(er, ehs->vertexes[vs].x, ehs->vertexes[vs].y)){
+                       result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                       }*/
 
-                if(ehs->vertexes[vs].x == ehr->vertexes[vr].x && ehs->vertexes[vs].y == ehr->vertexes[vr].y ){
-                    result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                }
+                    if(ehs->vertexes[vs].x == ehr->vertexes[vr].x && ehs->vertexes[vs].y == ehr->vertexes[vr].y ){
+                        result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                    }
 
-                //aresta horizontal
-                int ar = GET_HORZ_EDGE_EHR(xr, yr);
-                int as = GET_HORZ_EDGE_EHS(xs, ys);
-                if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
-                    printf("ar = %d, as = %d\n", ar, as);
-                    Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
-                    double int_length = inters.MaxX - inters.MinX;
-                    double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
-                    double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
+                    //aresta horizontal
+                    int ar = GET_HORZ_EDGE_EHR(xr, yr);
+                    int as = GET_HORZ_EDGE_EHS(xs, ys);
+                    if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
+                        printf("ar = %d, as = %d\n", ar, as);
+                        Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
+                        double int_length = inters.MaxX - inters.MinX;
+                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
+                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
 
-                    double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
-                    double cardin_ar = ehr->edges[ar].cardin;
-                    double cardin_as = ehr->edges[as].cardin;
-                    result -=  cardin_ar * cardin_as * p;
-                }
+                        double cardin_ar = ehr->edges[ar].cardin;
+                        double cardin_as = ehr->edges[as].cardin;
+                        result -=  cardin_ar * cardin_as * p;
+                        //result -= estimate_intersections_mp_edges_horz(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
+                    }
 
-                ar = GET_VERT_EDGE_EHR(xr, yr);
-                as = GET_VERT_EDGE_EHS(xs, ys);
-                if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
-                    Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
-                    double int_length = inters.MaxY - inters.MinY;
-                    double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
-                    double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
+                    ar = GET_VERT_EDGE_EHR(xr, yr);
+                    as = GET_VERT_EDGE_EHS(xs, ys);
+                    if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
+                        Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
+                        double int_length = inters.MaxY - inters.MinY;
+                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
+                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
 
-                    double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
-                    printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
+                        printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
 
-                    double cardin_ar = ehr->edges[ar].cardin;
-                    double cardin_as = ehr->edges[as].cardin;
-                    result -=  cardin_ar * cardin_as * p;
-                }
+                        double cardin_ar = ehr->edges[ar].cardin;
+                        double cardin_as = ehr->edges[as].cardin;
+                        result -=  cardin_ar * cardin_as * p;
+                        //result -= estimate_intersections_mp_edges_vert(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
+                    }
 
                 }
             }
