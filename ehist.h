@@ -4,6 +4,8 @@
 
 #include "histogram.h"
 #include "glibwrap.h"
+#include "rtree.h"
+#include "rtree-star.h"
 
 
 #define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))

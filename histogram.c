@@ -783,7 +783,6 @@ double estimate_intersections_mamoulis_papadias_grade(Envelope el, Envelope er, 
 	double qtdobjr = rcell->cardin * 
 		MIN(1,(avgr_x+wx)/ux) * 
 		MIN(1,(avgr_y+wy)/uy);
-        printf("%qtdobjr = %f\n", qtdobjr);
 
 	// estimate join result cardinality, eqn (2)
 	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);

@@ -1,10 +1,13 @@
-set terminal svg size 1000,1000
+set terminal svg size 800,600
+set xtics font "Verdana,14" 
+set xlabel font "Verdana,14" 
+set ylabel font "Verdana,14" 
 set output "output.svg"
 set xlabel "Longitude" 
 set ylabel "Latitude"
-set zlabel "Density"
+set zlabel "Densidade" offset -3,-3,1
 set hidden3d
-set view 70,30
+set view 70,20
 set ticslevel 0
 set dgrid3d 75,75 qnorm 1
-splot 'histogram/hist-card-.dat' with lines
+splot 'histogram/hist-card-charminar.shp.dat' with lines
