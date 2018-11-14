@@ -50,6 +50,7 @@ int main (int argc, char* argv[]){
     int xqtd_b = atoi(argv[5]);
     int yqtd_b = atoi(argv[6]);
 
+    int split_qtd = 1;
 
     HistogramGenerateSpec spec_a;
     spec_a.hm = hm;
@@ -62,7 +63,6 @@ int main (int argc, char* argv[]){
     spec_b.sm = sm;
     spec_b.xqtd = xqtd_b;
     spec_b.yqtd = yqtd_b;
-    int split_qtd = 1;
 
     // chamar a função que cria o histograma
     histogram_generate(ds_a, spec_a, CHECKR, split_qtd);
@@ -106,23 +106,28 @@ int main (int argc, char* argv[]){
         rtree_append(rtree_b, geo);
     }
 
-    double accuracy = 0.0;
-    double sum_ei = 0.0;
-    double sum_ri = 0.0;
-    double mean = 0.0;
-    double M2 = 0.0;
-    double sum_error = 0.0;
-    int n = 0;
 
     if( argv[7] && strcmp(argv[7], "per-cell") == 0){
         euler_cardinality_per_face(ds_a, ds_b, ehr, ehs, rtree_a, rtree_b);
         return 0;
     }
+    double eh_stddev = 0;
+    double gr_stddev = 0;
     int real = real_spatial_join_cardin(rtree_a, rtree_b, ehr, ehs);
-    int b = euler_join_cardinality(ds_a, ds_b, ehr, ehs);
-    int c = histogram_join_cardinality(ds_a, ds_b);
+    int b = euler_join_cardinality(ds_a, ds_b, ehr, ehs, rtree_a, rtree_b, &eh_stddev);
+    int c = histogram_join_cardinality(ds_a, ds_b, rtree_a, rtree_b, &gr_stddev);
     printf("euler = %d\ngrade = %d\nreal = %d\n", b, c,real);
 
+	char filename[100] = "join_data.csv";
+	FILE *file;
+	file = fopen(filename, "a");
+  	fprintf(file, "euler, %d, grid, %d, %s, %s, %d, %f, %f\n", 
+		b, 
+        c,
+		ds_a->metadata.name,
+        ds_b->metadata.name,
+        xqtd_a, eh_stddev, gr_stddev);
+	fclose(file);
     return 0;
 }
 

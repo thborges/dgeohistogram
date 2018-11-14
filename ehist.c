@@ -104,8 +104,8 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                     if (ENVELOPE_INTERSECTS(ev2, rs)) {
                         euler_face *face = &eh->faces[x*eh->yqtd +y];
                         face->cardin += 1;
-                        double delta_x = ev2.MaxX - ev2.MinX;
-                        double delta_y = ev2.MaxY - ev2.MinY;
+                        double delta_x = (ev2.MaxX - ev2.MinX);
+                        double delta_y = (ev2.MaxY - ev2.MinY);
                         double area = delta_x * delta_y;
                         face->avg_width += (delta_x - face->avg_width) / face->cardin;
                         face->avg_height += (delta_y - face->avg_height) / face->cardin;
@@ -445,20 +445,27 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
 }
 
 
-double real_cardin_histogram_cell(double estimated, Envelope inters, rtree_root* rtree_r, rtree_root* rtree_s){
-
-}
 
 
 int euler_join_cardinality(dataset *dr, 
         dataset *ds,
         euler_histogram* ehr, 
-        euler_histogram* ehs) {
+        euler_histogram* ehs,
+        rtree_root* rtree_r,
+        rtree_root* rtree_s,
+        double* stddev) {
+
 
     double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
     double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
     double xend = MIN(dr->metadata.hist.mbr.MaxX, ds->metadata.hist.mbr.MaxX);
     double yend = MIN(dr->metadata.hist.mbr.MaxY, ds->metadata.hist.mbr.MaxY);
+
+    unsigned int N = ceil((xend - xini) * (yend - yini));
+	double mean = 0.0;
+	double M2 = 0.0;
+	double sum_error = 0.0;
+
     int xdr_start = 0;
     while (xdr_start < ehr->xqtd && ehr->xtics[xdr_start+1] < xini)
         xdr_start++;
@@ -512,6 +519,7 @@ int euler_join_cardinality(dataset *dr,
                 es.MaxX = ehs->xtics[xs+1];
 
                 for(int ys = yds_atu; ys < yds_end; ys++) {
+                    double estimated_result = 0;
 
                     es.MinY = ehs->ytics[ys];
                     es.MaxY = ehs->ytics[ys+1];
@@ -524,8 +532,8 @@ int euler_join_cardinality(dataset *dr,
                     Envelope inters = EnvelopeIntersection2(er, es);
                     double int_area = ENVELOPE_AREA(inters);
 
-                    //printf("ehr_face[%d][%d].card = %f,\n"
-                    //"ehs_face[%d][%d].card = %f\n", xr, yr, ehr_face->cardin, xs, ys, ehs_face->cardin);
+                    printf("ehr_face[%d][%d].card = %f, avg_h = %f, avg_w = %f\n"
+                            "ehs_face[%d][%d].card = %f, avg_h = %f, avg_w = %f\n", xr, yr, ehr_face->cardin,ehr_face->avg_height, ehr_face->avg_width, xs, ys, ehs_face->cardin, ehs_face->avg_height, ehs_face->avg_width);
 
                     double intersections = 0;
                     double p = 1;
@@ -536,14 +544,16 @@ int euler_join_cardinality(dataset *dr,
                             intersections = 0;
                     }
                     result +=  intersections;                 
-                    
-                    
+                    estimated_result += intersections;
+
+
                     //vertice
                     int vr = xr * (ehr->yqtd+1) + yr;	
                     int vs = xs * (ehs->yqtd+1) + ys;	
 
                     if(ehs->vertexes[vs].x == ehr->vertexes[vr].x && ehs->vertexes[vs].y == ehr->vertexes[vr].y ){
                         result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
+                        estimated_result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
                     }
 
                     //aresta horizontal
@@ -561,6 +571,7 @@ int euler_join_cardinality(dataset *dr,
                         double cardin_ar = ehr->edges[ar].cardin;
                         double cardin_as = ehr->edges[as].cardin;
                         result -=  cardin_ar * cardin_as * p;
+                        estimated_result -=  cardin_ar * cardin_as * p;
                         //result -= estimate_intersections_mp_edges_horz(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
                     }
 
@@ -578,8 +589,20 @@ int euler_join_cardinality(dataset *dr,
                         double cardin_ar = ehr->edges[ar].cardin;
                         double cardin_as = ehr->edges[as].cardin;
                         result -=  cardin_ar * cardin_as * p;
+                        estimated_result -=  cardin_ar * cardin_as * p;
                         //result -= estimate_intersections_mp_edges_vert(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
                     }
+                        //double real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
+                        double real_cardin = 1;
+                        int error = abs(estimated_result - real_cardin);
+                        double delta = error - mean;
+                        assert(!isnan(delta));
+
+		                mean += delta/(double)N;
+                        assert(!isnan(mean));
+                        M2 += delta*(error - mean);
+                        sum_error += error;
+
 
                 }
             }
@@ -587,7 +610,8 @@ int euler_join_cardinality(dataset *dr,
     }
 
 
-
+    *stddev = sqrt(M2/(double)N);
+    assert(!isnan(*stddev));
     return round(result);
 }
 
@@ -776,6 +800,9 @@ int euler_cardinality_per_face(dataset *dr,
                         estimated_cardin = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
 
 
+                        real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
+                        
+                        /*
                         char wkt_inters[512];
                         sprintf(wkt_inters, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                                 inters.MinX, inters.MinY,
@@ -803,7 +830,7 @@ int euler_cardinality_per_face(dataset *dr,
                                     real_cardin++;
                             }
                         }
-
+*/
 
                         if(estimated_cardin< 1.0)
                             estimated_cardin= 0;
@@ -860,3 +887,39 @@ int euler_cardinality_per_face(dataset *dr,
     return round(result);
 }
 
+int real_cardin_euler_histogram_cell(rtree_root* rtree_r, rtree_root* rtree_s, Envelope inters){
+
+    rtree_window_stat stats1;
+    rtree_window_stat stats2;
+
+    double real_cardin = 0;
+    char wkt_inters[512];
+    sprintf(wkt_inters, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+            inters.MinX, inters.MinY,
+            inters.MaxX, inters.MinY,
+            inters.MaxX, inters.MaxY,
+            inters.MinX, inters.MaxY,
+            inters.MinX, inters.MinY);
+    GEOSGeometryH geo_inters = GEOSGeomFromWKT(wkt_inters);
+
+    memset(&stats1, 0, sizeof(rtree_window_stat));
+    memset(&stats2, 0, sizeof(rtree_window_stat));
+    GList *results_ehr = rtree_window_search(rtree_r, geo_inters, &stats1);
+    GList *results_ehs = rtree_window_search(rtree_s, geo_inters, &stats2);
+
+    GList *a;
+
+    g_list_foreach(a, results_ehr){
+        rtree_leaf* la = (rtree_leaf*)a->data;
+
+        GList* b;
+        g_list_foreach(b, results_ehs){
+            rtree_leaf* lb = (rtree_leaf*)b->data;
+
+            if(GEOSIntersects(la->geo, lb->geo))
+                real_cardin++;
+        }
+    }
+    return round(real_cardin);
+
+}

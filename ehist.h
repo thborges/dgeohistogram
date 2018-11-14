@@ -54,5 +54,12 @@ int euler_search_hist(euler_histogram *eh, Envelope query);
 void euler_print_hist(dataset *ds, euler_histogram *eh);
 
 int euler_spatial_join(euler_histogram* ehr, euler_histogram* ehs);
+int euler_join_cardinality(dataset *dr, 
+        dataset *ds,
+        euler_histogram* ehr, 
+        euler_histogram* ehs,
+        rtree_root* rtree_r,
+        rtree_root* rtree_s,
+        double* stddev);
 #endif
 

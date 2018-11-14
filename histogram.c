@@ -7,6 +7,8 @@
 
 #include <float.h>
 #include "histogram.h"
+#include "rtree.h"
+#include "rtree-star.h"
 
 const char *HistogramHashMethodName[4]  = {
 	"mbrc",
@@ -100,15 +102,23 @@ void hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double obja
 
 			// for point objects, objarea == 0.0
 			double fraction = (objarea == 0.0) ? 1.0 : intarea / objarea;
+            assert(fraction > 0);
 
 			histogram_cell *cell = &dh->hcells[x*dh->yqtd +y];
-			cell->cardin += 1.0;//fraction;
-			//cell->cardin += fraction;
+			//cell->cardin += 1.0;//fraction;
+			cell->cardin += fraction;
 			cell->points += points; //object is replicated
+            printf("[%d][%d]\n", x, y);
+            //assert(cell->avgwidth>=0);
+            double delta_x = (inters.MaxX - inters.MinX);
+            double delta_y = (inters.MaxY - inters.MinY);
+            assert(delta_x >= 0);
 
 			//TODO: calculate avg online;
-			cell->avgwidth += ((inters.MaxX - inters.MinX) - cell->avgwidth)/cell->cardin;
-			cell->avgheight += ((inters.MaxY - inters.MinY) - cell->avgheight)/cell->cardin;
+            printf("%f\n", delta_x);
+			cell->avgwidth += ((delta_x) - cell->avgwidth)/ cell->cardin;
+            //assert(cell->avgwidth >= 0);
+			cell->avgheight += ((delta_y) - cell->avgheight)/cell->cardin;
 		}
 	}
 }
@@ -788,13 +798,18 @@ double estimate_intersections_mamoulis_papadias_grade(Envelope el, Envelope er, 
 	return qtdobjl * qtdobjr * MIN(1, (avgl_x + avgr_x)/wx) * MIN(1, (avgl_y + avgr_y)/wy);
 }
 
-int histogram_join_cardinality(dataset *dr, dataset *ds) {
+int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rtree_root* rtree_s, double* stddev) {
 	dataset_histogram *hr = &dr->metadata.hist;
 	dataset_histogram *hs = &ds->metadata.hist;
 	double xini = MAX(hr->xtics[0], hs->xtics[0]);
 	double yini = MAX(hr->ytics[0], hs->ytics[0]);
 	double xend = MIN(dr->metadata.hist.mbr.MaxX, ds->metadata.hist.mbr.MaxX);
 	double yend = MIN(dr->metadata.hist.mbr.MaxY, ds->metadata.hist.mbr.MaxY);
+
+    unsigned int N = ceil((xend - xini) * (yend - yini));
+	double mean = 0.0;
+	double M2 = 0.0;
+	double sum_error = 0.0;
 
 	// skip non-intersect area on x
 	int xdr_start = 0;
@@ -864,8 +879,10 @@ int histogram_join_cardinality(dataset *dr, dataset *ds) {
 
 					histogram_cell *rcell = &hr->hcells[xr*hr->yqtd + yr];
 					histogram_cell *scell = &hs->hcells[xs*hs->yqtd + ys];
+                    printf("rcell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xr, yr, rcell->cardin, rcell->avgheight, rcell->avgwidth);
+                    printf("scell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xs, ys, scell->cardin, scell->avgheight, scell->avgwidth);
 
-                    double intersections = 0;
+                    double intersections;
 					if (rcell->cardin >= 1 || scell->cardin >= 1) {
                         intersections = estimate_intersections_mamoulis_papadias_grade(er, es, inters, rcell, scell);
 						if (intersections < 1.0)
@@ -873,12 +890,26 @@ int histogram_join_cardinality(dataset *dr, dataset *ds) {
 					}
                     //printf("inters = %f\n", intersections);
 					result += intersections;
+                    double estimated = intersections;
+                    //double real = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
+                    double real = 1;
+                    int error = abs(estimated - real);
+                    double delta = error - mean;
+
+                    assert(!isnan(delta));
+
+		            mean += delta/(double)N;
+                    assert(!isnan(mean));
+                    M2 += delta*(error - mean);
+                    sum_error += error;
                     //printf("result = %f\n", result);
 				}
 			}
 		}
 	}
 
+    *stddev = sqrt(M2/(double)N);
+    assert(!isnan(*stddev));
 	return round(result);
 }
 
