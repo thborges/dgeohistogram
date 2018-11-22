@@ -802,7 +802,7 @@ int euler_cardinality_per_face(dataset *dr,
 
                         real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
                         
-                        /*
+                        
                         char wkt_inters[512];
                         sprintf(wkt_inters, "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                                 inters.MinX, inters.MinY,
@@ -826,16 +826,20 @@ int euler_cardinality_per_face(dataset *dr,
                             g_list_foreach(b, results_ehs){
                                 rtree_leaf* lb = (rtree_leaf*)b->data;
 
-                                if(GEOSIntersects(la->geo, lb->geo))
-                                    real_cardin++;
+                                if(GEOSIntersects(la->geo, lb->geo)){
+                                    /*Envelope eva; GEOSGetEnvelope(la->geo, &eva);
+                                    Envelope evb; GEOSGetEnvelope(lb->geo, &evb);
+                                    Envelope inters = EnvelopeIntersection2(eva, evb);
+                                    double area = ENVELOPE_AREA(inters);*/
+                                    real_cardin+= 1;
+                                }
                             }
                         }
-*/
+
 
                         if(estimated_cardin< 1.0)
                             estimated_cardin= 0;
                     }
-                    printf("%d \t %d\n", (int)estimated_cardin,(int) real_cardin);
 
                     int vr = xr * (ehr->yqtd+1) + yr;	
                     int vs = xs * (ehs->yqtd+1) + ys;	
@@ -876,6 +880,7 @@ int euler_cardinality_per_face(dataset *dr,
                         result -=  cardin_ar * cardin_as * p;
                         //result -= estimate_intersections_mp_edges_vert(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
                     }
+                    printf("%d \t %d\n", (int)estimated_cardin,(int) real_cardin);
 
                 }
             }

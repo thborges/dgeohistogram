@@ -91,6 +91,7 @@ typedef struct {
 	double avgheight;
 	unsigned place;
 	unsigned copies;
+    int objcount;
 } histogram_cell;
 
 typedef	struct {
