@@ -15,6 +15,8 @@ extern "C" {
 #include "glibwrap.h"
 #include "dataset.h"
 #include "geosext.h"
+#include "rtree.h"
+#include "rtree-star.h"
 
 #define GET_HISTOGRAM_CELL(h, x, y) (&(h)->hcells[(x)*(h)->yqtd + (y)])
 #define SET_IN_PLACE(var, place) (var = var | 1<<(place-1))
@@ -57,11 +59,11 @@ void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMe
 void histogram_distribute(dataset *ds);
 void histogram_print(dataset *ds, histogram_type type);
 void histogram_print_geojson(dataset *ds);
-int histogram_join_cardinality(dataset *dr, dataset *ds);
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd);
 void histogram_print_estimative(char *name, multiway_histogram_estimate *estimate, int servers);
 double histogram_search_hist(dataset_histogram *dh, Envelope query);
 
+int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rtree_root* rtree_s, double* stddev);
 #ifdef __cplusplus
 }
 #endif

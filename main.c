@@ -66,22 +66,23 @@ int main(int argc, char* argv[]) {
 		yqtd = atoi(argv[argatu++]);
 	}
 
-    	//histograma a
-    	dataset_name = argv[argatu++];
-        printf("Carregando arquivo: %s\n", dataset_name);
-        dataset *dsA = read_geos(dataset_name, ogr_ds1);
-	//histograma b
-    	dataset_name = argv[argatu++];
-        printf("Carregando arquivo: %s\n", dataset_name);
-        dataset *dsB = read_geos(dataset_name, ogr_ds2);
+    //histograma a
+    dataset_name = argv[argatu++];
+    printf("Carregando arquivo: %s\n", dataset_name);
+    dataset *dsA = read_geos(dataset_name, ogr_ds1);
+
+    //histograma b
+    dataset_name = argv[argatu++];
+    printf("Carregando arquivo: %s\n", dataset_name);
+    dataset *dsB = read_geos(dataset_name, ogr_ds2);
 
 	HistogramGenerateSpec spec;
-        spec.hm = hm;
-        spec.sm = sm;
-        spec.xqtd = xqtd;
-        spec.yqtd = yqtd;
+    spec.hm = hm;
+    spec.sm = sm;
+    spec.xqtd = xqtd;
+    spec.yqtd = yqtd;
 
-        int split_method = 1;
+    int split_method = 1;
 
 	// chamar a função que cria o histograma
 	printf("Criando hist. euler para: %s\n", dsA->metadata.name);

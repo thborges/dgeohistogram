@@ -8,6 +8,7 @@
 #include <cpl_conv.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <math.h>
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Envelope.h>
 #include <geos/io/WKBWriter.h>

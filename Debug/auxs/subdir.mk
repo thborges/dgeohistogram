@@ -72,14 +72,14 @@ C_DEPS += \
 auxs/%.o: ../auxs/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -I/usr/include/gdal -I"/home/venom/Documents/DadosEspaciais/dgeohistogram/auxs" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	gcc -DHAVE_ISNAN=1 -I"/home/kronos/Documents/DadosEspaciais/dgeohistogram/auxs" -I/usr/include/gdal -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 auxs/%.o: ../auxs/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I"/home/venom/Documents/DadosEspaciais/dgeohistogram/auxs" -I/usr/include/gdal -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	g++ -DHAVE_ISNAN=1 -I/usr/include/gdal -I"/home/kronos/Documents/DadosEspaciais/dgeohistogram/auxs" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lgeos -lgeos_c -lgdal
+LIBS := -lgdal -lgeos -lgeos_c
 
