@@ -185,5 +185,4 @@ GEOSGeometryH    dataset_get_leaf_geo(dataset *dh, dataset_leaf *leaf);
 }
 #endif
 
-
 #endif /* DATASET_H_ */

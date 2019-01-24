@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
 	}
 
     euler_histogram *ehIntermed = NULL;
-    ehIntermed = eh_generate_intermed(dsA,ehA,ehB);
+    ehIntermed = eh_generate_intermed(dsA,dsB,ehA,ehB);
 
     //escolhe dataset A ou para Intermediario
     euler_print_hist("intermediario",ehIntermed);

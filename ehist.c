@@ -412,7 +412,6 @@ double estimate_intersections_mp_edges_horz(Envelope el, Envelope er, Envelope i
     double wx = inters.MaxX - inters.MinX;
     double qtdobjl = ehr_face->cardin *
         MIN(1,(avgl_x+wx)/ux);
-    printf("qtdobjl = %f\n", qtdobjl);
 
     // estimate the quantity of objects in RightDs in the inters window eqn (1)
     ux = er.MaxX - er.MinX;
@@ -438,6 +437,7 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
     double qtdobjl = ehr_face->cardin *
         MIN(1,(avgl_x+wx)/ux) *
         MIN(1,(avgl_y+wy)/uy);
+    //printf("qtdobjl = %f\n", qtdobjl);
 
     // estimate the quantity of objects in RightDs in the inters window eqn (1)
     ux = er.MaxX - er.MinX;

@@ -41,7 +41,7 @@ typedef	struct {
 
 euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck); 
 
-euler_histogram *eh_generate_intermed(dataset *ds,euler_histogram *ehA,euler_histogram *ehB);
+euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *ehA,euler_histogram *ehB);
 double estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
         euler_edge *ehr_face, euler_edge *ehs_face);
 double estimate_intersections_mp_edges_horz(Envelope el, Envelope er, Envelope inters,
