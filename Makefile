@@ -1,5 +1,6 @@
 
 INCLUDES= \
+	-D_GNU_SOURCE \
 	-DHAVE_ISNAN=1 \
 	-I/opt/local/include \
 	-I/usr/include/gdal \

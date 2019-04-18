@@ -14,6 +14,19 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
 
     double intersection = 1;
 
+    //arquivo txt
+    FILE *valores;
+    valores = fopen("../valores.txt","w");
+
+    if(valores == NULL){
+      printf("Erro na abertura do arquivo!");
+      return 1;
+    }
+
+    fprintf(valores, "%s", "linha\tcoluna\tfaceA\tfaceIntermed");
+    fprintf(valores, "%s", "\tarestaVertA\tarestaVertInter\tarestaHorzA\tarestaHorzIntermed\tvertA\tvertIntermed\n");
+
+
     //gerando um novo histograma
 	euler_histogram *ehIntermed = g_new(euler_histogram, 1);
 
@@ -123,6 +136,9 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
         er.MinX = ehA->xtics[xr];
         er.MaxX = ehA->xtics[xr+1];
 
+        //valores de llinha
+        fprintf(valores,"%d",xr);
+
         for(int yr = ydr_start; yr < ydr_end; yr++) {
 
             while(yds_atu < ehB->yqtd && ehB->ytics[yds_atu+1] < ehA->ytics[yr]) // skip when end of s < start of r
@@ -135,6 +151,13 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
             er.MaxY = ehA->ytics[yr+1];
             double erarea = ENVELOPE_AREA(er);
 
+            euler_face *ehA_face = &ehA->faces[xr*ehA->yqtd +yr];
+            euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
+
+            //valores coluna
+            fprintf(valores,"\t%d",yr);
+
+            //laço histograma B
             for(int xs = xds_atu; xs < xds_end; xs++) {
                 es.MinX = ehB->xtics[xs];
                 es.MaxX = ehB->xtics[xs+1];
@@ -148,8 +171,7 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
                     char i = ENVELOPE_INTERSECTS(er, es);
                     assert(i != 0);
 
-                    euler_face *ehr_face = &ehA->faces[xr*ehA->yqtd +yr];
-                    euler_face *ehs_face = &ehB->faces[xs*ehB->yqtd +ys];
+                    euler_face *ehB_face = &ehB->faces[xs*ehB->yqtd +ys];
                     Envelope inters = EnvelopeIntersection2(er, es);
                     double int_area = ENVELOPE_AREA(inters);
 
@@ -158,22 +180,24 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
 
                     double intersections = 0;
                     double p = 1;
-                    if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
-                        intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
+                    if(ehA_face->cardin >= 1 || ehB_face->cardin >= 1){
+                        intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
 
-                        if(intersections != 0)
+                        if(intersections > 0)
                         cont++;
 
-                        if(intersections< 1.0)
-                            intersections = 0;
+                        //if(intersections< 1.0)
+                          //  intersections = 0;
 
                     }
                     result +=  intersections;
                     estimated_result += intersections;
 
-                    euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
+                    //preenche o valor da face do histograma intermediario
                     ehI_face->cardin += intersections;
                     printf("valor face %lf \n",ehI_face->cardin);
+
+
 
 
                     //vertice
@@ -185,6 +209,16 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
                         estimated_result += ehA->vertexes[vr].cardin * ehB->vertexes[vs].cardin;
                     }
 
+                    //calculo vertices
+                    double objVertFace = 0;
+                    if(ehA_face->cardin > 0)
+                    	objVertFace = ehA->vertexes[vr].cardin / ehA_face->cardin;
+
+                    //multiplicando a qtd intersecao com objetos que ultrapassam
+                    ehIntermed->vertexes[vr].cardin  = objVertFace * ehI_face->cardin;
+                    printf("valor vertices %lf \n",ehIntermed->vertexes[vr].cardin );
+
+                    /*
                     //aresta horizontal
                     int ar = GET_HORZ_EDGE_EHR(xr, yr);
                     int as = GET_HORZ_EDGE_EHS(xs, ys);
@@ -196,11 +230,12 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
                         double p = MIN(1, ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection);
 
                         double cardin_ar = ehA->edges[ar].cardin;
-                        double cardin_as = ehA->edges[as].cardin;
+                        double cardin_as = ehB->edges[as].cardin;
                         result -=  cardin_ar * cardin_as * p;
                         estimated_result -=  cardin_ar * cardin_as * p;
                         //result -= estimate_intersections_mp_edges_horz(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
 
+                        /*
                         //media dos objetos do hist A
                         double avgObjA = ehA->edges[ar].avg_projection;
                         //printf("media obj A = %lf \n", avgObjA );
@@ -227,6 +262,61 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
                     }
 
 
+
+                    /*
+
+                    //aresta vertical com horizontal
+                    ar = GET_HORZ_EDGE_EHR(xr, yr);
+                    as = GET_VERT_EDGE_EHS(xs,ys);
+                    if(ENVELOPE_INTERSECTS(ehA->edges[ar].mbr, ehB->edges[as].mbr)){
+                    	Envelope inters = EnvelopeIntersection2(ehA->edges[ar].mbr, ehB->edges[as].mbr);
+                    	double int_length = inters.MaxX - inters.MinX;
+
+
+                    	//intersetion edge horz with vert
+                    	double p = MIN(1, ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection);
+
+                    	double cardin_ar = ehA->edges[ar].cardin;
+                    	double cardin_as = ehB->edges[as].cardin;
+
+                    	ehIntermed->edges[ar].cardin += p * cardin_ar * cardin_as;
+                    	//ehIntermed->edges[ar].cardin += 1;
+
+                       // printf("valor aresta horz/vert = %f \n", p * cardin_ar * cardin_as );
+
+
+/*
+                    	//cardinalidade da juncao espacial A com B
+                    	double cardinJS;
+                    	cardinJS += cardin_ar * cardin_as * MIN(1, (( ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection )  / ehA->xsize ) )  * MIN(1, (( ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection )  / ehB->xsize ) );
+                    	//cardinJS += p * cardin_ar * cardin_as * MIN(1, (( ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection )  / ehA->xsize ) )  * MIN(1, (( ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection )  / ehB->xsize ) );
+                    	ehIntermed->edges[ar].cardin += cardinJS;
+
+                    }
+
+
+                    ar = GET_VERT_EDGE_EHR(xr, yr);
+                    as = GET_HORZ_EDGE_EHS(xs,ys);
+                    if(ENVELOPE_INTERSECTS(ehA->edges[ar].mbr, ehB->edges[as].mbr)){
+                    	Envelope inters = EnvelopeIntersection2(ehA->edges[ar].mbr, ehB->edges[as].mbr);
+                    	double int_length = inters.MaxX - inters.MinX;
+
+                    	//intersetion edge vert with horz
+                    	double p = MIN(1, ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection);
+
+                    	double cardin_ar = ehA->edges[ar].cardin;
+                    	double cardin_as = ehB->edges[as].cardin;
+
+                    	ehIntermed->edges[ar].cardin += p * cardin_ar * cardin_as;
+                    	//ehIntermed->edges[ar].cardin += 1;
+
+                    	// printf("valor aresta vert/horz = %f \n", p * cardin_ar * cardin_as );
+
+                    }
+*/
+/*
+
+                    //aresta vertical
                     ar = GET_VERT_EDGE_EHR(xr, yr);
                     as = GET_VERT_EDGE_EHS(xs,ys);
                     if (ENVELOPE_INTERSECTS(ehA->edges[ar].mbr, ehB->edges[as].mbr)){
@@ -239,11 +329,11 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
                         //printf(" edge p = %f\n", ehA->edges[ar].avg_projection + ehB->edges[as].avg_projection);
 
                         double cardin_ar = ehA->edges[ar].cardin;
-                        double cardin_as = ehA->edges[as].cardin;
+                        double cardin_as = ehB->edges[as].cardin;
                         result -=  cardin_ar * cardin_as * p;
                         estimated_result -=  cardin_ar * cardin_as * p;
                         //result -= estimate_intersections_mp_edges_vert(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
-                    }
+                    }*/
                         //double real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
                         double real_cardin = 1;
                         int error = abs(estimated_result - real_cardin);
@@ -258,13 +348,54 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
 
                 }
             }
+
+            //calculo arestas
+            int ahA = GET_HORZ_EDGE_EHR(xr, yr);
+            int avA = GET_VERT_EDGE_EHR(xr, yr);
+
+            //objetos que ultrapassam a face e na aresta horizontal
+            double objEdgeHorzFace = 0;
+            if(ehA_face->cardin > 0)
+            	objEdgeHorzFace = ehA->edges[ahA].cardin / ehA_face->cardin;
+
+            //multiplicando a qtd intersecao com objetos que ultrapassam
+            ehIntermed->edges[ahA].cardin = objEdgeHorzFace * ehI_face->cardin;
+            printf("valor aresta hori %lf \n",ehIntermed->edges[ahA].cardin);
+
+            //objetos que ultrapassam a face e na aresta vertical
+            double objEdgeVertFace = 0;
+            if(ehA_face->cardin > 0)
+            	objEdgeVertFace = ehA->edges[avA].cardin / ehA_face->cardin;
+
+            //multiplicando a qtd intersecao com objetos que ultrapassam
+            ehIntermed->edges[avA].cardin = objEdgeVertFace * ehI_face->cardin;
+            printf("valor aresta vert %lf \n\n",ehIntermed->edges[avA].cardin);
+
+
+            fprintf(valores,"\t%lf",ehA_face->cardin);
+            fprintf(valores,"\t%lf",ehI_face->cardin);
+            fprintf(valores,"\t%lf",ehA->edges[avA].cardin);
+            fprintf(valores,"\t%lf",ehIntermed->edges[avA].cardin);
+            fprintf(valores,"\t%lf",ehA->edges[ahA].cardin);
+            fprintf(valores,"\t%lf",ehIntermed->edges[ahA].cardin);
+
+            int vr = xr * (ehA->yqtd+1) + yr;
+            fprintf(valores,"\t%lf",ehA->vertexes[vr].cardin);
+            fprintf(valores,"\t%lf",ehIntermed->vertexes[vr].cardin);
+            fprintf(valores,"%s","\n");
+
+
         }
 
 
     }
 
+
     printf("cont = %d" , cont);
     printf("result = %f ", result);
+
+
+    //
 
 	/*
 	//verificar valores intersecao
@@ -369,6 +500,8 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
 
         }
     } */
+
+    fclose(valores);
 
 
     return ehIntermed;
