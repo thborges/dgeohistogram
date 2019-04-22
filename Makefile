@@ -10,16 +10,23 @@ LIBS= \
 	-L/opt/local/lib \
 	-L/usr/lib
 
-DEBUG=-Wall -ggdb -O0
-#DEBUG=-O2
+WARNS=-Wno-missing-braces \
+      -Wno-unused-variable \
+
+DEBUG=$(WARNS) -Wall -ggdb -O0
+#DEBUG=$(WARNS) -O2
 
 DEPEND_CPP=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
-DEPEND_C=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(wildcard *.c)) 
+DEPEND_C_MAIN=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(wildcard *.c))
+DEPEND_C=$(filter-out main.o join.o, $(DEPEND_C_MAIN))
 
-all: main
+all: main join
 
-main: $(DEPEND_CPP) $(DEPEND_C)
-	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) -o main $(LIBS) -lgdal -lgeos -lgeos_c
+main: $(DEPEND_CPP) $(DEPEND_C) main.o
+	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) main.o -o main $(LIBS) -lgdal -lgeos -lgeos_c
+
+join: $(DEPEND_CPP) $(DEPEND_C) join.o
+	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) join.o -o join $(LIBS) -lgdal -lgeos -lgeos_c
 
 %.o: %.c
 	gcc -std=c11 $(DEBUG) $(INCLUDES) -c $< -o $@

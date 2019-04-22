@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <ogrext.h>
+#include <geosext.h>
 #include "dataset.h"
 #include "uthash.h"
 #include "wkbconvert.h"
@@ -671,5 +672,41 @@ GEOSGeometryH dataset_get_leaf_geo(dataset *dh, dataset_leaf *leaf) {
 	GEOSGeometryH geosg = convertOGRToGEOS(g);
 	OGR_F_Destroy(f);
 	return geosg;
+}
+
+void dataset_write_csv(dataset *dh, FILE *f) {
+/*	fprintf(f, "ID,WKT\n");
+
+	GEOSContextHandle_t geoscontext = initGEOS_r(geos_messages, geos_messages);
+        GEOSWKBWriter *writer = GEOSCreateWKBWritter(geoscontext);
+        void *iobuff = GEOSCreateWKBBuffer();
+
+	int id = 0;
+	dataset_iter feature;
+	dataset_foreach(feature, dh) {
+		dataset_leaf *lgeo = get_join_pair_leaf(feature.item, 0);
+		//char *wkt = GEOSGeomToWKT(lgeo->geo);
+		int wkb_size;
+		const char *wkb = GEOSGeomToWKB(writer, iobuff, lgeo->geo, &wkb_size);
+		fprintf(f, "\"%d\",\"", id);
+		for(int i = 0; i < wkb_size; i++)
+			fprintf(f, "%x", wkb[i]);
+		fprintf(f, "\"\n");
+		id++;
+	}
+
+	GEOSDestroyWKBWritter(writer, iobuff);
+	finishGEOS_r(geoscontext); */
+
+	fprintf(f, "\"ID\",\"WKT\"\n");
+	int id = 0;
+	dataset_iter feature;
+	dataset_foreach(feature, dh) {
+		dataset_leaf *lgeo = get_join_pair_leaf(feature.item, 0);
+		char *wkt = GEOSGeomToWKT(lgeo->geo);
+		fprintf(f, "\"%d\",\"%s\"\n", id, wkt);
+		free(wkt);
+		id++;
+	}
 }
 

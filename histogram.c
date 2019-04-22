@@ -897,7 +897,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
                     printf("rcell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xr, yr, rcell->cardin, rcell->avgheight, rcell->avgwidth);
                     printf("scell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xs, ys, scell->cardin, scell->avgheight, scell->avgwidth);
 
-                    double intersections;
+                    double intersections = 0;
                     if (rcell->cardin >= 1 || scell->cardin >= 1) {
                         intersections = estimate_intersections_mamoulis_papadias_grade(er, es, inters, rcell, scell);
                         if (intersections < 1.0)
@@ -908,7 +908,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
                     double estimated = intersections;
                     //double real = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
                     double real = 1;
-                    int error = abs(estimated - real);
+                    int error = fabs(estimated - real);
                     double delta = error - mean;
 
                     assert(!isnan(delta));

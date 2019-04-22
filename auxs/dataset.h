@@ -169,6 +169,8 @@ void             dataset_release_iter(dataset_iter_seg *i);
 
 GEOSGeometryH    dataset_get_leaf_geo(dataset *dh, dataset_leaf *leaf);
 
+void             dataset_write_csv(dataset *dh, FILE *f);
+
 #define	dataset_foreach(var, dataset) dataset_foreach_seg(var, dataset, dataset_get_seg(dataset, 0))
 
 #define	dataset_foreach_seg(var, dh, segment)		\
