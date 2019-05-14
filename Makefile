@@ -18,15 +18,19 @@ DEBUG=$(WARNS) -Wall -ggdb -O0
 
 DEPEND_CPP=$(patsubst %.cpp,%.o,$(wildcard auxs/*.cpp)) $(patsubst %.cpp,%.o,$(wildcard *.cpp)) 
 DEPEND_C_MAIN=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o,$(wildcard *.c))
-DEPEND_C=$(filter-out main.o join.o, $(DEPEND_C_MAIN))
+DEPEND_C=$(filter-out main.o join.o histComp.o, $(DEPEND_C_MAIN))
 
-all: main join
+all: main join histComp
 
 main: $(DEPEND_CPP) $(DEPEND_C) main.o
 	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) main.o -o main $(LIBS) -lgdal -lgeos -lgeos_c
 
 join: $(DEPEND_CPP) $(DEPEND_C) join.o
 	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) join.o -o join $(LIBS) -lgdal -lgeos -lgeos_c
+
+histComp: $(DEPEND_CPP) $(DEPEND_C) histComp.o
+	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) histComp.o -o histComp $(LIBS) -lgdal -lgeos -lgeos_c
+
 
 %.o: %.c
 	gcc -std=c11 $(DEBUG) $(INCLUDES) -c $< -o $@

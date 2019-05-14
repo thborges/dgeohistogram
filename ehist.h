@@ -39,9 +39,13 @@ typedef	struct {
 	euler_vertex *vertexes;
 } euler_histogram;
 
-euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck); 
+euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck);
+
+euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *ehA,enum JoinPredicateCheck pcheck);
 
 euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *ehA,euler_histogram *ehB);
+euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc,euler_histogram *ehA,euler_histogram *ehB,euler_histogram *ehC);
+
 double estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
         euler_edge *ehr_face, euler_edge *ehs_face);
 double estimate_intersections_mp_edges_horz(Envelope el, Envelope er, Envelope inters,

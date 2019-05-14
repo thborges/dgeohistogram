@@ -29,7 +29,6 @@ enum HistogramType {
 };
 
 int main(int argc, char* argv[]) {
-
 	//srand(time(NULL));
 
 	OGRRegisterAll();
@@ -59,7 +58,7 @@ int main(int argc, char* argv[]) {
 	int xqtd = 0, yqtd = 0;
 
 
-    	if (strcmp(argv[argatu], "fix") == 0) {
+    if (strcmp(argv[argatu], "fix") == 0) {
 		sm = HSPLIT_FIX;
 		argatu++;
 		xqtd = atoi(argv[argatu++]);

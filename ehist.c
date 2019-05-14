@@ -10,7 +10,6 @@
 #define GET_VERT_EDGE_EHS(x, y) ((x == ehs->xqtd) ? (x * (2*ehs->yqtd+1) + y) : (x * (2*ehs->yqtd+1) + 2*y + 1))
 #define GET_HORZ_EDGE_EHS(x, y) (x * (2*ehs->yqtd+1) + 2*y)
 
-
 void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psizex, double psizey) {
     assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
     eh->xqtd = xqtd;
@@ -157,6 +156,73 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
     }
 }
 
+euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,enum JoinPredicateCheck pcheck) {
+
+    //gerando um novo histograma
+	euler_histogram *eh_real = g_new(euler_histogram, 1);
+
+	eh_real->mbr = ds->metadata.hist.mbr;
+
+    //escolher hist A ou B para copia
+	eh_real->xqtd = eh->xqtd;
+	eh_real->yqtd = eh->yqtd;
+	eh_real->xtics = g_new(double, eh->xqtd+1);
+	eh_real->ytics = g_new(double, eh->yqtd+1);
+	eh_real->faces = g_new0(euler_face, eh->xqtd * eh->yqtd);
+	eh_real->edges = g_new0(euler_edge, ((eh->xqtd+1) * eh->yqtd) + ((eh->yqtd+1) * eh->xqtd));
+	eh_real->vertexes = g_new0(euler_vertex, (eh->xqtd+1) * (eh->yqtd+1));
+
+	eh_real->xsize = eh->xsize;
+	eh_real->ysize = eh->ysize;
+	printf("Generating histogram real of size: %d x %d\n", eh_real->xqtd, eh_real->yqtd);
+
+	// X tics
+	for(int i = 0; i < eh->xqtd; i++)
+		eh_real->xtics[i] = eh->xtics[i];
+	eh_real->xtics[eh->xqtd] = eh->xtics[eh->xqtd];
+
+	// Y tics
+	for(int i = 0; i < eh->yqtd; i++)
+		eh_real->ytics[i] = eh->ytics[i];
+	eh_real->ytics[eh->yqtd] = eh->ytics[eh->yqtd];
+
+	//set edges and vertexes
+	int v = 0;
+	for(int i = 0; i <= eh_real->xqtd; i++) { // x
+		for(int j = 0; j <= eh_real->yqtd; j++) { // y
+
+			// set vetex at (i,j)
+			eh_real->vertexes[v].x = eh_real->xtics[i];
+			eh_real->vertexes[v].y = eh_real->ytics[j];
+			v++;
+
+			// horizontal edge at vertex v
+			if (i < eh_real->xqtd) {
+				int e = GET_HORZ_EDGE(i, j);
+				eh_real->edges[e].mbr.MinX = eh_real->xtics[i];
+				eh_real->edges[e].mbr.MaxX = eh_real->xtics[i+1];
+				eh_real->edges[e].mbr.MinY = eh_real->ytics[j];
+				eh_real->edges[e].mbr.MaxY = eh_real->ytics[j]+1e-10;
+			}
+
+
+			// vertical edge at vertex v
+			if (j < eh_real->yqtd) {
+				int e = GET_VERT_EDGE(i, j);
+				eh_real->edges[e].mbr.MinY = eh_real->ytics[j];
+				eh_real->edges[e].mbr.MaxY = eh_real->ytics[j+1];
+				eh_real->edges[e].mbr.MinX = eh_real->xtics[i];
+				eh_real->edges[e].mbr.MaxX = eh_real->xtics[i]+1e-10;
+			}
+		}
+	}
+
+    eh_hash_ds_objects(dsb, eh_real, pcheck);
+
+
+    return eh_real;
+}
+
 void eh_generate_hw(dataset *ds, euler_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck) {
 
     double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
@@ -188,6 +254,7 @@ void eh_generate_fix(dataset *ds, euler_histogram *eh, int fsizex, int fsizey, e
     eh_alloc(ds, eh, fsizex, fsizey, psizex, psizey);
     eh_hash_ds_objects(ds, eh, pcheck);
 };
+
 
 euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck) {
 
