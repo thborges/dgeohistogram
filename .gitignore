@@ -3,3 +3,4 @@ main
 *.swp
 *.geojson
 /Debug/
+tmp/*
