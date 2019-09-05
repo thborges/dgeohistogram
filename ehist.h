@@ -53,6 +53,10 @@ double estimate_intersections_mp_edges_horz(Envelope el, Envelope er, Envelope i
 double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelope inters,
 		euler_face *ehr_face, euler_face *ehs_face);
 
+double estimate_intersections_zu(Envelope el, Envelope er,
+Envelope inters, euler_face *ehl_face, euler_face *ehr_face,
+dataset_histogram *dh_l, dataset_histogram *dh_r);
+
 
 int euler_search_hist(euler_histogram *eh, Envelope query);
 void euler_print_hist(char *name, euler_histogram *eh);

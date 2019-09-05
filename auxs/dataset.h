@@ -102,6 +102,7 @@ typedef	struct {
 	double ysize;
 	double *xtics;
 	double *ytics;
+	//OGRwkbGeometryType geom_type;
 	histogram_cell *hcells;
 } dataset_histogram;
 

@@ -155,7 +155,7 @@ void write_to_shp(dataset *dh, char *name) {
 		printf( "Creation of output file failed.\n" );
 		exit( 1 );
 	}
-	hLayer = GDALDatasetCreateLayer( hDS, name, NULL, wkbPolygon, NULL );
+	hLayer = GDALDatasetCreateLayer( hDS, name, NULL, wkbLineString, NULL );
 	if( hLayer == NULL )
 	{
 		printf( "Layer creation failed.\n" );

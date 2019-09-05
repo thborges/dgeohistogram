@@ -154,6 +154,7 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 
 	results->temp_ogr_layer = layer;
 
+
 	clock_t cs = clock();
 
 	unsigned read = 0;
@@ -161,6 +162,8 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 	OGRGeometryH geometry;
 	while((feature = OGR_L_GetNextFeature(layer)) != NULL) {
 		geometry = OGR_F_GetGeometryRef(feature);
+
+
 		if (geometry != NULL) {
 			size_t wkb_size = OGR_G_WkbSize(geometry);
 			unsigned char* wkb = g_new(unsigned char, wkb_size);
@@ -174,6 +177,7 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 				dataset_fill_leaf_id(leaf, 0, -1, &mbr);
 				//leaf[0].points = OGRGetNumPoints(geometry);
 				leaf[0].geo = ggeo;
+
 			}
 		}
 		OGR_F_Destroy(feature);
