@@ -695,10 +695,10 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
                     double intersections = 0.0;
                     double p = 1;
-                    if(ehA_face->cardin > 0.0 || ehB_face->cardin > 0.0){
-                    	//intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
+                    if(ehA_face->cardin > 0.0 && ehB_face->cardin > 0.0){
+                    	intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
 
-                        intersections = estimate_intersections_zu(er, es, inters, ehA_face, ehB_face,ds,dsb);
+                        //intersections = estimate_intersections_zu(er, es, inters, ehA_face, ehB_face,ds,dsb);
                         //intersections *= int_area / ENVELOPE_AREA(es);
 
 
@@ -732,7 +732,7 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
                 }
             }
 
-
+            /*
             int vr = xr * (ehA->yqtd+1) + yr;
             //calculo vertices
             double objVertFace = 0;
@@ -767,13 +767,16 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
             //printf("valor aresta vert %lf \n\n",ehIntermed->edges[avA].cardin);
 
             result -= ehIntermed->edges[avA].cardin - ehIntermed->edges[ahA].cardin;
-
+			*/
 
 
         }
 
 
     }
+
+
+
 
     double sumFace = 0, sumEdgeVert = 0, sumEdgeHorz = 0,sumVert = 0, sumCardinReal = 0, sumCardinEstimada = 0;
     double sumFaceEstimadaErro = 0, sumEdgeVertEstimadaErro = 0, sumEdgeHorzEstimadaErro = 0,sumVertEstimadaErro= 0;
@@ -890,3 +893,5 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
     return ehIntermed;
 }
+
+

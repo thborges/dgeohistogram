@@ -22,11 +22,6 @@ extern "C" {
 #define SET_IN_PLACE(var, place) (var = var | 1<<(place-1))
 #define IS_IN_PLACE(var, place) (var & 1<<(place-1))
 
-#define AVGL_HISTO_SIZE 4
-// buckets equally divided
-#define AVGL_HISTO_DIV 3.999999
-#define AVGLENGTH_FIND_BUCKET(olength,dim_length) ((olength) / ((dim_length) / AVGL_HISTO_DIV))
-
 enum HistogramHashMethod { 
 	HHASH_MBRCENTER, 
 	HHASH_CENTROID, 
