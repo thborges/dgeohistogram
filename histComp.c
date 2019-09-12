@@ -170,6 +170,9 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 			OGR_G_ExportToWkb(geometry, (OGRwkbByteOrder)(htonl(1) == 1 ? 0 : 1), wkb);
 
 			GEOSGeometryH ggeo = GEOSGeomFromWKB_buf(wkb, wkb_size);
+			//criar campo de colocar tipo objeto
+			//erro de segmentação
+			//results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
 
 			if (ggeo) {
 				dataset_leaf *leaf = dataset_add(results);

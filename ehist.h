@@ -12,6 +12,7 @@ typedef struct {
     double avg_height;
     double avg_width;
     double avg_area;
+    double areasum;
 } euler_face;
 
 typedef struct {
@@ -55,7 +56,7 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
 
 double estimate_intersections_zu(Envelope el, Envelope er,
 Envelope inters, euler_face *ehl_face, euler_face *ehr_face,
-dataset_histogram *dh_l, dataset_histogram *dh_r);
+dataset *dh_l, dataset *dh_r);
 
 
 int euler_search_hist(euler_histogram *eh, Envelope query);

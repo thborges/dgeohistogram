@@ -503,6 +503,13 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
     double wx = inters.MaxX - inters.MinX;
     double wy = inters.MaxY - inters.MinY;
 
+    if(avgl_x == 0.0)
+    	printf("media x zerada \n");
+    if(avgl_y == 0.0)
+    	printf("media y zerada \n");
+    if(ehr_face->cardin == 0.0)
+    	printf("face zerada \n");
+
     double qtdobjl = ehr_face->cardin *
         MIN(1,(avgl_x+wx)/ux) *
         MIN(1,(avgl_y+wy)/uy);
@@ -1009,126 +1016,163 @@ int real_cardin_euler_histogram_cell(rtree_root* rtree_r, rtree_root* rtree_s, E
 
 double estimate_intersections_zu(Envelope el, Envelope er,
 Envelope inters, euler_face *ehl_face, euler_face *ehr_face,
-dataset_histogram *dh_l, dataset_histogram *dh_r) {
+dataset *dh_l, dataset *dh_r) {
 
 
-//if (!ENVELOPE_INTERSECTS(lcell->usedarea, rcell->usedarea))
-if(!ENVELOPE_INTERSECTS(el, er))
-	return 0;
+		//if (!ENVELOPE_INTERSECTS(lcell->usedarea, rcell->usedarea))
+		if(!ENVELOPE_INTERSECTS(el, er))
+			return 0;
 
-//Envelope w = EnvelopeIntersection2(el, er);
-double wx = inters.MaxX - inters.MinX;
-double wy = inters.MaxY - inters.MinY;
-
-
- //printf("%c",dh_r->metadata.memory_dataset);
+		//Envelope w = EnvelopeIntersection2(el, er);
+		double wx = inters.MaxX - inters.MinX;
+		double wy = inters.MaxY - inters.MinY;
 
 
-bool line_to_line = false;
-bool line_to_polygon = true;
-bool left_is_line = true;
+		 //printf("%c",dh_r->metadata.memory_dataset);
 
-/*if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
-        (dh_r->geom_type == wkbPolygon    || dh_r->geom_type == wkbMultiPolygon)) {
-		line_to_polygon = true;
-		left_is_line = true;
-}
-else if ((dh_r->geom_type == wkbLineString || dh_r->geom_type == wkbMultiLineString) &&
-        (dh_l->geom_type == wkbPolygon    || dh_l->geom_type == wkbMultiPolygon)) {
-		line_to_polygon = true;
-		left_is_line = false;
-}
-else if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
-(dh_r->geom_type == wkbLineString || dh_r->geom_type == wkbMultiLineString)) {
-	line_to_line = true;
-	left_is_line = true;
-}*/
 
-// estimate the quantity of objects in LeftDs inside inters window
-double ux_l = el.MaxX - el.MinX;
-double uy_l = el.MaxY - el.MinY;
-double avgl_x = ehl_face->avg_width;
-double avgl_y = ehl_face->avg_height;
+		bool line_to_line = false;
+		bool line_to_polygon = true;
+		bool left_is_line = false;
 
-// observing that objects generally doesn't overlap in both axis,
-// fix the probability of intersection in one of them
-double usx_l = el.MaxX - el.MinX;
-double usy_l = el.MaxY - el.MinY;
-if (avgl_x > avgl_y)
-	avgl_x = MIN(usx_l/(avgl_y*ehl_face->cardin/usy_l), avgl_x);
-else
-	avgl_y = MIN(usy_l/(avgl_x*ehl_face->cardin/usx_l), avgl_y);
+		/*if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
+				(dh_r->geom_type == wkbPolygon    || dh_r->geom_type == wkbMultiPolygon)) {
+				line_to_polygon = true;
+				left_is_line = true;
+		}
+		else if ((dh_r->geom_type == wkbLineString || dh_r->geom_type == wkbMultiLineString) &&
+				(dh_l->geom_type == wkbPolygon    || dh_l->geom_type == wkbMultiPolygon)) {
+				line_to_polygon = true;
+				left_is_line = false;
+		}
+		else if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
+		(dh_r->geom_type == wkbLineString || dh_r->geom_type == wkbMultiLineString)) {
+			line_to_line = true;
+			left_is_line = true;
+		}*/
 
-double qtdobjl = MAX(0.0, ehl_face->cardin) *
-		MIN(1.0,(avgl_x + wx)/usx_l) *
-		MIN(1.0,(avgl_y + wy)/usy_l);
+		// estimate the quantity of objects in LeftDs inside inters window
+		double ux_l = el.MaxX - el.MinX;
+		double uy_l = el.MaxY - el.MinY;
+		double avgl_x = ehl_face->avg_width;
+		double avgl_y = ehl_face->avg_height;
 
-// estimate the quantity of objects in RightDs inside inters window
-double ux_r = er.MaxX - er.MinX;
-double uy_r = er.MaxY - er.MinY;
-double avgr_x = ehr_face->avg_width;
-double avgr_y = ehr_face->avg_height;
+		// observing that objects generally doesn't overlap in both axis,
+		// fix the probability of intersection in one of them
+		double usx_l = el.MaxX - el.MinX;
+		double usy_l = el.MaxY - el.MinY;
 
-// observing that objects generally doesn't overlap in both axis,
-// fix the probability of intersection in one of them
-double usx_r = er.MaxX - er.MinX;
-double usy_r = er.MaxY - er.MinY;
-if (avgr_x > avgr_y)
-	avgr_x = MIN(usx_r/(avgr_y*ehr_face->cardin/usy_r), avgr_x);
-else
-	avgr_y = MIN(usy_r/(avgr_x*ehr_face->cardin/usx_r), avgr_y);
+/*
+		if(avgl_x == 0)
+			printf("avgl_x zerada antes\n");
+		if(avgl_y == 0)
+			printf("avgl_y zerada antes\n");*/
 
-double qtdobjr = MAX(0.0, ehr_face->cardin) *
-		MIN(1.0,(avgr_x + wx)/usx_r) *
-		MIN(1.0,(avgr_y + wy)/usy_r);
+		if (avgl_x > avgl_y)
+			avgl_x = MIN(usx_l/(avgl_y*ehl_face->cardin/usy_l), avgl_x);
+		else
+			avgl_y = MIN(usy_l/(avgl_x*ehl_face->cardin/usx_l), avgl_y);
+		/*
+		if(avgl_x == 0)
+			printf("avgl_x zerada depois\n");
+		if(avgl_y == 0)
+			printf("avgl_y zerada depois\n");
+		*/
+		double qtdobjl = MAX(0.0, ehl_face->cardin) *
+				MIN(1.0,(avgl_x + wx)/usx_l) *
+				MIN(1.0,(avgl_y + wy)/usy_l);
 
-// estimate join result cardinality
-double result = qtdobjl * qtdobjr *
-		MIN(1.0, (avgl_x + avgr_x)/wx) *
-		MIN(1.0, (avgl_y + avgr_y)/wy);
+		// estimate the quantity of objects in RightDs inside inters window
+		double ux_r = er.MaxX - er.MinX;
+		double uy_r = er.MaxY - er.MinY;
+		double avgr_x = ehr_face->avg_width;
+		double avgr_y = ehr_face->avg_height;
 
-double coef_area = 0;
-if (line_to_polygon) {
-	/* disabling this increases the estimation a litle bit for J1,J2
-	avgr_x = MIN(wx,avgr_x);
-	avgr_y = MIN(wy,avgr_y);
-	avgl_x = MIN(wx,avgl_x);
-	avgl_y = MIN(wy,avgl_y);*/
+		// observing that objects generally doesn't overlap in both axis,
+		// fix the probability of intersection in one of them
+		double usx_r = er.MaxX - er.MinX;
+		double usy_r = er.MaxY - er.MinY;
 
-	if (left_is_line) {
-			double d = ehr_face->avg_area/(ux_r*uy_r);
-			double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
-			double navgx = avgr_x * f;
-			double navgy = avgr_y * f;
-			result = qtdobjl * d * MAX(1.2,avgl_x / navgx) * MAX(1.2,avgl_y / navgy);
-			//printf("%lf\t",result);
-	} else {
-		double d = ehl_face->avg_area/(ux_l*uy_l);
-		double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
-		double navgx = avgl_x * f;
-		double navgy = avgl_y * f;
-		result = qtdobjr * d * MAX(1.2,avgr_x / navgx) * MAX(1.2,avgr_y / navgy);
-	}
-}
-else if (line_to_line) {
-	/*
-	The probability of two random line segments intersect in unit square = 1/3
-	The probability of four random points forms a convex quadrilateral 133/144
-	The overall probability then, 1/3 * 133/144 = 133/432 ~= 0.3078
-	Source: math.stackexchange.com/questions/134525
-	*/
+		//printf("avgr_y: %lf\n",avgr_y);
+		//printf("avgr_x: %lf\n",avgr_x);
 
-	double line_coef;
-	double margina = sqrt(pow(avgl_x,2) + pow(avgl_y,2));
-	double marginb = sqrt(pow(avgr_x,2) + pow(avgr_y,2));
-	if (margina < marginb)
-		line_coef = MIN(133.0/432.0, margina/marginb);
-	else
-		line_coef = MIN(133.0/432.0, marginb/margina);
-	result = qtdobjl * qtdobjr * line_coef *
-			MIN(1.0, (avgl_x + avgr_x)/wx) *
-			MIN(1.0, (avgl_y + avgr_y)/wy);
-}
+		if(avgr_x == 0)
+			printf("avgr_x zerada antes\n");
+		if(avgr_y == 0)
+			printf("avgr_y zerada antes\n");
 
-return result;
+		if (avgr_x > avgr_y)
+			avgr_x = MIN(usx_r/(avgr_y*ehr_face->cardin/usy_r), avgr_x);
+		else
+			avgr_y = MIN(usy_r/(avgr_x*ehr_face->cardin/usx_r), avgr_y);
+
+		/*if(avgr_x == 0)
+			printf("avgr_x zerada depois\n");
+		if(avgr_y == 0)
+			printf("avgr_y zerada depois\n\n");*/
+
+
+
+		double qtdobjr = MAX(0.0, ehr_face->cardin) *
+				MIN(1.0,(avgr_x + wx)/usx_r) *
+				MIN(1.0,(avgr_y + wy)/usy_r);
+
+		// estimate join result cardinality
+		double result = qtdobjl * qtdobjr *
+				MIN(1.0, (avgl_x + avgr_x)/wx) *
+				MIN(1.0, (avgl_y + avgr_y)/wy);
+
+		double coef_area = 0;
+		if (line_to_polygon) {
+			/* disabling this increases the estimation a litle bit for J1,J2
+			avgr_x = MIN(wx,avgr_x);
+			avgr_y = MIN(wy,avgr_y);
+			avgl_x = MIN(wx,avgl_x);
+			avgl_y = MIN(wy,avgl_y);*/
+
+			if (left_is_line) {
+					double d = ehr_face->avg_area/(ux_r*uy_r);
+					double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
+					//if(ehr_face->cardin == 0)
+						//printf("cardinalidade zerada \n");
+					//if(avgr_x*avgr_y == 0)
+						//printf("avgr_x*avgr_y zerada \n");
+					double navgx = avgr_x * f;
+					double navgy = avgr_y * f;
+					result = qtdobjl * d * MAX(1.0,avgl_x / navgx) * MAX(1.0,avgl_y / navgy);
+					//printf("%lf\t",result);
+			} else {
+				double d = ehl_face->avg_area/(ux_l*uy_l);
+				double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
+				//double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
+				//if(ehl_face->cardin == 0)
+					//printf("cardinalidade zerada \n");
+				//if(avgl_x*avgl_y == 0)
+					//printf("avgl_x*avgl_y zerada \n");
+				double navgx = avgl_x * f;
+				double navgy = avgl_y * f;
+				result = qtdobjr * d * MAX(1.0,avgr_x / navgx) * MAX(1.0,avgr_y / navgy);
+			}
+		}
+		else if (line_to_line) {
+			/*
+			The probability of two random line segments intersect in unit square = 1/3
+			The probability of four random points forms a convex quadrilateral 133/144
+			The overall probability then, 1/3 * 133/144 = 133/432 ~= 0.3078
+			Source: math.stackexchange.com/questions/134525
+			*/
+
+			double line_coef;
+			double margina = sqrt(pow(avgl_x,2) + pow(avgl_y,2));
+			double marginb = sqrt(pow(avgr_x,2) + pow(avgr_y,2));
+			if (margina < marginb)
+				line_coef = MIN(133.0/432.0, margina/marginb);
+			else
+				line_coef = MIN(133.0/432.0, marginb/margina);
+			result = qtdobjl * qtdobjr * line_coef *
+					MIN(1.0, (avgl_x + avgr_x)/wx) *
+					MIN(1.0, (avgl_y + avgr_y)/wy);
+		}
+
+		return result;
 }

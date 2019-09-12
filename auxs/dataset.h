@@ -26,6 +26,9 @@ extern "C" {
 enum JoinPredicateCheck { CHECKR, CHECKS };
 #define get_join_pair_leaf(ir, pcheck) pcheck == CHECKR ? &ir[0] : &ir[1]
 
+
+#define AVGLENGTH_FIND_BUCKET(olength,dim_length) ((olength) / ((dim_length) / AVGL_HISTO_DIV))
+
 typedef GEOSGeometry* GEOSGeometryH;
 
 struct leaf {
@@ -92,9 +95,16 @@ typedef struct {
 	unsigned place;
 	unsigned copies;
     int objcount;
+	float areasum;
+    //void *extra_data;
 } histogram_cell;
 
-typedef	struct {
+
+double OLD_AVG_LENGTH_X(histogram_cell *cell);
+double OLD_AVG_LENGTH_Y(histogram_cell *cell);
+
+
+typedef	struct dataset_histogram{
 	Envelope mbr;
 	int xqtd;
 	int yqtd;
@@ -103,6 +113,7 @@ typedef	struct {
 	double *xtics;
 	double *ytics;
 	//OGRwkbGeometryType geom_type;
+    //void *extra_data;
 	histogram_cell *hcells;
 } dataset_histogram;
 

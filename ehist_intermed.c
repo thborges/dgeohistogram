@@ -695,8 +695,8 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
                     double intersections = 0.0;
                     double p = 1;
-                    if(ehA_face->cardin >= 1 || ehB_face->cardin >= 1){
-                        //intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
+                    if(ehA_face->cardin > 0.0 || ehB_face->cardin > 0.0){
+                    	//intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
 
                         intersections = estimate_intersections_zu(er, es, inters, ehA_face, ehB_face,ds,dsb);
                         //intersections *= int_area / ENVELOPE_AREA(es);
@@ -715,17 +715,6 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
                     result +=  intersections;
                     estimated_result += intersections;
-
-
-
-                    //vertice
-                    int vr = xr * (ehA->yqtd+1) + yr;
-                    int vs = xs * (ehB->yqtd+1) + ys;
-
-                    //if(ehB->vertexes[vs].x == ehA->vertexes[vr].x && ehB->vertexes[vs].y == ehA->vertexes[vr].y ){
-                    //    result += ehA->vertexes[vr].cardin * ehB->vertexes[vs].cardin;
-                    //    estimated_result += ehA->vertexes[vr].cardin * ehB->vertexes[vs].cardin;
-                    //}
 
 
 					//double real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
