@@ -171,8 +171,8 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 			GEOSGeometryH ggeo = GEOSGeomFromWKB_buf(wkb, wkb_size);
 			//criar campo de colocar tipo objeto
 			//erro de segmentação
-			results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
-			printf("Geom type: %d\n", results->metadata.hist.geom_type);
+			//results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
+		//	printf("Geom type: %d\n", results->metadata.hist.geom_type);
 
 			if (ggeo) {
 				dataset_leaf *leaf = dataset_add(results);

@@ -812,9 +812,9 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
                     double intersections = 0.0;
                     double p = 1;
                     if(ehA_face->cardin > 0.0 && ehB_face->cardin > 0.0){
-                    	intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
+                    	//intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
 
-                        //intersections = estimate_intersections_zu(er, es, inters, ehA_face, ehB_face,ds,dsb);
+                        intersections = estimate_intersections_zu(er, es, inters, ehA_face, ehB_face,ds,dsb);
                         //intersections *= int_area / ENVELOPE_AREA(es);
 
 

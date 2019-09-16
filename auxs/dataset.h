@@ -102,7 +102,7 @@ typedef struct {
 
 typedef	struct dataset_histogram{
     //void *extra_data;
-	OGRwkbGeometryType geom_type;
+	//OGRwkbGeometryType geom_type;
 	Envelope mbr;
 	int xqtd;
 	int yqtd;

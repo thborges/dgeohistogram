@@ -114,7 +114,6 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                     continue;
                 Envelope ev2;
                 GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
-                GEOSGeom_destroy(clipped);
 
                 // face
                 if (x < eh->xqtd && y < eh->yqtd) {
@@ -138,6 +137,8 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                     }
 
                 }
+
+                GEOSGeom_destroy(clipped);
 
                 // vertex
                 int v = x * (eh->yqtd+1) + y;
@@ -932,7 +933,7 @@ dataset *dh_l, dataset *dh_r) {
 			avgl_y = MIN(wy,avgl_y);*/
 
 			if (left_is_line) {
-					double d = ehr_face->avg_area/(ux_r*uy_r);
+					double d = ehr_face->areasum/(ux_r*uy_r);
 					double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
 					//if(ehr_face->cardin == 0)
 						//printf("cardinalidade zerada \n");
@@ -943,7 +944,7 @@ dataset *dh_l, dataset *dh_r) {
 					result = qtdobjl * d * MAX(1.0,avgl_x / navgx) * MAX(1.0,avgl_y / navgy);
 					//printf("%lf\t",result);
 			} else {
-				double d = ehl_face->avg_area/(ux_l*uy_l);
+				double d = ehl_face->areasum/(ux_l*uy_l);
 				double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
 				//if(ehl_face->cardin == 0)
 					//printf("cardinalidade zerada \n");
