@@ -96,10 +96,13 @@ typedef struct {
     int objcount;
 	float areasum;
     //void *extra_data;
+	//OGRwkbGeometryType geom_type;
 } histogram_cell;
 
 
 typedef	struct dataset_histogram{
+    //void *extra_data;
+	OGRwkbGeometryType geom_type;
 	Envelope mbr;
 	int xqtd;
 	int yqtd;
@@ -107,8 +110,6 @@ typedef	struct dataset_histogram{
 	double ysize;
 	double *xtics;
 	double *ytics;
-	//OGRwkbGeometryType geom_type;
-    //void *extra_data;
 	histogram_cell *hcells;
 } dataset_histogram;
 

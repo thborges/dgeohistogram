@@ -84,6 +84,16 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
         if (xfim < eh->xqtd) xfim++;
         if (yfim < eh->yqtd) yfim++;
 
+    	int xspan = xfim - xini + 1;
+    	int yspan = yfim - yini + 1;
+        float areasum[xspan][yspan];
+
+        for(int xi = 0; xi < xspan; xi++) {
+        	for(int yi = 0; yi < yspan; yi++) {
+        		areasum[xi][yi] = 0;
+        	}
+        }
+
         for(int x = xini; x <= xfim; x++) {
             Envelope rs;
             rs.MinX = eh->xtics[x];
@@ -117,6 +127,13 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         face->avg_width += (delta_x - face->avg_width) / face->cardin;
                         face->avg_height += (delta_y - face->avg_height) / face->cardin;
                         face->avg_area += (area - face->avg_area) / face->cardin;
+
+                        double aux_area = 0;
+                        if (GEOSArea(clipped, &aux_area)) {
+                        	areasum[x][y] += aux_area;
+                        }
+
+                        face->areasum += areasum[x][y];
 
                     }
 
@@ -928,7 +945,6 @@ dataset *dh_l, dataset *dh_r) {
 			} else {
 				double d = ehl_face->avg_area/(ux_l*uy_l);
 				double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
-				//double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
 				//if(ehl_face->cardin == 0)
 					//printf("cardinalidade zerada \n");
 				//if(avgl_x*avgl_y == 0)

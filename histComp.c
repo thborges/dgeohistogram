@@ -154,7 +154,6 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 
 	results->temp_ogr_layer = layer;
 
-
 	clock_t cs = clock();
 
 	unsigned read = 0;
@@ -172,7 +171,8 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 			GEOSGeometryH ggeo = GEOSGeomFromWKB_buf(wkb, wkb_size);
 			//criar campo de colocar tipo objeto
 			//erro de segmentação
-			//results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
+			results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
+			printf("Geom type: %d\n", results->metadata.hist.geom_type);
 
 			if (ggeo) {
 				dataset_leaf *leaf = dataset_add(results);
@@ -182,6 +182,8 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 				leaf[0].geo = ggeo;
 
 			}
+
+
 		}
 		OGR_F_Destroy(feature);
 

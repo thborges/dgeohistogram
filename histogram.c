@@ -20,8 +20,6 @@ const char *HistogramHashMethodName[4]  = {
 
 void histogram_alloc(dataset_histogram *dh, int xqtd, int yqtd) {
     assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
-    euler_histogram *ghd = g_new0(euler_histogram, 1);
-    //dh->extra_data = ghd;
     dh->xqtd = xqtd;
     dh->yqtd = yqtd;
     dh->xtics = g_new(double, dh->xqtd+1);

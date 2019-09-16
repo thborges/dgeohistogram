@@ -508,6 +508,122 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
     return ehIntermed;
 }
 
+
+double returnPercent(euler_histogram *ehA, euler_histogram *ehIntermed, int xr, int yr){
+	double res = 0.0;
+
+	euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
+	euler_face *ehA_face = &ehA->faces[xr*ehA->yqtd +yr];
+
+	if(ehA_face->cardin > 0.0)
+		res = ehI_face->cardin / ehA_face->cardin;
+
+	return res;
+
+}
+
+void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed){
+
+
+	 for(int xr = 0; xr < ehIntermed->xqtd; xr++){
+
+	    for(int yr = 0; yr < ehIntermed->yqtd; yr++){
+	    	double perface = 0.0;
+	    	//calculo vertice
+	    	int vr = xr * (ehIntermed->yqtd+1) + yr;
+
+	    	//calculo arestas
+	    	int ahA = GET_HORZ_EDGE_EHR(xr, yr);
+	    	int avA = GET_VERT_EDGE_EHR(xr, yr);
+
+    		perface = returnPercent(ehA,ehIntermed,xr,yr);
+
+	    	//vertices com 1 face
+	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
+
+		    	ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
+	    		if(isnan(ehIntermed->vertexes[vr].cardin))
+		    		ehIntermed->vertexes[vr].cardin = 0.0;
+
+	    	}
+
+	    	//vertices com 2 faces na horizontal
+	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr != 0) || (yr != ehIntermed->yqtd-1) )   ){
+
+		    	perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+		    	ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
+	    		if(isnan(ehIntermed->vertexes[vr].cardin))
+		    		ehIntermed->vertexes[vr].cardin = 0.0;
+
+	    	}
+	    	//vertices com 2 faces na vertical
+	    	if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
+
+	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
+	    		ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
+	    		if(isnan(ehIntermed->vertexes[vr].cardin))
+		    		ehIntermed->vertexes[vr].cardin = 0.0;
+
+	    	}
+
+	    	//vértices com 4 face
+	    	if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) && ( (yr != 0) || (yr != ehIntermed->yqtd-1) )   ){
+
+	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
+	    		perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr-1);
+
+	    		ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 4);
+	    		if(isnan(ehIntermed->vertexes[vr].cardin))
+		    		ehIntermed->vertexes[vr].cardin = 0.0;
+
+	    	}
+
+	    	//arestas superior e infeiror
+	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) ){
+		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * perface;
+
+
+		    	//if(isnan(ehIntermed->edges[ahA].cardin))
+		    		//ehIntermed->edges[ahA].cardin = 0.0;
+	    	}
+
+			//arestas laterais
+			if(	( (yr == 0) || (yr == ehIntermed->yqtd-1) ) ){
+				ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * perface;
+		    	//if(isnan(ehIntermed->edges[avA].cardin))
+		    		//ehIntermed->edges[avA].cardin = 0.0;
+			}
+
+			//arestas com 2 faces na vertical
+			if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) ){
+
+				perface += returnPercent(ehA,ehIntermed,xr-1,yr);
+		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * (perface / 2);
+
+		    	if(isnan(ehIntermed->edges[ahA].cardin))
+		    		ehIntermed->edges[ahA].cardin = 0.0;
+
+			}
+
+			//arestas com 2 faces na horizontal
+			if(	( (yr != 0) || (yr != ehIntermed->yqtd-1) ) ){
+
+				perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+		    	ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * (perface / 2);
+
+		    	if(isnan(ehIntermed->edges[avA].cardin))
+		    		ehIntermed->edges[avA].cardin = 0.0;
+			}
+
+
+	    }
+	 }
+
+}
+
+
+
 euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc,euler_histogram *ehA,euler_histogram *ehB,euler_histogram *ehC) {
 
     double intersection = 1;
@@ -771,11 +887,10 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
 
         }
-
-
     }
 
 
+    insert_data_edge_vertice(ehA, ehIntermed);
 
 
     double sumFace = 0, sumEdgeVert = 0, sumEdgeHorz = 0,sumVert = 0, sumCardinReal = 0, sumCardinEstimada = 0;
