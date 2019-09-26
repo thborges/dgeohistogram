@@ -87,7 +87,6 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
     	int xspan = xfim - xini + 1;
     	int yspan = yfim - yini + 1;
         float areasum[xspan][yspan];
-
         for(int xi = 0; xi < xspan; xi++) {
         	for(int yi = 0; yi < yspan; yi++) {
         		areasum[xi][yi] = 0;
@@ -127,17 +126,22 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                         face->avg_height += (delta_y - face->avg_height) / face->cardin;
                         face->avg_area += (area - face->avg_area) / face->cardin;
 
-                        double aux_area = 0;
-                        if (GEOSArea(clipped, &aux_area)) {
-                        	areasum[x][y] += aux_area;
-                        }
-
-                        face->areasum += areasum[x][y];
-
+                        if (ev2.MinX <= ev2.MaxX) {
+							double aux_area = 0;
+							if (ds->geom_type == wkbPolygon || ds->geom_type == wkbMultiPolygon) {
+								//double aux_area = 0;
+								if (GEOSArea(clipped, &aux_area)) {
+									//printf("%d",aux_area);
+									//areasum[x][y] += aux_area;
+									face->areasum += aux_area;
+								}
+							}else{
+								face->areasum += aux_area;
+							}
+						}
                     }
 
                 }
-
                 GEOSGeom_destroy(clipped);
 
                 // vertex
@@ -830,14 +834,14 @@ dataset *dh_l, dataset *dh_r) {
 		double wy = inters.MaxY - inters.MinY;
 
 
-		 //printf("%c",dh_r->metadata.memory_dataset);
+		//printf("%d\t",dh_l->geom_type);
 
 
 		bool line_to_line = false;
-		bool line_to_polygon = true;
+		bool line_to_polygon = false;
 		bool left_is_line = false;
 
-		/*if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
+		if ((dh_l->geom_type == wkbLineString || dh_l->geom_type == wkbMultiLineString) &&
 				(dh_r->geom_type == wkbPolygon    || dh_r->geom_type == wkbMultiPolygon)) {
 				line_to_polygon = true;
 				left_is_line = true;
@@ -851,7 +855,7 @@ dataset *dh_l, dataset *dh_r) {
 		(dh_r->geom_type == wkbLineString || dh_r->geom_type == wkbMultiLineString)) {
 			line_to_line = true;
 			left_is_line = true;
-		}*/
+		}
 
 		// estimate the quantity of objects in LeftDs inside inters window
 		double ux_l = el.MaxX - el.MinX;
@@ -864,11 +868,11 @@ dataset *dh_l, dataset *dh_r) {
 		double usx_l = el.MaxX - el.MinX;
 		double usy_l = el.MaxY - el.MinY;
 
-/*
+
 		if(avgl_x == 0)
 			printf("avgl_x zerada antes\n");
 		if(avgl_y == 0)
-			printf("avgl_y zerada antes\n");*/
+			printf("avgl_y zerada antes\n");
 
 		if (avgl_x > avgl_y)
 			avgl_x = MIN(usx_l/(avgl_y*ehl_face->cardin/usy_l), avgl_x);
@@ -898,8 +902,9 @@ dataset *dh_l, dataset *dh_r) {
 		//printf("avgr_y: %lf\n",avgr_y);
 		//printf("avgr_x: %lf\n",avgr_x);
 
-		if(avgr_x == 0)
+		if(avgr_x == 0){
 			printf("avgr_x zerada antes\n");
+		}
 		if(avgr_y == 0)
 			printf("avgr_y zerada antes\n");
 
@@ -931,19 +936,22 @@ dataset *dh_l, dataset *dh_r) {
 			avgr_y = MIN(wy,avgr_y);
 			avgl_x = MIN(wx,avgl_x);
 			avgl_y = MIN(wy,avgl_y);*/
+			//printf("linha com poligono\t");
 
 			if (left_is_line) {
-					double d = ehr_face->areasum/(ux_r*uy_r);
-					double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
-					//if(ehr_face->cardin == 0)
-						//printf("cardinalidade zerada \n");
-					//if(avgr_x*avgr_y == 0)
-						//printf("avgr_x*avgr_y zerada \n");
-					double navgx = avgr_x * f;
-					double navgy = avgr_y * f;
-					result = qtdobjl * d * MAX(1.0,avgl_x / navgx) * MAX(1.0,avgl_y / navgy);
-					//printf("%lf\t",result);
+				//printf("linha esquerda\t");
+				double d = ehr_face->areasum/(ux_r*uy_r);
+				double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
+				//if(ehr_face->cardin == 0)
+					//printf("cardinalidade zerada \n");
+				//if(avgr_x*avgr_y == 0)
+					//printf("avgr_x*avgr_y zerada \n");
+				double navgx = avgr_x * f;
+				double navgy = avgr_y * f;
+				result = qtdobjl * d * MAX(1.0,avgl_x / navgx) * MAX(1.0,avgl_y / navgy);
+				//printf("%lf\t",result);
 			} else {
+				//printf("linha direita\t");
 				double d = ehl_face->areasum/(ux_l*uy_l);
 				double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
 				//if(ehl_face->cardin == 0)
@@ -956,6 +964,7 @@ dataset *dh_l, dataset *dh_r) {
 			}
 		}
 		else if (line_to_line) {
+			//printf("linha com linha\n");
 			/*
 			The probability of two random line segments intersect in unit square = 1/3
 			The probability of four random points forms a convex quadrilateral 133/144

@@ -102,7 +102,6 @@ typedef struct {
 
 typedef	struct dataset_histogram{
     //void *extra_data;
-	//OGRwkbGeometryType geom_type;
 	Envelope mbr;
 	int xqtd;
 	int yqtd;
@@ -130,6 +129,8 @@ typedef struct dataset_head_ {
 		int servers;
 		dataset_histogram hist;
 	} metadata;
+
+	OGRwkbGeometryType geom_type;
 
 	// temp data
 	OGRLayerH temp_ogr_layer;

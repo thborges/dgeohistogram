@@ -1,15 +1,7 @@
-/*
- * histogram.c
- *
- *  Created on: 09/08/2014
- *      Author: thborges
- */
-
 #include <float.h>
 #include "histogram.h"
 #include "rtree.h"
 #include "rtree-star.h"
-#include "ehist.h"
 
 const char *HistogramHashMethodName[4]  = {
     "mbrc",
@@ -49,7 +41,6 @@ inline __attribute__((always_inline))
         if (l->gid != -1) // free because of the call to dataset_get_leaf_geo
             GEOSGeom_destroy(geo);
     }
-
 
 inline __attribute__((always_inline))
     void fill_hist_cell_mbr_center(dataset_leaf *l, dataset *ds, dataset_histogram *dh) {
@@ -405,6 +396,7 @@ void divisao_com_2(int n, dataset_leaf *l, dataset *ds, dataset_histogram *dh, c
 }
 
 
+
 int fill_hist_cell_area_fraction_with_split(dataset_leaf *l, dataset *ds, dataset_histogram *dh, int split_method) {
 
     int xini = (l->mbr.MinX - dh->mbr.MinX) / dh->xsize;
@@ -628,8 +620,6 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
     dh->ytics[dh->yqtd] = ds->metadata.hist.mbr.MaxY;
 
     int splitted = 0;
-
-    double total_area,split_area = 0;
     dataset_iter di;
     double sum = 0;
     dataset_foreach(di, ds) {
@@ -651,7 +641,7 @@ void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enu
 
             case HHASH_AREAFRACSPLIT:
                 splitted += fill_hist_cell_area_fraction_with_split(l, ds, dh, split_method);
-            	break;
+                break;
 
             default:
                 printf("Histogram method not defined.\n");
@@ -900,7 +890,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
                     printf("rcell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xr, yr, rcell->cardin, rcell->avgheight, rcell->avgwidth);
                     printf("scell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xs, ys, scell->cardin, scell->avgheight, scell->avgwidth);
 
-                    double intersections = 0;
+                    double intersections;
                     if (rcell->cardin >= 1 || scell->cardin >= 1) {
                         intersections = estimate_intersections_mamoulis_papadias_grade(er, es, inters, rcell, scell);
                         if (intersections < 1.0)
@@ -911,7 +901,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
                     double estimated = intersections;
                     //double real = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
                     double real = 1;
-                    int error = fabs(estimated - real);
+                    int error = abs(estimated - real);
                     double delta = error - mean;
 
                     assert(!isnan(delta));

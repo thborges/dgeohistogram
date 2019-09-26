@@ -548,7 +548,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	    	}
 
 	    	//vertices com 2 faces na horizontal
-	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr != 0) || (yr != ehIntermed->yqtd-1) )   ){
+	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr > 0) || (yr < ehIntermed->yqtd-1) )   ){
 
 		    	perface += returnPercent(ehA,ehIntermed,xr,yr-1);
 		    	ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
@@ -557,7 +557,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 
 	    	}
 	    	//vertices com 2 faces na vertical
-	    	if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
+	    	if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
 
 	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
 	    		ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
@@ -567,7 +567,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	    	}
 
 	    	//vértices com 4 face
-	    	if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) && ( (yr != 0) || (yr != ehIntermed->yqtd-1) )   ){
+	    	if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) && ( (yr > 0) || (yr < ehIntermed->yqtd-1) )   ){
 
 	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
 	    		perface += returnPercent(ehA,ehIntermed,xr,yr-1);
@@ -583,20 +583,19 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) ){
 		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * perface;
 
-
-		    	//if(isnan(ehIntermed->edges[ahA].cardin))
-		    		//ehIntermed->edges[ahA].cardin = 0.0;
+		    	if(isnan(ehIntermed->edges[ahA].cardin))
+		    		ehIntermed->edges[ahA].cardin = 0.0;
 	    	}
 
 			//arestas laterais
 			if(	( (yr == 0) || (yr == ehIntermed->yqtd-1) ) ){
 				ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * perface;
-		    	//if(isnan(ehIntermed->edges[avA].cardin))
-		    		//ehIntermed->edges[avA].cardin = 0.0;
+		    	if(isnan(ehIntermed->edges[avA].cardin))
+		    		ehIntermed->edges[avA].cardin = 0.0;
 			}
 
 			//arestas com 2 faces na vertical
-			if(	( (xr != 0) || (xr != ehIntermed->xqtd-1) ) ){
+			if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) ){
 
 				perface += returnPercent(ehA,ehIntermed,xr-1,yr);
 		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * (perface / 2);
@@ -607,7 +606,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 			}
 
 			//arestas com 2 faces na horizontal
-			if(	( (yr != 0) || (yr != ehIntermed->yqtd-1) ) ){
+			if(	( (yr > 0) || (yr < ehIntermed->yqtd-1) ) ){
 
 				perface += returnPercent(ehA,ehIntermed,xr,yr-1);
 		    	ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * (perface / 2);

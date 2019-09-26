@@ -129,6 +129,8 @@ int main(int argc, char* argv[]) {
 	//escolhe dataset A ou para Intermediario
 	euler_print_hist("intermediario",ehIntermed);
 
+	printf("tipo objeto datasetA: %d datasetB: %d\n\n",dsA->geom_type,dsB->geom_type);
+
 
 	OGR_DS_Destroy(ogr_ds1);
 	OGR_DS_Destroy(ogr_ds2);
@@ -171,8 +173,12 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 			GEOSGeometryH ggeo = GEOSGeomFromWKB_buf(wkb, wkb_size);
 			//criar campo de colocar tipo objeto
 			//erro de segmentação
+
+
+			results->geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
+			//printf("Geom type: %d\n",	OGR_GT_Flatten(OGR_L_GetGeomType(layer)));
 			//results->metadata.hist.geom_type = OGR_GT_Flatten(OGR_L_GetGeomType(layer));
-		//	printf("Geom type: %d\n", results->metadata.hist.geom_type);
+			//printf("Geom type: %d\n", results->metadata.hist.geom_type);
 
 			if (ggeo) {
 				dataset_leaf *leaf = dataset_add(results);
