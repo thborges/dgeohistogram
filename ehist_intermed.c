@@ -508,6 +508,147 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
     return ehIntermed;
 }
 
+void salvaArquivo(euler_histogram *ehA, euler_histogram *ehIntermed, dataset *dsc, euler_histogram *ehC){
+
+
+    //arquivo txt
+    FILE *valores,*tabela;
+
+
+	char nome[200] = "../dados_tabela/values_";
+
+
+	strcat(nome,dsc->metadata.name);
+	strcat(nome,".tese.txt");
+
+
+    valores = fopen(nome,"w");
+    if(valores == NULL){
+      printf("Erro na abertura do arquivo!");
+    }
+
+    tabela = fopen("../dados_tabela/tabela","a");
+    if(tabela == NULL){
+      printf("Erro na abertura do arquivo!");
+    }
+
+    fprintf(valores, "%s", "linha\tcoluna\tfaceReal\tfaceIntermed");
+    fprintf(valores, "%s", "\tarestaVertReal\tarestaVertInter\tarestaHorzReal\tarestaHorzIntermed\tvertReal\tvertIntermed");
+    fprintf(valores, "%s", "\t\terroFace\terroArestaVert\terroArestaHorz\terroVert\t\tcardinReal\tcardinEstimado\n");
+
+    if(ftell(tabela) == 0)
+    	fprintf(tabela, "%s", "juncao\tcardTotal\tcardFace\tcardAresta\tcardVertice\n");
+
+    double sumFace = 0, sumEdgeVert = 0, sumEdgeHorz = 0,sumVert = 0, sumCardinReal = 0, sumCardinEstimada = 0;
+    double sumFaceEstimadaErro = 0, sumEdgeVertEstimadaErro = 0, sumEdgeHorzEstimadaErro = 0,sumVertEstimadaErro= 0;
+    double sumFaceEstimada = 0, sumEdgeVertEstimada = 0, sumEdgeHorzEstimada = 0,sumVertEstimada= 0;
+
+    for(int xr = 0; xr < ehA->xqtd; xr++){
+        //valores de llinha
+        fprintf(valores,"%d",xr);
+
+    	for(int yr = 0; yr < ehA->yqtd; yr++){
+            //valores coluna
+            fprintf(valores,"\t%d",yr);
+
+            euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
+            euler_face *ehReal_face = &ehC->faces[xr*ehC->yqtd +yr];
+
+            //calculo arestas
+            int ahA = GET_HORZ_EDGE_EHR(xr, yr);
+            int avA = GET_VERT_EDGE_EHR(xr, yr);
+
+
+    		fprintf(valores,"\t%lf",ehReal_face->cardin);
+			fprintf(valores,"\t%lf",ehI_face->cardin);
+			fprintf(valores,"\t%lf",ehC->edges[avA].cardin);
+			fprintf(valores,"\t%lf",ehIntermed->edges[avA].cardin);
+			fprintf(valores,"\t%lf",ehC->edges[ahA].cardin);
+			fprintf(valores,"\t%lf",ehIntermed->edges[ahA].cardin);
+
+			int vr = xr * (ehA->yqtd+1) + yr;
+			fprintf(valores,"\t%lf",ehC->vertexes[vr].cardin);
+			fprintf(valores,"\t%lf",ehIntermed->vertexes[vr].cardin);
+
+			double erroFace = fabs(ehReal_face->cardin - ehI_face->cardin);
+			fprintf(valores,"\t\t%lf",erroFace);
+			double erroEdgeVert = fabs(ehC->edges[avA].cardin- ehIntermed->edges[avA].cardin);
+			fprintf(valores,"\t%lf",erroEdgeVert);
+			double erroEdgeHorz = fabs(ehC->edges[ahA].cardin - ehIntermed->edges[ahA].cardin);
+			fprintf(valores,"\t%lf",erroEdgeHorz);
+			double erroVert = fabs(ehC->vertexes[vr].cardin - ehIntermed->vertexes[vr].cardin);
+			fprintf(valores,"\t%lf",erroVert);
+
+			double cardinReal = ehReal_face->cardin - (ehC->edges[avA].cardin + ehC->edges[ahA].cardin) + ehC->vertexes[vr].cardin;
+			fprintf(valores,"\t\t%lf",cardinReal);
+			double cardinEstimado = ehI_face->cardin - (ehIntermed->edges[avA].cardin + ehIntermed->edges[ahA].cardin) + ehIntermed->vertexes[vr].cardin;
+			fprintf(valores,"\t%lf",cardinEstimado);
+
+			sumFace += ehReal_face->cardin;
+			sumEdgeVert += ehC->edges[avA].cardin,
+			sumEdgeHorz += ehC->edges[ahA].cardin;
+			sumVert += ehC->vertexes[vr].cardin;
+
+			sumFaceEstimada += ehI_face->cardin;
+			sumEdgeVertEstimada += ehIntermed->edges[avA].cardin,
+			sumEdgeHorzEstimada += ehIntermed->edges[ahA].cardin;
+			sumVertEstimada += ehIntermed->vertexes[vr].cardin;
+
+			sumFaceEstimadaErro += erroFace;
+			sumEdgeVertEstimadaErro += erroEdgeVert,
+			sumEdgeHorzEstimadaErro += erroEdgeHorz;
+			sumVertEstimadaErro += erroVert;
+
+			sumCardinReal += cardinReal;
+			sumCardinEstimada += cardinEstimado;
+
+			fprintf(valores,"%s","\n");
+
+    	}
+    }
+
+    double erroTotalFace = 0,erroTotalEdgeVert = 0,erroTotalEdgeHorz = 0,erroTotalVertice = 0;
+    erroTotalFace = sumFaceEstimadaErro/sumFace;
+    erroTotalEdgeVert = sumEdgeVertEstimadaErro/sumEdgeVert;
+    erroTotalEdgeHorz = sumEdgeHorzEstimadaErro/sumEdgeHorz;
+    erroTotalVertice = sumVertEstimadaErro/sumVert;
+
+    fprintf(valores,"\n\n\t\t%lf",sumFace);
+    fprintf(valores,"\t%lf",sumFaceEstimada);
+    fprintf(valores,"\t%lf",sumEdgeVert);
+    fprintf(valores,"\t%lf",sumEdgeVertEstimada);
+    fprintf(valores,"\t%lf",sumEdgeHorz);
+    fprintf(valores,"\t%lf",sumEdgeHorzEstimada);
+    fprintf(valores,"\t%lf",sumVert);
+    fprintf(valores,"\t%lf",sumVertEstimada);
+    fprintf(valores,"\t\t%lf",erroTotalFace);
+    fprintf(valores,"\t%lf",erroTotalEdgeVert);
+    fprintf(valores,"\t%lf",erroTotalEdgeHorz);
+    fprintf(valores,"\t%lf",erroTotalVertice);
+    fprintf(valores,"\t\t%lf",sumCardinReal);
+    fprintf(valores,"\t%lf",sumCardinEstimada);
+	fprintf(valores,"%s","\n");
+
+    fprintf(valores,"\n\n\t\t%lf",sumFace);
+        fprintf(valores,"\t%lf",sumFaceEstimada);
+        fprintf(valores,"\t%lf",sumEdgeVert + sumEdgeHorz);
+        fprintf(valores,"\t%lf", (sumEdgeVertEstimada +sumEdgeHorzEstimada));
+        fprintf(valores,"\t%lf",sumVert);
+        fprintf(valores,"\t%lf",sumVertEstimada);
+        fprintf(valores,"\t\t%lf",erroTotalFace);
+        fprintf(valores,"\t%lf", ( (sumEdgeVertEstimadaErro + sumEdgeHorzEstimadaErro)/(sumEdgeVert +sumEdgeHorz ) ));
+        fprintf(valores,"\t%lf",erroTotalVertice);
+
+   fprintf(tabela,"\t%lf\t",sumCardinEstimada);
+   fprintf(tabela,"%lf\t",sumFaceEstimada);
+   fprintf(tabela,"%lf\t",sumEdgeVertEstimada +sumEdgeHorzEstimada);
+   fprintf(tabela,"%lf\n",sumVertEstimada);
+
+    fclose(valores);
+    fclose(tabela);
+
+}
+
 
 double returnPercent(euler_histogram *ehA, euler_histogram *ehIntermed, int xr, int yr){
 	double res = 0.0;
@@ -536,83 +677,109 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	    	int ahA = GET_HORZ_EDGE_EHR(xr, yr);
 	    	int avA = GET_VERT_EDGE_EHR(xr, yr);
 
-    		perface = returnPercent(ehA,ehIntermed,xr,yr);
+	    	//vertices lado esquerdo
+	    	//if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
+    		if(	xr == 0){
 
-	    	//vertices com 1 face
-	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
+    	    	//calculo porcentagem face
+        		perface = returnPercent(ehA,ehIntermed,xr,yr);
 
-		    	ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
-	    		if(isnan(ehIntermed->vertexes[vr].cardin))
-		    		ehIntermed->vertexes[vr].cardin = 0.0;
+    			//1 face
+    			if( yr == 0 ){
+        			//baixo
+    				ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
+    			}else if( yr == ehIntermed->yqtd-1 ){
+    				//cima
+    				perface = returnPercent(ehA,ehIntermed,xr,yr-1);
+    				ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
+    			}else if( yr < ehIntermed->yqtd-1 ){
+        		//2 faces
+					perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+					ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
 
-	    	}
-
-	    	//vertices com 2 faces na horizontal
-	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr > 0) || (yr < ehIntermed->yqtd-1) )   ){
-
-		    	perface += returnPercent(ehA,ehIntermed,xr,yr-1);
-		    	ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
-	    		if(isnan(ehIntermed->vertexes[vr].cardin))
-		    		ehIntermed->vertexes[vr].cardin = 0.0;
-
-	    	}
-	    	//vertices com 2 faces na vertical
-	    	if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
-
-	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
-	    		ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
-	    		if(isnan(ehIntermed->vertexes[vr].cardin))
-		    		ehIntermed->vertexes[vr].cardin = 0.0;
+				}
 
 	    	}
+
+    		//vertices lado direito
+			if(	xr == ehIntermed->xqtd-1){
+
+	    		perface = returnPercent(ehA,ehIntermed,xr-1,yr);
+				//1 face
+				if( yr == 0 ){
+					//baixo
+					ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
+				}else if( yr == ehIntermed->yqtd-1 ){
+					//cima
+					perface = returnPercent(ehA,ehIntermed,xr-1,yr-1);
+					ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * perface;
+				}else if( yr < ehIntermed->yqtd-1 ){
+				//2 faces
+					perface += returnPercent(ehA,ehIntermed,xr-1,yr-1);
+					ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 2);
+
+				}
+			}
 
 	    	//vértices com 4 face
-	    	if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) && ( (yr > 0) || (yr < ehIntermed->yqtd-1) )   ){
+	    	if(	( (xr > 0) && (xr < ehIntermed->xqtd-1) ) && ( (yr > 0) && (yr < ehIntermed->yqtd-1) )   ){
 
+		    	//calculo porcentagem face
+	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
 	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr);
 	    		perface += returnPercent(ehA,ehIntermed,xr,yr-1);
 	    		perface += returnPercent(ehA,ehIntermed,xr-1,yr-1);
 
 	    		ehIntermed->vertexes[vr].cardin  = ehA->vertexes[vr].cardin * (perface / 4);
-	    		if(isnan(ehIntermed->vertexes[vr].cardin))
-		    		ehIntermed->vertexes[vr].cardin = 0.0;
 
 	    	}
 
-	    	//arestas superior e infeiror
-	    	if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) ){
+	    	//arestas infeirores
+	    	if(	yr == 0 && xr < ehIntermed->xqtd-1){
+		    	//calculo porcentagem face
+	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
 		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * perface;
 
-		    	if(isnan(ehIntermed->edges[ahA].cardin))
-		    		ehIntermed->edges[ahA].cardin = 0.0;
 	    	}
+	    	//arestas superiores
+			if(	yr == ehIntermed->yqtd-1 && xr < ehIntermed->xqtd-1){
 
-			//arestas laterais
-			if(	( (yr == 0) || (yr == ehIntermed->yqtd-1) ) ){
-				ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * perface;
-		    	if(isnan(ehIntermed->edges[avA].cardin))
-		    		ehIntermed->edges[avA].cardin = 0.0;
+				perface = returnPercent(ehA,ehIntermed,xr,yr-1);
+				ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * perface;
+
 			}
 
-			//arestas com 2 faces na vertical
-			if(	( (xr > 0) || (xr < ehIntermed->xqtd-1) ) ){
+			//arestas esquerda
+			if(	xr == 0 && yr < ehIntermed->yqtd-1) {
+		    	//calculo porcentagem face
+	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
+				ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * perface;
 
-				perface += returnPercent(ehA,ehIntermed,xr-1,yr);
-		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * (perface / 2);
+			}
+			//aresta direita
+			if( xr == ehIntermed->xqtd-1 && yr < ehIntermed->yqtd-1){
 
-		    	if(isnan(ehIntermed->edges[ahA].cardin))
-		    		ehIntermed->edges[ahA].cardin = 0.0;
+				perface = returnPercent(ehA,ehIntermed,xr-1,yr);
+				ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * perface;
 
 			}
 
 			//arestas com 2 faces na horizontal
-			if(	( (yr > 0) || (yr < ehIntermed->yqtd-1) ) ){
-
-				perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+			if(	( (xr > 0) && (xr < ehIntermed->xqtd-1) ) ){
+		    	//calculo porcentagem face
+	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
+				perface += returnPercent(ehA,ehIntermed,xr-1,yr);
 		    	ehIntermed->edges[avA].cardin = ehA->edges[avA].cardin * (perface / 2);
 
-		    	if(isnan(ehIntermed->edges[avA].cardin))
-		    		ehIntermed->edges[avA].cardin = 0.0;
+			}
+
+			//arestas com 2 faces na vertical
+			if(	( (yr > 0) && (yr < ehIntermed->yqtd-1) ) ){
+		    	//calculo porcentagem face
+	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
+				perface += returnPercent(ehA,ehIntermed,xr,yr-1);
+		    	ehIntermed->edges[ahA].cardin = ehA->edges[ahA].cardin * (perface / 2);
+
 			}
 
 
@@ -627,38 +794,6 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
     double intersection = 1;
 
-    //arquivo txt
-    FILE *valores,*tabela;
-
-
-	char nome[200] = "../dados_tabela/values_";
-
-    if(ehA->xqtd == 30){
-		strcat(nome,dsc->metadata.name);
-		strcat(nome,"30.txt");
-    }else{
-		strcat(nome,dsc->metadata.name);
-		strcat(nome,".tese.txt");
-    }
-
-    valores = fopen(nome,"w");
-    if(valores == NULL){
-      printf("Erro na abertura do arquivo!");
-      return 1;
-    }
-
-    tabela = fopen("../dados_tabela/tabela","a");
-    if(tabela == NULL){
-      printf("Erro na abertura do arquivo!");
-      return 1;
-    }
-
-    fprintf(valores, "%s", "linha\tcoluna\tfaceReal\tfaceIntermed");
-    fprintf(valores, "%s", "\tarestaVertReal\tarestaVertInter\tarestaHorzReal\tarestaHorzIntermed\tvertReal\tvertIntermed");
-    fprintf(valores, "%s", "\t\terroFace\terroArestaVert\terroArestaHorz\terroVert\t\tcardinReal\tcardinEstimado\n");
-
-    if(ftell(tabela) == 0)
-    	fprintf(tabela, "%s", "juncao\tcardTotal\tcardFace\tcardAresta\tcardVertice\n");
     //gerando um novo histograma
 	euler_histogram *ehIntermed = g_new(euler_histogram, 1);
 
@@ -847,163 +982,16 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
                 }
             }
 
-            /*
-            int vr = xr * (ehA->yqtd+1) + yr;
-            //calculo vertices
-            double objVertFace = 0;
-            if(ehA_face->cardin > 0)
-            	objVertFace = ehA->vertexes[vr].cardin / ehA_face->cardin;
-
-            //multiplicando a qtd intersecao com objetos que ultrapassam
-            ehIntermed->vertexes[vr].cardin  = objVertFace * ehI_face->cardin;
-            //printf("valor vertices %lf \n",ehIntermed->vertexes[vr].cardin );
-            result +=  ehIntermed->vertexes[vr].cardin;
-
-            //calculo arestas
-            int ahA = GET_HORZ_EDGE_EHR(xr, yr);
-            int avA = GET_VERT_EDGE_EHR(xr, yr);
-
-            //objetos que ultrapassam a face e na aresta horizontal
-            double objEdgeHorzFace = 0.0;
-            if(ehA_face->cardin > 0.0)
-            	objEdgeHorzFace = ehA->edges[ahA].cardin / ehA_face->cardin;
-
-            //multiplicando a qtd intersecao com objetos que ultrapassam
-            ehIntermed->edges[ahA].cardin = objEdgeHorzFace * ehI_face->cardin;
-            //printf("valor aresta hori %lf \n",ehIntermed->edges[ahA].cardin);
-
-            //objetos que ultrapassam a face e na aresta vertical
-            double objEdgeVertFace = 0.0;
-            if(ehA_face->cardin > 0.0)
-            	objEdgeVertFace = ehA->edges[avA].cardin / ehA_face->cardin;
-
-            //multiplicando a qtd intersecao com objetos que ultrapassam
-            ehIntermed->edges[avA].cardin = objEdgeVertFace * ehI_face->cardin;
-            //printf("valor aresta vert %lf \n\n",ehIntermed->edges[avA].cardin);
-
-            result -= ehIntermed->edges[avA].cardin - ehIntermed->edges[ahA].cardin;
-			*/
-
-
         }
     }
 
 
     insert_data_edge_vertice(ehA, ehIntermed);
 
-
-    double sumFace = 0, sumEdgeVert = 0, sumEdgeHorz = 0,sumVert = 0, sumCardinReal = 0, sumCardinEstimada = 0;
-    double sumFaceEstimadaErro = 0, sumEdgeVertEstimadaErro = 0, sumEdgeHorzEstimadaErro = 0,sumVertEstimadaErro= 0;
-    double sumFaceEstimada = 0, sumEdgeVertEstimada = 0, sumEdgeHorzEstimada = 0,sumVertEstimada= 0;
-
-    for(int xr = 0; xr < ehA->xqtd; xr++){
-        //valores de llinha
-        fprintf(valores,"%d",xr);
-
-    	for(int yr = 0; yr < ehA->yqtd; yr++){
-            //valores coluna
-            fprintf(valores,"\t%d",yr);
-
-            euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
-            euler_face *ehReal_face = &ehC->faces[xr*ehC->yqtd +yr];
-
-            //calculo arestas
-            int ahA = GET_HORZ_EDGE_EHR(xr, yr);
-            int avA = GET_VERT_EDGE_EHR(xr, yr);
-
-
-    		fprintf(valores,"\t%lf",ehReal_face->cardin);
-			fprintf(valores,"\t%lf",ehI_face->cardin);
-			fprintf(valores,"\t%lf",ehC->edges[avA].cardin);
-			fprintf(valores,"\t%lf",ehIntermed->edges[avA].cardin);
-			fprintf(valores,"\t%lf",ehC->edges[ahA].cardin);
-			fprintf(valores,"\t%lf",ehIntermed->edges[ahA].cardin);
-
-			int vr = xr * (ehA->yqtd+1) + yr;
-			fprintf(valores,"\t%lf",ehC->vertexes[vr].cardin);
-			fprintf(valores,"\t%lf",ehIntermed->vertexes[vr].cardin);
-
-			double erroFace = fabs(ehReal_face->cardin - ehI_face->cardin);
-			fprintf(valores,"\t\t%lf",erroFace);
-			double erroEdgeVert = fabs(ehC->edges[avA].cardin- ehIntermed->edges[avA].cardin);
-			fprintf(valores,"\t%lf",erroEdgeVert);
-			double erroEdgeHorz = fabs(ehC->edges[ahA].cardin - ehIntermed->edges[ahA].cardin);
-			fprintf(valores,"\t%lf",erroEdgeHorz);
-			double erroVert = fabs(ehC->vertexes[vr].cardin - ehIntermed->vertexes[vr].cardin);
-			fprintf(valores,"\t%lf",erroVert);
-
-			double cardinReal = ehReal_face->cardin - (ehC->edges[avA].cardin + ehC->edges[ahA].cardin) + ehC->vertexes[vr].cardin;
-			fprintf(valores,"\t\t%lf",cardinReal);
-			double cardinEstimado = ehI_face->cardin - (ehIntermed->edges[avA].cardin + ehIntermed->edges[ahA].cardin) + ehIntermed->vertexes[vr].cardin;
-			fprintf(valores,"\t%lf",cardinEstimado);
-
-			sumFace += ehReal_face->cardin;
-			sumEdgeVert += ehC->edges[avA].cardin,
-			sumEdgeHorz += ehC->edges[ahA].cardin;
-			sumVert += ehC->vertexes[vr].cardin;
-
-			sumFaceEstimada += ehI_face->cardin;
-			sumEdgeVertEstimada += ehIntermed->edges[avA].cardin,
-			sumEdgeHorzEstimada += ehIntermed->edges[ahA].cardin;
-			sumVertEstimada += ehIntermed->vertexes[vr].cardin;
-
-			sumFaceEstimadaErro += erroFace;
-			sumEdgeVertEstimadaErro += erroEdgeVert,
-			sumEdgeHorzEstimadaErro += erroEdgeHorz;
-			sumVertEstimadaErro += erroVert;
-
-			sumCardinReal += cardinReal;
-			sumCardinEstimada += cardinEstimado;
-
-			fprintf(valores,"%s","\n");
-
-    	}
-    }
-
-    double erroTotalFace = 0,erroTotalEdgeVert = 0,erroTotalEdgeHorz = 0,erroTotalVertice = 0;
-    erroTotalFace = sumFaceEstimadaErro/sumFace;
-    erroTotalEdgeVert = sumEdgeVertEstimadaErro/sumEdgeVert;
-    erroTotalEdgeHorz = sumEdgeHorzEstimadaErro/sumEdgeHorz;
-    erroTotalVertice = sumVertEstimadaErro/sumVert;
-
-    fprintf(valores,"\n\n\t\t%lf",sumFace);
-    fprintf(valores,"\t%lf",sumFaceEstimada);
-    fprintf(valores,"\t%lf",sumEdgeVert);
-    fprintf(valores,"\t%lf",sumEdgeVertEstimada);
-    fprintf(valores,"\t%lf",sumEdgeHorz);
-    fprintf(valores,"\t%lf",sumEdgeHorzEstimada);
-    fprintf(valores,"\t%lf",sumVert);
-    fprintf(valores,"\t%lf",sumVertEstimada);
-    fprintf(valores,"\t\t%lf",erroTotalFace);
-    fprintf(valores,"\t%lf",erroTotalEdgeVert);
-    fprintf(valores,"\t%lf",erroTotalEdgeHorz);
-    fprintf(valores,"\t%lf",erroTotalVertice);
-    fprintf(valores,"\t\t%lf",sumCardinReal);
-    fprintf(valores,"\t%lf",sumCardinEstimada);
-	fprintf(valores,"%s","\n");
-
-    fprintf(valores,"\n\n\t\t%lf",sumFace);
-        fprintf(valores,"\t%lf",sumFaceEstimada);
-        fprintf(valores,"\t%lf",sumEdgeVert + sumEdgeHorz);
-        fprintf(valores,"\t%lf", (sumEdgeVertEstimada +sumEdgeHorzEstimada));
-        fprintf(valores,"\t%lf",sumVert);
-        fprintf(valores,"\t%lf",sumVertEstimada);
-        fprintf(valores,"\t\t%lf",erroTotalFace);
-        fprintf(valores,"\t%lf", ( (sumEdgeVertEstimadaErro + sumEdgeHorzEstimadaErro)/(sumEdgeVert +sumEdgeHorz ) ));
-        fprintf(valores,"\t%lf",erroTotalVertice);
-
-   fprintf(tabela,"\t%lf\t",sumCardinEstimada);
-   fprintf(tabela,"%lf\t",sumFaceEstimada);
-   fprintf(tabela,"%lf\t",sumEdgeVertEstimada +sumEdgeHorzEstimada);
-   fprintf(tabela,"%lf\n",sumVertEstimada);
+    salvaArquivo(ehA,ehIntermed,dsc,ehC);
 
     printf("cont = %d" , cont);
     printf("result = %f ", result);
-
-
-    fclose(valores);
-    fclose(tabela);
-
 
     return ehIntermed;
 }
