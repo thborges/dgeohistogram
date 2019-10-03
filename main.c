@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 	// create min skew histogram
 	GList *minskewh = NULL;
 	if (ht == HTMINSKEW) {
-		minskewh = minskew_generate_hist(ds, 300);
+		minskewh = minskew_generate_hist(ds, 500);
 		minskew_print_hist(ds, minskewh);
 	}
 

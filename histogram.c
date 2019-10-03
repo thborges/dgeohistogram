@@ -1059,7 +1059,8 @@ void histogram_print_geojson(dataset *ds) {
             fprintf(f, "[%.15lf, %.15lf]",  e.MinX, e.MinY);
             fprintf(f, "]]}, 'properties': {");
             fprintf(f, "\"name\": \"%d.%d\",", x, y);
-            fprintf(f, "\"card\": %f,", hist->hcells[x*hist->yqtd + y].cardin);
+            fprintf(f, "\"card_prop\": %f,", hist->hcells[x*hist->yqtd + y].cardin);
+            fprintf(f, "\"card\": %d,", hist->hcells[x*hist->yqtd + y].objcount);
             fprintf(f, "\"points\": %f,", hist->hcells[x*hist->yqtd + y].points);
             fprintf(f, "\"place\": %d,", hist->hcells[x*hist->yqtd + y].place);
             fprintf(f, "\"avgwidth\": %f,", hist->hcells[x*hist->yqtd + y].avgwidth);
