@@ -1,5 +1,7 @@
 *.o
 main
+join
+histComp
 *.swp
 *.geojson
 /Debug/
