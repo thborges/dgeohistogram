@@ -1,0 +1,94 @@
+int 			OGRRegisterAll	(	void		)													-> Registre todos os drivers.
+
+OGRDataSourceH 	OGROpen		(	const char * 	pszName ,	int 	bUpdate ,	OGRSFDriverH * 	pahDriverList	)	-> Abra um arquivo / fonte de dados com um dos drivers registrados.
+OGRLayerH 		OGR_DS_GetLayer	(	OGRDataSourceH 	hDS,int 	iLayer) 
+int 		OGR_G_GetGeometryCount	(	OGRGeometryH 	hGeom	) ->  						Busque o número de elementos em uma geometria ou número de geometrias no contêiner.	
+
+GIntBig 	OGR_L_GetFeatureCount (OGRLayerH hLayer, int bForce) -> Retorna o número de fetures da camada
+								   * Parâmetros:
+								   	*	hLayer	identificador para a camada que possuía os recursos.
+									*	bForce	Sinalizador indicando se a contagem deve ser calculada mesmo que seja cara.
+
+
+
+
+OGRFeatureDefnH		OGR_F_GetDefnRef		(	OGRFeatureH hFeat		)	-> Retorma um ponteitopara o objeto de definição de feature do qual a feature depende.
+OGRFeatureDefnH 		OGR_L_GetLayerDefn	(	OGRLayerH 	hLayer	)	-> Busque as informações do esquema para esta camada.
+
+const char *		OGR_L_GetFIDColumn	(	OGRLayerH 	hLayer	)	-> Este método retorna o nome da coluna do banco de dados subjacente que está sendo usada como a coluna.
+OGRwkbGeometryType 	OGR_L_GetGeomType		(	OGRLayerH 	hLayer	)	-> Retorne o tipo de geometria da camada.
+const char * 		OGR_L_GetName 	      (	OGRLayerH 	hLayer	)	-> Retorne o nome da camada.
+OGRFeatureH 		OGR_L_GetNextFeature	(	OGRLayerH 	hLayer	)	-> Busque a próxima feição disponível nessa camada.
+void				OGR_L_ResetReading	(	OGRLayerH 	hLayer	)	-> Redefina a leitura do recurso para iniciar no primeiro recurso.
+
+
+int 				     getFieldCount() const			-> Busque o número de campos nesse recurso. Será sempre o mesmo que a contagem de campos para o OGRFeatureDefn 
+
+
+int 			OGR_FD_GetFieldCount	(OGRFeatureDefnH		hDefn) -> retorna a quantidade de campos
+int 			OGR_FD_GetReferenceCount(	OGRFeatureDefnH 	hDefn	)				-> Buscar contagem de referência atual.
+OGRGeometryH	OGR_F_GetGeomFieldRef	(	OGRFeatureH 	hFeat , int 	iField )	-> Retorna um ponteiro para a geometria da feature(feição)
+OGRFieldDefnH	OGR_F_GetFieldDefnRef	(	OGRFeatureH 	hFeat , int 	iField )	-> Retorna um ponteiro para os campo i, iField, de uma feição. 0 < iField <GetFieldCount ().
+OGRFieldDefnH 	OGR_FD_GetFieldDefn	(	OGRFeatureDefnH 	hDefn , int 	iField )	-> Retorna um ponteiro para os campo i, iField, de uma feature ou layer. 0 < iField <GetFieldCount ().
+
+const char*		OGR_Fld_GetNameRef	(	OGRFieldDefnH 	hDefn	) 				-> Retorna o nome do campo.			
+
+
+const char *		OGR_FD_GetName	(	OGRFeatureDefnH 	hDefn	)				-> Obter o nome do OGRFeatureDefn passado como argumento.
+const char *		OGR_FD_GetName	(	OGRFeatureDefnHh	Defn	)				-> ********
+
+
+
+int 				OGR_G_Centroid	(	OGRGeometryH	hGeom , OGRGeometryH	hCentroidPoint	)	-> Calcule o centróide da geometria. Retorno: OGRERR_NONE com sucesso ou 																				   OGRERR_FAILURE com erro.
+
+
+
+
+
+
+
+CENTRÓIDE 
+
+A localização do centróide é aplicada ao objeto passado no OGRPoint . O centróide não está necessariamente dentro da geometria.
+
+Esse método está relacionado ao método SFCOM ISurface :: get_Centroid (), no entanto, a implementação atual baseada no GEOS pode operar em outros tipos de geometria, como multiponto, cadeia de linhas, coleção de geometria, como multipolígonos. OGC SF SQL 1.1 define a operação para superfícies (polígonos). SQL / MM-Part 3 define a operação para superfícies e superfícies múltiplas (multipolígonos).
+
+
+
+
+
+============================================================================ CLASSES ======================================================================================
+OGRLayerH
+ 	* Documentação: https://gdal.org/doxygen/classOGRLayer.html
+	
+	* Finatidade: Esta classe representa uma camada de mapeamento de um dataser, com seus métodos de acesso.
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
