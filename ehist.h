@@ -13,6 +13,7 @@ typedef struct {
     double avg_width;
     double avg_area;
     double areasum;
+    Envelope usedarea;
 } euler_face;
 
 typedef struct {

@@ -1,6 +1,8 @@
 
 #include "histogram.h"
 #include "ehist.h"
+#include <float.h>
+#include <math.h>
 
 #define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
 #define GET_HORZ_EDGE(x, y) (x * (2*eh->yqtd+1) + 2*y)
@@ -64,8 +66,20 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
                 eh->edges[e].mbr.MinX = eh->xtics[i];
                 eh->edges[e].mbr.MaxX = eh->xtics[i]+1e-10;
             }
+
+            //face
+            if(i < eh->xqtd && j < eh->yqtd){
+            	euler_face *face = &eh->faces[i*eh->yqtd +j];
+
+				face->usedarea.MinX = face->usedarea.MinY = DBL_MAX;
+				face->usedarea.MaxX = face->usedarea.MaxY = -DBL_MAX;
+
+            }
+
+
         }
     }
+
 }
 
 void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateCheck pcheck) {
@@ -75,6 +89,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
         dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
         Envelope ev = l->mbr; // pega mbr do objeto
         GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
+
 
         // descobrir a celula de que o objeto intercepta
         int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize; // descobrir a celula do objeto
@@ -86,12 +101,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 
     	int xspan = xfim - xini + 1;
     	int yspan = yfim - yini + 1;
-        float areasum[xspan][yspan];
-        for(int xi = 0; xi < xspan; xi++) {
-        	for(int yi = 0; yi < yspan; yi++) {
-        		areasum[xi][yi] = 0;
-        	}
-        }
+
 
         for(int x = xini; x <= xfim; x++) {
             Envelope rs;
@@ -109,67 +119,75 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                     rs.MaxY = rs.MinY + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
 
                 GEOSGeometryH clipped = GEOSClipByRect(geo, rs.MinX, rs.MinY, rs.MaxX, rs.MaxY);
-                if (clipped == NULL)
-                    continue;
-                Envelope ev2;
-                GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
+                if (clipped != NULL){
+					Envelope ev2;
+					GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
 
-                // face
-                if (x < eh->xqtd && y < eh->yqtd) {
-                    if (ENVELOPE_INTERSECTS(ev2, rs)) {
-                        euler_face *face = &eh->faces[x*eh->yqtd +y];
-                        face->cardin += 1;
-                        double delta_x = (ev2.MaxX - ev2.MinX);
-                        double delta_y = (ev2.MaxY - ev2.MinY);
-                        double area = delta_x * delta_y;
-                        face->avg_width += (delta_x - face->avg_width) / face->cardin;
-                        face->avg_height += (delta_y - face->avg_height) / face->cardin;
-                        face->avg_area += (area - face->avg_area) / face->cardin;
+					// face
+					if (x < eh->xqtd && y < eh->yqtd) {
+						if (ENVELOPE_INTERSECTS(ev2, rs)) {
+							euler_face *face = &eh->faces[x*eh->yqtd +y];
+							face->cardin += 1;
+							double delta_x = (ev2.MaxX - ev2.MinX);
+							double delta_y = (ev2.MaxY - ev2.MinY);
+							double area = delta_x * delta_y;
+							face->avg_width += (delta_x - face->avg_width) / face->cardin;
+							face->avg_height += (delta_y - face->avg_height) / face->cardin;
+							face->avg_area += (area - face->avg_area) / face->cardin;
 
-                        if (ev2.MinX <= ev2.MaxX) {
-							double aux_area = 0;
-							if (ds->geom_type == wkbPolygon || ds->geom_type == wkbMultiPolygon) {
-								//double aux_area = 0;
-								if (GEOSArea(clipped, &aux_area)) {
-									//printf("%d",aux_area);
-									//areasum[x][y] += aux_area;
+
+							envelope_update(&face->usedarea, ev2.MinX, ev2.MinY);
+							envelope_update(&face->usedarea, ev2.MaxX, ev2.MaxY);
+
+							if (ev2.MinX <= ev2.MaxX) {
+
+								double aux_area = 0;
+								if (ds->geom_type == wkbPolygon || ds->geom_type == wkbMultiPolygon) {
+									//double aux_area = 0;
+									if (GEOSArea(clipped, &aux_area)) {
+										//printf("%d",aux_area);
+										//areasum[x][y] += aux_area;
+										face->areasum += aux_area;
+									}
+								}else{
 									face->areasum += aux_area;
 								}
-							}else{
-								face->areasum += aux_area;
 							}
+
+
 						}
-                    }
 
-                }
-                GEOSGeom_destroy(clipped);
+					}
+					GEOSGeom_destroy(clipped);
 
-                // vertex
-                int v = x * (eh->yqtd+1) + y;
-                if (ENVELOPE_CONTAINSP(ev2, eh->vertexes[v].x, eh->vertexes[v].y))
-                    eh->vertexes[v].cardin += 1;
+					// vertex
+					int v = x * (eh->yqtd+1) + y;
+					if (ENVELOPE_CONTAINSP(ev2, eh->vertexes[v].x, eh->vertexes[v].y))
+						eh->vertexes[v].cardin += 1;
 
-                // horizontal edge
-                if (x < eh->xqtd) {
-                    int e = GET_HORZ_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
-                        double delta_x = ev2.MaxX - ev2.MinX;
-                        eh->edges[e].cardin += 1;
-                        double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
-                        eh->edges[e].avg_projection += (delta_x- eh->edges[e].avg_projection ) / eh->edges[e].cardin;
-                    }
-                    //eh->avg_projection +=
-                }
+					// horizontal edge
+					if (x < eh->xqtd) {
+						int e = GET_HORZ_EDGE(x, y);
+						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
+							double delta_x = ev2.MaxX - ev2.MinX;
+							eh->edges[e].cardin += 1;
+							double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
+							eh->edges[e].avg_projection += (delta_x- eh->edges[e].avg_projection ) / eh->edges[e].cardin;
+						}
+						//eh->avg_projection +=
+					}
 
-                // vertical edge
-                if (y < eh->yqtd) {
-                    int e = GET_VERT_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
-                        double delta_y = ev2.MaxY - ev2.MinY;
-                        eh->edges[e].cardin += 1;
-                        double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
-                        eh->edges[e].avg_projection += (delta_y - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
-                    }
+					// vertical edge
+					if (y < eh->yqtd) {
+						int e = GET_VERT_EDGE(x, y);
+						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
+							double delta_y = ev2.MaxY - ev2.MinY;
+							eh->edges[e].cardin += 1;
+							double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
+							eh->edges[e].avg_projection += (delta_y - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
+						}
+					}
+
                 }
             }
         }
@@ -177,6 +195,19 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
         if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
             GEOSGeom_destroy(geo);
     }
+
+    /*
+	for(int x = 0; x < eh->xqtd; x++) {
+		for(int y = 0; y < eh->yqtd; y++) {
+
+			euler_face *cell = &eh->faces[x*eh->yqtd +y];
+
+			if(cell->usedarea.MinX == 1.7976931348623157e+308)
+			printf("MinX = %f MaxX = %f MinY = %f MaxY = %f \n",cell->usedarea.MinX,cell->usedarea.MaxX,cell->usedarea.MinY,cell->usedarea.MaxY);
+		}
+	}*/
+
+
 }
 
 euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,enum JoinPredicateCheck pcheck) {
@@ -186,7 +217,7 @@ euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,
 
 	eh_real->mbr = ds->metadata.hist.mbr;
 
-    //escolher hist A ou B para copia
+    //escolher hist A ou B para copiar
 	eh_real->xqtd = eh->xqtd;
 	eh_real->yqtd = eh->yqtd;
 	eh_real->xtics = g_new(double, eh->xqtd+1);
@@ -237,8 +268,20 @@ euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,
 				eh_real->edges[e].mbr.MinX = eh_real->xtics[i];
 				eh_real->edges[e].mbr.MaxX = eh_real->xtics[i]+1e-10;
 			}
+
+
+            //face
+            if(i < eh->xqtd && j < eh_real->yqtd){
+            	euler_face *face = &eh_real->faces[i*eh_real->yqtd +j];
+
+				face->usedarea.MinX = face->usedarea.MinY = DBL_MAX;
+				face->usedarea.MaxX = face->usedarea.MaxY = -DBL_MAX;
+
+            }
+
 		}
 	}
+
 
     eh_hash_ds_objects(dsb, eh_real, pcheck);
 
@@ -825,16 +868,12 @@ Envelope inters, euler_face *ehl_face, euler_face *ehr_face,
 dataset *dh_l, dataset *dh_r) {
 
 
-		//if (!ENVELOPE_INTERSECTS(lcell->usedarea, rcell->usedarea))
-		if(!ENVELOPE_INTERSECTS(el, er))
+		if (!ENVELOPE_INTERSECTS(ehl_face->usedarea, ehr_face->usedarea))
 			return 0;
 
-		//Envelope w = EnvelopeIntersection2(el, er);
-		double wx = inters.MaxX - inters.MinX;
-		double wy = inters.MaxY - inters.MinY;
-
-
-		//printf("%d\t",dh_l->geom_type);
+		Envelope w = EnvelopeIntersection2(ehl_face->usedarea, ehr_face->usedarea);
+		double wx = w.MaxX - w.MinX;
+		double wy = w.MaxY - w.MinY;
 
 
 		bool line_to_line = false;
@@ -863,30 +902,23 @@ dataset *dh_l, dataset *dh_r) {
 		double avgl_x = ehl_face->avg_width;
 		double avgl_y = ehl_face->avg_height;
 
+
 		// observing that objects generally doesn't overlap in both axis,
 		// fix the probability of intersection in one of them
-		double usx_l = el.MaxX - el.MinX;
-		double usy_l = el.MaxY - el.MinY;
+		double usx_l = ehl_face->usedarea.MaxX - ehl_face->usedarea.MinX;
+		double usy_l = ehl_face->usedarea.MaxY - ehl_face->usedarea.MinY;
 
-
-		if(avgl_x == 0)
-			printf("avgl_x zerada antes\n");
-		if(avgl_y == 0)
-			printf("avgl_y zerada antes\n");
 
 		if (avgl_x > avgl_y)
 			avgl_x = MIN(usx_l/(avgl_y*ehl_face->cardin/usy_l), avgl_x);
 		else
 			avgl_y = MIN(usy_l/(avgl_x*ehl_face->cardin/usx_l), avgl_y);
-		/*
-		if(avgl_x == 0)
-			printf("avgl_x zerada depois\n");
-		if(avgl_y == 0)
-			printf("avgl_y zerada depois\n");
-		*/
+
+
 		double qtdobjl = MAX(0.0, ehl_face->cardin) *
 				MIN(1.0,(avgl_x + wx)/usx_l) *
 				MIN(1.0,(avgl_y + wy)/usy_l);
+
 
 		// estimate the quantity of objects in RightDs inside inters window
 		double ux_r = er.MaxX - er.MinX;
@@ -894,40 +926,30 @@ dataset *dh_l, dataset *dh_r) {
 		double avgr_x = ehr_face->avg_width;
 		double avgr_y = ehr_face->avg_height;
 
+
 		// observing that objects generally doesn't overlap in both axis,
 		// fix the probability of intersection in one of them
-		double usx_r = er.MaxX - er.MinX;
-		double usy_r = er.MaxY - er.MinY;
-
-		//printf("avgr_y: %lf\n",avgr_y);
-		//printf("avgr_x: %lf\n",avgr_x);
-
-		if(avgr_x == 0){
-			printf("avgr_x zerada antes\n");
-		}
-		if(avgr_y == 0)
-			printf("avgr_y zerada antes\n");
+		double usx_r = ehr_face->usedarea.MaxX - ehr_face->usedarea.MinX;
+		double usy_r = ehr_face->usedarea.MaxY - ehr_face->usedarea.MinY;
 
 		if (avgr_x > avgr_y)
 			avgr_x = MIN(usx_r/(avgr_y*ehr_face->cardin/usy_r), avgr_x);
 		else
 			avgr_y = MIN(usy_r/(avgr_x*ehr_face->cardin/usx_r), avgr_y);
 
-		/*if(avgr_x == 0)
-			printf("avgr_x zerada depois\n");
-		if(avgr_y == 0)
-			printf("avgr_y zerada depois\n\n");*/
-
-
 
 		double qtdobjr = MAX(0.0, ehr_face->cardin) *
 				MIN(1.0,(avgr_x + wx)/usx_r) *
 				MIN(1.0,(avgr_y + wy)/usy_r);
 
+
 		// estimate join result cardinality
 		double result = qtdobjl * qtdobjr *
 				MIN(1.0, (avgl_x + avgr_x)/wx) *
 				MIN(1.0, (avgl_y + avgr_y)/wy);
+
+		//if(result == 0)
+			//printf("result 0");
 
 		double coef_area = 0;
 		if (line_to_polygon) {
@@ -936,35 +958,22 @@ dataset *dh_l, dataset *dh_r) {
 			avgr_y = MIN(wy,avgr_y);
 			avgl_x = MIN(wx,avgl_x);
 			avgl_y = MIN(wy,avgl_y);*/
-			//printf("linha com poligono\t");
 
 			if (left_is_line) {
-				//printf("linha esquerda\t");
 				double d = ehr_face->areasum/(ux_r*uy_r);
 				double f = sqrt(((ux_r*uy_r)/ehr_face->cardin)/(avgr_x*avgr_y));
-				//if(ehr_face->cardin == 0)
-					//printf("cardinalidade zerada \n");
-				//if(avgr_x*avgr_y == 0)
-					//printf("avgr_x*avgr_y zerada \n");
 				double navgx = avgr_x * f;
 				double navgy = avgr_y * f;
-				result = qtdobjl * d * MAX(1.0,avgl_x / navgx) * MAX(1.0,avgl_y / navgy);
-				//printf("%lf\t",result);
+				result = qtdobjl * d * MAX(1.2,avgl_x / navgx) * MAX(1.2,avgl_y / navgy);
 			} else {
-				//printf("linha direita\t");
 				double d = ehl_face->areasum/(ux_l*uy_l);
 				double f = sqrt(((ux_l*uy_l)/ehl_face->cardin)/(avgl_x*avgl_y));
-				//if(ehl_face->cardin == 0)
-					//printf("cardinalidade zerada \n");
-				//if(avgl_x*avgl_y == 0)
-					//printf("avgl_x*avgl_y zerada \n");
 				double navgx = avgl_x * f;
 				double navgy = avgl_y * f;
-				result = qtdobjr * d * MAX(1.0,avgr_x / navgx) * MAX(1.0,avgr_y / navgy);
+				result = qtdobjr * d * MAX(1.2,avgr_x / navgx) * MAX(1.2,avgr_y / navgy);
 			}
 		}
 		else if (line_to_line) {
-			//printf("linha com linha\n");
 			/*
 			The probability of two random line segments intersect in unit square = 1/3
 			The probability of four random points forms a convex quadrilateral 133/144

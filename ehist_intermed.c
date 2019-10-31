@@ -1,6 +1,7 @@
 #include "histogram.h"
 #include "ehist.h"
 #include <math.h>
+#include <float.h>
 
 //#define MIN(a,b) (((a)<(b))?(a):(b))
 #define GET_VERT_EDGE(x, y) ((x == ehA->xqtd) ? (x * (2*ehA->yqtd+1) + y) : (x * (2*ehA->yqtd+1) + 2*y + 1))
@@ -439,7 +440,7 @@ euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *
 			int v = i * (ehA->yqtd+1) + j;
 			ehIntermed->vertexes[v].cardin = ehA->vertexes[v].cardin;
 			//printf("vertices ehInter %lf vertices ehA %lf\n", ehIntermed->vertexes[v].cardin, ehA->vertexes[v].cardin);
-			
+
 
     		// aresta horizontal
 			if (i < ehIntermed->xqtd) {
@@ -532,12 +533,12 @@ void salvaArquivo(euler_histogram *ehA, euler_histogram *ehIntermed, dataset *ds
       printf("Erro na abertura do arquivo!");
     }
 
-    fprintf(valores, "%s", "linha\tcoluna\tfaceReal\tfaceIntermed");
-    fprintf(valores, "%s", "\tarestaVertReal\tarestaVertInter\tarestaHorzReal\tarestaHorzIntermed\tvertReal\tvertIntermed");
-    fprintf(valores, "%s", "\t\terroFace\terroArestaVert\terroArestaHorz\terroVert\t\tcardinReal\tcardinEstimado\n");
+    fprintf(valores, "%s", "linha \t coluna \t faceReal \t faceIntermed \t arestaVertReal \t arestaVertInter");
+    fprintf(valores, "%s", "\t arestaHorzReal \t arestaHorzIntermed  \t vertReal \t vertIntermed ");
+    fprintf(valores, "%s", "\t\t erroFace \t erroArestaVert \t erroArestaHorz \t erroVert \t\t cardinReal \t cardinEstimado\n");
 
     if(ftell(tabela) == 0)
-    	fprintf(tabela, "%s", "juncao\tcardTotal\tcardFace\tcardAresta\tcardVertice\n");
+    	fprintf(tabela, "%s", "juncao \t cardTotal \t cardFace \t cardAresta \t cardVertice\n");
 
     double sumFace = 0, sumEdgeVert = 0, sumEdgeHorz = 0,sumVert = 0, sumCardinReal = 0, sumCardinEstimada = 0;
     double sumFaceEstimadaErro = 0, sumEdgeVertEstimadaErro = 0, sumEdgeHorzEstimadaErro = 0,sumVertEstimadaErro= 0;
@@ -669,6 +670,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	 for(int xr = 0; xr < ehIntermed->xqtd; xr++){
 
 	    for(int yr = 0; yr < ehIntermed->yqtd; yr++){
+
 	    	double perface = 0.0;
 	    	//calculo vertice
 	    	int vr = xr * (ehIntermed->yqtd+1) + yr;
@@ -676,6 +678,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 	    	//calculo arestas
 	    	int ahA = GET_HORZ_EDGE_EHR(xr, yr);
 	    	int avA = GET_VERT_EDGE_EHR(xr, yr);
+
 
 	    	//vertices lado esquerdo
 	    	//if(	( (xr == 0) || (xr == ehIntermed->xqtd-1) ) && ( (yr == 0) || (yr == ehIntermed->yqtd-1) )   ){
@@ -765,7 +768,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 			}
 
 			//arestas com 2 faces na horizontal
-			if(	( (xr > 0) && (xr < ehIntermed->xqtd-1) ) ){
+			if(	( (xr > 0) && (xr < ehIntermed->xqtd-1) && (yr < ehIntermed->yqtd-1) ) ){
 		    	//calculo porcentagem face
 	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
 				perface += returnPercent(ehA,ehIntermed,xr-1,yr);
@@ -774,7 +777,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 			}
 
 			//arestas com 2 faces na vertical
-			if(	( (yr > 0) && (yr < ehIntermed->yqtd-1) ) ){
+			if(	( (yr > 0) && (yr < ehIntermed->yqtd-1) && (xr < ehIntermed->xqtd-1)) ){
 		    	//calculo porcentagem face
 	    		perface = returnPercent(ehA,ehIntermed,xr,yr);
 				perface += returnPercent(ehA,ehIntermed,xr,yr-1);
@@ -782,9 +785,9 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 
 			}
 
-
 	    }
 	 }
+
 
 }
 
@@ -815,12 +818,14 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 	// X tics
 	for(int i = 0; i < ehA->xqtd; i++)
 		ehIntermed->xtics[i] = ehA->xtics[i];
-	ehIntermed->xtics[ehA->xqtd] = ehA->xtics[ehA->xqtd];
+	//ehIntermed->xtics[ehA->xqtd] = ehA->xtics[ehA->xqtd];
+	ehIntermed->xtics[ehA->xqtd] = ds->metadata.hist.mbr.MaxX;
 
 	// Y tics
 	for(int i = 0; i < ehA->yqtd; i++)
 		ehIntermed->ytics[i] = ehA->ytics[i];
-	ehIntermed->ytics[ehA->yqtd] = ehA->ytics[ehA->yqtd];
+	//ehIntermed->ytics[ehA->yqtd] = ehA->ytics[ehA->yqtd];
+	ehIntermed->ytics[ehIntermed->yqtd] = ds->metadata.hist.mbr.MaxY;
 
 	//set edges and vertexes
 	int v = 0;
@@ -830,11 +835,13 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 			// set vetex at (i,j)
 			ehIntermed->vertexes[v].x = ehIntermed->xtics[i];
 			ehIntermed->vertexes[v].y = ehIntermed->ytics[j];
+			ehIntermed->vertexes[v].cardin = 0.0;
 			v++;
 
 			// horizontal edge at vertex v
 			if (i < ehIntermed->xqtd) {
-				int e = GET_HORZ_EDGE(i, j);
+				int e = GET_HORZ_EDGE_EHR(i, j);
+				ehIntermed->edges[e].cardin = 0.0;
 				ehIntermed->edges[e].mbr.MinX = ehIntermed->xtics[i];
 				ehIntermed->edges[e].mbr.MaxX = ehIntermed->xtics[i+1];
 				ehIntermed->edges[e].mbr.MinY = ehIntermed->ytics[j];
@@ -844,12 +851,30 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
 
 			// vertical edge at vertex v
 			if (j < ehIntermed->yqtd) {
-				int e = GET_VERT_EDGE(i, j);
+				int e = GET_VERT_EDGE_EHR(i, j);
+				ehIntermed->edges[e].cardin = 0.0;
 				ehIntermed->edges[e].mbr.MinY = ehIntermed->ytics[j];
 				ehIntermed->edges[e].mbr.MaxY = ehIntermed->ytics[j+1];
 				ehIntermed->edges[e].mbr.MinX = ehIntermed->xtics[i];
 				ehIntermed->edges[e].mbr.MaxX = ehIntermed->xtics[i]+1e-10;
 			}
+
+			//usedarea
+            if(i < ehIntermed->xqtd && j < ehIntermed->yqtd){
+            	euler_face *face = &ehIntermed->faces[i*ehIntermed->yqtd +j];
+
+				face->usedarea.MinX = face->usedarea.MinY = DBL_MAX;
+				face->usedarea.MaxX = face->usedarea.MaxY = -DBL_MAX;
+
+            }
+
+			//face
+			euler_face *faceA = &ehA->faces[i*ehA->yqtd +j];
+			euler_face *faceIntermed = &ehIntermed->faces[i*ehIntermed->yqtd +j];
+			faceIntermed->avg_area = faceA->avg_area;
+			faceIntermed->avg_height = faceA->avg_height;
+			faceIntermed->avg_width = faceA->avg_width;
+
 		}
 	}
 
@@ -872,7 +897,7 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
     while (xdr_end < ehA->xqtd && ehA->xtics[xdr_end] <= xend)
         xdr_end++;
     if (xdr_start == ehA->xqtd)
-        return 0;
+        printf("xdr_start == ehA->xqtd");
 
     // skip non-intersect area on y
     int ydr_start = 0;
@@ -882,7 +907,7 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
     while (ydr_end < ehA->yqtd && ehA->ytics[ydr_end] <= yend)
         ydr_end++;
     if (ydr_start == ehA->yqtd)
-        return 0;
+        printf("ydr_start == ehA->yqtd");
 
     int cont=0;
 
@@ -952,11 +977,15 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
                         //intersections *= int_area / ENVELOPE_AREA(es);
 
 
-                        if(intersections > 1.0)
+                        if(intersections > 0.0)
                         cont++;
 
-                        //if(intersections< 1.0)
-                            //intersections = 0;
+                        if (isnan(intersections))
+                        	intersections = 0;
+
+                        if (intersections < 0.00001)
+                        	intersections = 0.00001;
+
 
                     }
                     //preenche o valor da face do histograma intermediario
@@ -985,12 +1014,10 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc
         }
     }
 
-
-    insert_data_edge_vertice(ehA, ehIntermed);
-
+    //insert_data_edge_vertice(ehA,ehIntermed);
     salvaArquivo(ehA,ehIntermed,dsc,ehC);
 
-    printf("cont = %d" , cont);
+    printf("\n\ncont = %d" , cont);
     printf("result = %f ", result);
 
     return ehIntermed;
