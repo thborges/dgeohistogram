@@ -13,6 +13,7 @@
 #include "histogram.h"
 #include "minskew.h"
 #include "ehist.h"
+#include "eulerskew.h"
 #include "dataset_specs.h"
 
 char *dataset_name;
@@ -24,7 +25,8 @@ OGRDataSourceH ogr_ds;
 enum HistogramType {
 	HTGRID,
 	HTMINSKEW,
-	HTEULER
+	HTEULER,
+	HTHIBRID
 };
 
 int main(int argc, char* argv[]) {
@@ -35,7 +37,7 @@ int main(int argc, char* argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
 	if (argc < 3) {
-		printf("Use: %s [grid minskew euler] [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
+		printf("Use: %s [grid minskew euler hibrid] [mbrc, centr, areaf, areafs] [fix x y, avg, avgstd] file.shp size%%query\n", argv[0]);
 		return 1;
 	}
 
@@ -46,6 +48,8 @@ int main(int argc, char* argv[]) {
 		ht = HTMINSKEW;
 	else if(strcmp(argv[1], "euler") == 0)
 		ht = HTEULER;
+	else if(strcmp(argv[1], "hibrid") == 0)
+		ht = HTHIBRID;
 	else {
 		printf("Histogram type %s does not exists.\n", argv[1]);
 		exit(1);
@@ -120,9 +124,15 @@ int main(int argc, char* argv[]) {
 
 	// create euler histogram
 	euler_histogram *eh = NULL;
-	if (ht == HTEULER) {
+	if (ht == HTEULER || ht == HTHIBRID) {
 		eh = eh_generate_hist(ds, spec, CHECKR);
 		euler_print_hist(ds, eh);
+	}
+
+	eulerskew_hist *esh = NULL;
+	if (ht == HTHIBRID) {
+		// esh = eulerskew_generate_hist(eh, 2)
+		// imprime
 	}
 
 	// the user specified a query?
