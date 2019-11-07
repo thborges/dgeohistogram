@@ -5,16 +5,32 @@
 #include "histogram.h"
 #include "glibwrap.h"
 
-typedef struct {
-	Envelope mbr;
-	double cardin;
-} st_hist_bucket;
+#include<vector>
+#include<forward_list>
 
-st_hist_bucket *st_generate_hist(dataset *ds, int buckets_num/*****/);
+using namespace std;
 
-double st_search_hist(st_hist_bucket *hist, Envelope query);
+struct coordenada{
+	double x;
+	double y;
+};
 
-void st_print_hist(dataset *ds, st_hist_bucket *hist);
+struct{
+        Envelope mbr;
+	unsigned int F;
+        forward_list<coordenada> O;
+        vector<int> filhos;
+}hotSpot;
+
+typedef struct hotSpot STBucket;
+
+typedef vector<STBucket> hotSpotTree;
+typedef hotSpotTree STHist;
+
+STHist * STHist_generate(dataset *ds, int buckets_num);
+
+double STHist_search(STHist *hist, Envelope query);
+
+void STHist_print(STHist *hist);
 
 #endif
-
