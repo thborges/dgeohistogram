@@ -1,4 +1,4 @@
-
+// editei codigo
 #ifndef _STHIST_H
 #define _STHIST_H
 
