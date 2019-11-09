@@ -2,29 +2,23 @@
 #include "sthist.h"
 #include<algorithm>
 
-STHist *STHist_generate(dataset *ds, int buckets_num);
 int computeNBi(STHist &hotSpotTree, int bRoot, int iSon);
 void constructionHotSpotsTree(STHist &hotSpotTree, int bRoot, int NB);
-void detectedHotSpot(STHist &hotSpotTree, int bRoot, int s, int f);
+int detectedHotSpot(STHist& hotSpotTree, int bRoot, int s, int f);
 bool yCoordinateAscending(coordenada a, coordenada b);
 bool xCoordinateAscending(coordenada a, coordenada b);
-int limitIndex_binarySearch(const vector<coordenada> &vetor, int begin, int end, double value);
+int limitIndexY_binarySearch(const vector<coordenada>& vetor, int begin, int end, double value);
 
-STHist* STHist_generate(dataset* ds, int buckets_num){
+void STHist_generate(dataset* ds, STHist& toFillOut, int buckets_num){
 	STBucket root;
 	Envelope root_mbr;
 	unsigned int cardin=0;
-	double Ox, Oy;
 
 	dataset_iter di;
 	dataset_foreach(di, ds) {
-		coordenada objeto;
-		objeto.x = di.item->mbr.MinX;
-		objeto.y = di.item->mbr.MinY;
 		root_mbr = di.item->mbr;
 		break;
 	}
-
 
 	dataset_foreach(di, ds) {
 		Envelope mbr = di.item->mbr;
@@ -41,15 +35,17 @@ STHist* STHist_generate(dataset* ds, int buckets_num){
 	root.mbr = root_mbr;
 	root.F = cardin;
 
-	STHist hist;
-	hist.push_back(root);
+	toFillOut.push_back(root);
 
-	constructionHotSpotsTree(hist,0,buckets_num);
+	constructionHotSpotsTree(toFillOut,0,buckets_num);
+
 }
 
+int computeNBi(STHist &hotSpotTree, int bRoot, int iSon){
+	return 1;
+}
 
-
-void constructionHotSpotsTree(STHist& hotSpotTree, int bRoot, int NB){
+void constructionHotSpotsTree(STHist &hotSpotTree, int bRoot, int NB){
 	// B : hotSpotTree[i].mbr
 	// O : (hotSpotTree[i].Ox, hotSpotTree[i].Oy)
 	// NB : NB
@@ -72,9 +68,6 @@ void constructionHotSpotsTree(STHist& hotSpotTree, int bRoot, int NB){
 
 
 
-int computeNBi(STHist &hotSpotTree, int bRoot, int iSon){
-	return 1;
-}
 
 int detectedHotSpot(STHist& hotSpotTree, int bRoot, int s, int f){
 	// Entrada:
@@ -96,52 +89,51 @@ int detectedHotSpot(STHist& hotSpotTree, int bRoot, int s, int f){
 
 /*1:*/
 
-/*2:*/	Envelope D = hotSpotTree[i].mbr;
-	unsigned int F = hotSpotTree[i].F;
+/*2:*/	Envelope D = hotSpotTree[bRoot].mbr;
+	unsigned int F = hotSpotTree[bRoot].F;
 
 /*3:*/	float w =  (1/pow(s,0.5))* (D.MaxX - D.MinY);
 /*4:*/	float h =  (1/pow(s,0.5))* (D.MaxY - D.MinY);
 
 /*5, 6:*/
-
-	for(coordenada& oi= SortedListX.begin(); oi != SortedListX.end(); oi++){
-		double W = SortedListX[oi] + w;
+	for(forward_list<coordenada>::iterator oi= SortedListX.begin(); oi != SortedListX.end(); oi++){
+		double W = oi->x + w;
 		vector<coordenada> SortedCandiListY;
 
-		for(coordenada& it = oi; it != SortedListX.end(); it++){
-			if(it.x <= W){  // verificar no artigo se menor ou menor igual
-				SortedCandiListY.push_back(it);
+		for(forward_list<coordenada>::iterator it = oi; it != SortedListX.end(); it++){
+			if(it->x <= W){  // verificar no artigo se menor ou menor igual
+				SortedCandiListY.push_back(*it);
 			}else{
 				break;
 			}
 /*8:*/		}
 
-		usigned int freqW = SortedCandiListY.size();
+		unsigned int freqW = SortedCandiListY.size();
 /*7:*/		if(freqW >= F/f){
 /*8:*/			sort(SortedCandiListY.begin(), SortedCandiListY.end(),yCoordinateAscending);
 			double H = SortedCandiListY[0].y + h;
 
-/*9, 10:*/		for(int oj=0; oj < freqW; oj++){
-				usigned int freqH = -oj + 1 + limitIndex_binarySearch(SortedCandiListY,oj,SortedCandiListY.size(), H);
+/*9, 10:*/		for(unsigned int oj=0; oj < freqW; oj++){
+				unsigned int freqH = -oj + 1 + limitIndexY_binarySearch(SortedCandiListY,oj,SortedCandiListY.size(), H);
 				if(freqH >= F/f){
 /*12*/
 					hotSpot R;
-					R.mbr.MinX = SortedListX[oi].x;
+					R.mbr.MinX = oi->x;
+					R.mbr.MaxX = oi->x + W;
 					R.mbr.MinY = SortedCandiListY[oj].y;
-					R.mbr.MaxX = SortedListX[io].x + w;
-					R.mbr.MaxY = SortedCandiListY[oj].y +h;
+					R.mbr.MaxY =SortedCandiListY[oj].y + H;
 					R.F = freqH;
-					R.O.insert(R.O.begin(),SortedCandiListY.begin()+oj, SortedCandiListY.begin()+oj+freqH);
+					R.O.insert_after(R.O.begin(),SortedCandiListY.begin()+oj, SortedCandiListY.begin()+oj+freqH);
 
 /*13*/					hotSpotTree.push_back(R);
 					hotSpotsCount++;
 
 
 					auto oY = SortedListY.begin();
-					for(usingnet int oC = 0; oC < SortedCandiListY.size(); oC++){
+					for(unsigned int oC = 0; oC < SortedCandiListY.size(); oC++){
 						while(oY != SortedListY.end()){
 							if((*oY).x == SortedCandiListY[oC].x  && (*oY).y == SortedCandiListY[oC].y){
-								oY = SortedListY.remove_after(oY);
+								oY = SortedListY.erase_after(oY);
 							}else{
 								oY++;
 							}
@@ -151,10 +143,10 @@ int detectedHotSpot(STHist& hotSpotTree, int bRoot, int s, int f){
 					sort(SortedCandiListY.begin(), SortedCandiListY.end(),xCoordinateAscending);
 
 					auto oX = SortedListX.begin();
-					for(usingnet int oC = 0; oC < SortedCandiListY.size(); oC++){
-						while(oX != SortedListX.end)){
+					for(unsigned int oC = 0; oC < SortedCandiListY.size(); oC++){
+						while(oX != SortedListX.end()){
 							if((*oX).x == SortedCandiListY[oC].x  && (*oX).y == SortedCandiListY[oC].y){
-								oX = SortedListX.remove_after(oX);
+								oX = SortedListX.erase_after(oX);
 							}else{
 								oX++;
 							}
@@ -172,19 +164,14 @@ bool yCoordinateAscending(coordenada a, coordenada b){
 	return a.y < b.y;
 }
 
-bool xCoordinateAscendinge(coordenada a, coordenada b){
+bool xCoordinateAscending(coordenada a, coordenada b){
 	return a.x < b.x;
 }
 
-
-bool idCoordinateAscending(coordenada a, coordenada b){
-	return a.id < b.id;
-}
-
-int limitIndex_binarySearch(const vector<double> &vetor; int begin; int end, double value){
+int limitIndexY_binarySearch(const vector<coordenada>& vetor, int begin, int end, double value){
 	int meio = (end-begin)/2 +begin;
 	while(end-begin >3){
-		if(value < vetor[meio]){
+		if(value < vetor[meio].y){
 			end = meio;
 		}else{
 			begin = meio;
@@ -193,12 +180,12 @@ int limitIndex_binarySearch(const vector<double> &vetor; int begin; int end, dou
 	}
 	int x = begin;
 	while(x < end) {
-		if(vector[x+1] > value )
+		if(vetor[x+1].y > value )
 			return x;
 	}
 	return x;
 }
 
-double STHist_search(STHist *hist, Envelope query);
+double STHist_search(STHist &hist, Envelope query);
 
-void STHist_print(STHist *hist);
+void STHist_print(STHist &hist);
