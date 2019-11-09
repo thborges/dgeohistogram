@@ -19,18 +19,15 @@ struct{
         Envelope mbr;
 	unsigned int F;
         forward_list<coordenada> O;
-        vector<int> filhos;
+        vector<int> childrean;
 }hotSpot;
 
 typedef struct hotSpot STBucket;
-
 typedef vector<STBucket> hotSpotTree;
 typedef hotSpotTree STHist;
 
-STHist * STHist_generate(dataset *ds, int buckets_num);
-
+STHist* STHist_generate(dataset *ds, int buckets_num);
 double STHist_search(STHist *hist, Envelope query);
-
 void STHist_print(STHist *hist);
 
 #endif

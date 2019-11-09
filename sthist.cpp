@@ -3,16 +3,17 @@
 #include<algorithm>
 
 STHist *STHist_generate(dataset *ds, int buckets_num);
-void constructionHotspotsTree(ST_hist &hotSpotTree, int bRoot, int NB)
-void detectedHotspots(&hotSpotTree, dataset * ds, int s, int f);
+int computeNBi(STHist &hotSpotTree, int bRoot, int iSon);
+void constructionHotSpotsTree(STHist &hotSpotTree, int bRoot, int NB);
+void detectedHotSpot(STHist &hotSpotTree, int bRoot, int s, int f);
 bool yCoordinateAscending(coordenada a, coordenada b);
 bool xCoordinateAscending(coordenada a, coordenada b);
-int limitIndex_binarySearch(const vector<double> &vetor; int begin; int end, double value);
+int limitIndex_binarySearch(const vector<coordenada> &vetor, int begin, int end, double value);
 
-STHist *STHist_generate(dataset *ds, int buckets_num){
+STHist* STHist_generate(dataset* ds, int buckets_num){
 	STBucket root;
-	Envelope r_mbr;
-	usingned int cardin=0;
+	Envelope root_mbr;
+	unsigned int cardin=0;
 	double Ox, Oy;
 
 	dataset_iter di;
@@ -20,38 +21,35 @@ STHist *STHist_generate(dataset *ds, int buckets_num){
 		coordenada objeto;
 		objeto.x = di.item->mbr.MinX;
 		objeto.y = di.item->mbr.MinY;
-		root.O.push_front(objeto);
-		cardin++;
-		r_mrb = di.item->mbr;
+		root_mbr = di.item->mbr;
 		break;
 	}
 
-	Envelope mbr;
 
 	dataset_foreach(di, ds) {
-		mbr = di.item->mbr;
+		Envelope mbr = di.item->mbr;
 		coordenada objeto;
 		objeto.x = mbr.MinX;
 		objeto.y = mbr.MinY;
 		root.O.push_front(objeto);
 		cardin++;
-		if(mbr.MinX < h_mbr.MinX)  h_mbr.MinX = bmr.MinX;
-		if(mbr.MaxX > h_mbr.MaxX)  h_mbr.MaxX = bmr.MaxX;
-		if(mbr.MinY < h_mbr.MinY)  h_mbr.MinY = bmr.MinY;
-		if(mbr.MaxY > h_mbr.MaxY)  h_mbr.MaxY = bmr.MaxY;
+		if(mbr.MinX < root_mbr.MinX)  root_mbr.MinX = mbr.MinX;
+		if(mbr.MaxX > root_mbr.MaxX)  root_mbr.MaxX = mbr.MaxX;
+		if(mbr.MinY < root_mbr.MinY)  root_mbr.MinY = mbr.MinY;
+		if(mbr.MaxY > root_mbr.MaxY)  root_mbr.MaxY = mbr.MaxY;
 	}
-	root.mbr = r_mbr;
+	root.mbr = root_mbr;
 	root.F = cardin;
 
 	STHist hist;
 	hist.push_back(root);
 
-	constructionHotspotsTree(hist,0,buckets_num);
+	constructionHotSpotsTree(hist,0,buckets_num);
 }
 
 
 
-void constructionHotspotsTree(ST_hist &hotSpotTree, int bRoot, int NB){
+void constructionHotSpotsTree(STHist& hotSpotTree, int bRoot, int NB){
 	// B : hotSpotTree[i].mbr
 	// O : (hotSpotTree[i].Ox, hotSpotTree[i].Oy)
 	// NB : NB
@@ -60,25 +58,25 @@ void constructionHotspotsTree(ST_hist &hotSpotTree, int bRoot, int NB){
 	int f = max(NB, 2);
 
 
-	int qtd_hotSpot = detectedHotspots(hotSpotTree, bRoot, NB, s,f);
+	int qtd_hotSpot = detectedHotSpot(hotSpotTree, bRoot, s, f);
 
-	for(int i =0; i < qtd_hotSpot){
-		hotSpotTree[bRoot].filhos.push_back(bRoot+i);
+	for(int i =0; i < qtd_hotSpot; i++){
+		hotSpotTree[bRoot].childrean.push_back(bRoot+i);
 	}
 
-	for(int i =0; i < hotSpot[bRoot].filhos.size(); i++){
-		NBi = computeNBi(hotSpotTree, bRoot, i);
-		constructionHotspotsTree(hotSpotTree, i, NBi);
+	for(int i =0; i < hotSpotTree[bRoot].childrean.size(); i++){
+		int NBi = computeNBi(hotSpotTree, bRoot, i);
+		constructionHotSpotsTree(hotSpotTree, i, NBi);
 	}
 }
 
 
 
-int computeNBi(ST_hist& hotSpotTree, int bRoot, int filho){
+int computeNBi(STHist &hotSpotTree, int bRoot, int iSon){
 	return 1;
 }
 
-int detectedHotspots(STHist &hotSpotTree, int bRoot, int s, int f){
+int detectedHotSpot(STHist& hotSpotTree, int bRoot, int s, int f){
 	// Entrada:
 		// D : hotSpotTree[i].mbr
 		// O : (hotSpotTree[i].Ox, hotSpotTree[i].Oy)
@@ -99,16 +97,16 @@ int detectedHotspots(STHist &hotSpotTree, int bRoot, int s, int f){
 /*1:*/
 
 /*2:*/	Envelope D = hotSpotTree[i].mbr;
-	usingned int F = hotSpotTree[i].F;
+	unsigned int F = hotSpotTree[i].F;
 
 /*3:*/	float w =  (1/pow(s,0.5))* (D.MaxX - D.MinY);
 /*4:*/	float h =  (1/pow(s,0.5))* (D.MaxY - D.MinY);
 
 /*5, 6:*/
 
-	for(coordenada oi= SortedListX.begin(); oi != SortedListX.end(); oi++){
+	for(coordenada& oi= SortedListX.begin(); oi != SortedListX.end(); oi++){
 		double W = SortedListX[oi] + w;
-		vector<auto> SortedCandiListY;
+		vector<coordenada> SortedCandiListY;
 
 		for(coordenada& it = oi; it != SortedListX.end(); it++){
 			if(it.x <= W){  // verificar no artigo se menor ou menor igual
@@ -118,13 +116,13 @@ int detectedHotspots(STHist &hotSpotTree, int bRoot, int s, int f){
 			}
 /*8:*/		}
 
-		usingned int freqW = SortedCandiListY.size();
+		usigned int freqW = SortedCandiListY.size();
 /*7:*/		if(freqW >= F/f){
 /*8:*/			sort(SortedCandiListY.begin(), SortedCandiListY.end(),yCoordinateAscending);
 			double H = SortedCandiListY[0].y + h;
 
 /*9, 10:*/		for(int oj=0; oj < freqW; oj++){
-				usingned int freqH = -oj + 1 + limitIndex_binarySearch(SortedCandiListY,oj,SortedCandiListY.size(), H);
+				usigned int freqH = -oj + 1 + limitIndex_binarySearch(SortedCandiListY,oj,SortedCandiListY.size(), H);
 				if(freqH >= F/f){
 /*12*/
 					hotSpot R;
@@ -166,6 +164,7 @@ int detectedHotspots(STHist &hotSpotTree, int bRoot, int s, int f){
 			}
 		}
 	}
+	return hotSpotsCount;
 }
 
 
