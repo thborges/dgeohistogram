@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="dgeohistogram" />
+		<Option makefile_is_custom="1" />
+		<Option execution_dir="../../../dgeohistogram" />
+		<Option pch_mode="2" />
+		<Option compiler="clang" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../../main" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="clang" />
+				<Option parameters="minskew areaf fix 30 30 avgstd ../shapeslupa/alertas.shp" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="gdal" />
+					<Add library="geos" />
+					<Add library="geos_c" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="../../main" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="clang" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="Minskew Alertas 10 10">
+				<Option output="../../main" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="clang" />
+				<Option parameters="minskew areaf fix 30 30 avgstd ../shapeslupa/alertas.shp" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="gdal" />
+					<Add library="geos" />
+					<Add library="geos_c" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Weverything" />
+		</Compiler>
+		<Unit filename="../../auxs/dataset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/dataset.h" />
+		<Unit filename="../../auxs/geosext.cpp" />
+		<Unit filename="../../auxs/geosext.h" />
+		<Unit filename="../../auxs/glibwrap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/glibwrap.h" />
+		<Unit filename="../../auxs/lru-buffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/lru-buffer.h" />
+		<Unit filename="../../auxs/ogrext.cpp" />
+		<Unit filename="../../auxs/ogrext.h" />
+		<Unit filename="../../auxs/rtree-distributor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree-distributor.h" />
+		<Unit filename="../../auxs/rtree-lazy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree-lazy.h" />
+		<Unit filename="../../auxs/rtree-reinsert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree-reinsert.h" />
+		<Unit filename="../../auxs/rtree-star.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree-star.h" />
+		<Unit filename="../../auxs/rtree-wquery.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/rtree.h" />
+		<Unit filename="../../auxs/uthash.h" />
+		<Unit filename="../../auxs/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/utils.h" />
+		<Unit filename="../../auxs/wkbconvert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../auxs/wkbconvert.h" />
+		<Unit filename="../../dataset_specs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../dataset_specs.h" />
+		<Unit filename="../../ehist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../ehist.h" />
+		<Unit filename="../../eulerskew.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../eulerskew.h" />
+		<Unit filename="../../histogram.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../histogram.h" />
+		<Unit filename="../../main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../minskew.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../minskew.h" />
+		<Unit filename="../../sthist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../sthist.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

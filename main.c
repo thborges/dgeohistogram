@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
 	// split disabled
 	int split_qtd = 1;
-	
+
 	dataset_name = argv[argatu++];
 	dataset *ds = read_geos(dataset_name);
 
@@ -141,8 +141,8 @@ int main(int argc, char* argv[]) {
 
 	double query_size = atof(argv[argatu++]);
 
-	
-	
+
+
 
 	// cria uma r*
 	rtree_root *rtree = NULL;
@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
 		query.MinY = ds->metadata.hist.mbr.MinY + (qryno % qtdqx) * hsize;
 		query.MaxX = query.MinX + wsize;
 		query.MaxY = query.MinY + hsize;
-		
+
 		#ifdef PRINT_QUERY_GEOJSON
 		print_geojson_mbr_file(query, "0", fqueries);
 		#endif
@@ -216,7 +216,7 @@ int main(int argc, char* argv[]) {
         	query.MaxX, query.MaxY,
         	query.MinX, query.MaxY,
         	query.MinX, query.MinY);
-		
+
 		GEOSGeometryH geoquery = GEOSGeomFromWKT(wkt);
 
 		memset(&stats, 0, sizeof(rtree_window_stat));
@@ -283,10 +283,10 @@ int main(int argc, char* argv[]) {
 	print_geojson_footer_file(fqueries);
 	fclose(fqueries);
 	#endif
-	
+
 	printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
 	printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
-		query_size, 
+		query_size,
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
@@ -297,16 +297,16 @@ int main(int argc, char* argv[]) {
 	char filename[100] = "data.csv";
 	FILE *file;
 	file = fopen(filename, "a");
-  	fprintf(file, "%3.2f,%f,%f,%f,%s,%s\n", 
-		query_size, 
+  	fprintf(file, "%3.2f,%f,%f,%f,%s,%s\n",
+		query_size,
 		sum_ei / (double)sum_ri,
 		sqrt(M2/(double)n),
 		sum_error,
 		argv[1],
 		ds->metadata.name);
 	fclose(file);
-	
-finish:	
+
+finish:
 	OGR_DS_Destroy(ogr_ds);
 	finishGEOS();
 
@@ -329,7 +329,7 @@ dataset *read_geos(char *shpfile) {
 	results->temp_ogr_layer = layer;
 
 	clock_t cs = clock();
-	
+
 	unsigned read = 0;
 	OGRFeatureH feature;
 	OGRGeometryH geometry;

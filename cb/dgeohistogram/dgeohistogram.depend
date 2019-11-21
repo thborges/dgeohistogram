@@ -1,0 +1,178 @@
+# depslib dependency file v1.0
+1573738628 source:/Users/thborges/projects/dgeohistogram/auxs/dataset.c
+	<stdio.h>
+	<string.h>
+	<unistd.h>
+	<fcntl.h>
+	<unistd.h>
+	<sys/stat.h>
+	<ogrext.h>
+	"dataset.h"
+	"uthash.h"
+	"wkbconvert.h"
+	"glibwrap.h"
+
+1573150240 /Users/thborges/projects/dgeohistogram/auxs/ogrext.h
+	<geos_c.h>
+	<ogr_api.h>
+	<emmintrin.h>
+	<assert.h>
+
+1573738628 /Users/thborges/projects/dgeohistogram/auxs/dataset.h
+	"uthash.h"
+	<ogrext.h>
+	<stdbool.h>
+	<pthread.h>
+
+1555613872 /Users/thborges/projects/dgeohistogram/auxs/uthash.h
+	<string.h>
+	<stddef.h>
+	<stdlib.h>
+	<inttypes.h>
+
+1555613872 /Users/thborges/projects/dgeohistogram/auxs/wkbconvert.h
+	<geos_c.h>
+	<ogr_api.h>
+	<arpa/inet.h>
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/glibwrap.h
+	"utils.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/utils.h
+	<stdio.h>
+	<stdlib.h>
+	<ogrext.h>
+	<sys/time.h>
+
+1573738628 source:/Users/thborges/projects/dgeohistogram/auxs/geosext.cpp
+	<cpl_conv.h>
+	<stdarg.h>
+	<assert.h>
+	<geos/geom/Geometry.h>
+	<geos/geom/Envelope.h>
+	<geos/io/WKBWriter.h>
+	<geos/io/WKTWriter.h>
+	<geos/io/Writer.h>
+	"geosext.h"
+
+1555613872 /Users/thborges/projects/dgeohistogram/auxs/geosext.h
+	<geos_c.h>
+
+1555613872 source:/Users/thborges/projects/dgeohistogram/auxs/glibwrap.c
+	"glibwrap.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/lru-buffer.c
+	"lru-buffer.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/lru-buffer.h
+	"glibwrap.h"
+	"uthash.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/ogrext.cpp
+	<ogr_geometry.h>
+	<geos_c.h>
+	"ogrext.h"
+	"geosext.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/rtree-distributor.c
+	"rtree.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/rtree.h
+	<geos_c.h>
+	<assert.h>
+	<sys/queue.h>
+	"lru-buffer.h"
+	<ogrext.h>
+	"utils.h"
+	"dataset.h"
+	"glibwrap.h"
+
+1573150240 source:/Users/thborges/projects/dgeohistogram/auxs/rtree-lazy.c
+	<float.h>
+	"rtree-lazy.h"
+	"rtree-star.h"
+	"rtree-reinsert.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/rtree-lazy.h
+	"rtree.h"
+	"ogrext.h"
+	<assert.h>
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/rtree-star.h
+	"rtree.h"
+	"ogrext.h"
+	<assert.h>
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/rtree-reinsert.h
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/rtree-reinsert.c
+	<float.h>
+	"rtree.h"
+	"ogrext.h"
+	<ogr_api.h>
+	<ogr_core.h>
+	"rtree-lazy.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/rtree-star.c
+	<float.h>
+	"rtree-star.h"
+	"rtree-reinsert.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/rtree-wquery.c
+	<ogr_core.h>
+	<assert.h>
+	"glibwrap.h"
+	"rtree.h"
+	"ogrext.h"
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/auxs/rtree.c
+	<float.h>
+	<math.h>
+	<assert.h>
+	"glibwrap.h"
+	"rtree.h"
+	"rtree-distributor.h"
+	"ogrext.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/auxs/rtree-distributor.h
+
+1573150240 source:/Users/thborges/projects/dgeohistogram/auxs/utils.c
+	"utils.h"
+	<float.h>
+	<unistd.h>
+	<signal.h>
+	<execinfo.h>
+	<sys/time.h>
+
+1555613872 source:/Users/thborges/projects/dgeohistogram/auxs/wkbconvert.c
+	<wkbconvert.h>
+
+1573150139 source:/Users/thborges/projects/dgeohistogram/dataset_specs.c
+	<float.h>
+	"minskew.h"
+	"utils.h"
+
+1573150139 /Users/thborges/projects/dgeohistogram/minskew.h
+	"histogram.h"
+	"glibwrap.h"
+
+1573150240 /Users/thborges/projects/dgeohistogram/histogram.h
+	"glibwrap.h"
+	"dataset.h"
+	"geosext.h"
+	"rtree.h"
+	"rtree-star.h"
+
+1573738628 source:/Users/thborges/projects/dgeohistogram/ehist.c
+	"histogram.h"
+	"ehist.h"
+
+1573738628 /Users/thborges/projects/dgeohistogram/ehist.h
+	"histogram.h"
+	"glibwrap.h"
+	"rtree.h"
+	"rtree-star.h"
+
+1573738628 source:/Users/thborges/projects/dgeohistogram/eulerskew.c
+	"minskew.h"
+

@@ -21,6 +21,9 @@ DEPEND_C_JOIN=$(patsubst %.c,%.o,$(wildcard auxs/*.c)) $(patsubst %.c,%.o, $(fil
 
 all: main 
 
+Debug: main
+cleanDebug: clean
+
 main: $(DEPEND_CPP) $(DEPEND_C)
 	g++ -std=c++11 $(DEBUG) $(INCLUDES) $(DEPEND_C) $(DEPEND_CPP) -o main $(LIBS) -lgdal -lgeos -lgeos_c
 
