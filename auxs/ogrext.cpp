@@ -19,6 +19,14 @@ const Envelope EnvelopeIntersection(const Envelope r, const Envelope s) {
     if (ENVELOPE_INTERSECTS(r, s)) {
         Envelope result;
         result.MinX = r.MinX > s.MinX ? r.MinX : s.MinX;
+
+        //"?" and ":" means  :
+        // if(r.MinX > s.MinX) {
+        //result.MinX = r.MinX;
+        //} else {
+        //result.MinX = s.MinX;
+        //}
+
         result.MinY = r.MinY > s.MinY ? r.MinY : s.MinY;
         result.MaxX = r.MaxX < s.MaxX ? r.MaxX : s.MaxX;
         result.MaxY = r.MaxY < s.MaxY ? r.MaxY : s.MaxY;
@@ -29,7 +37,7 @@ const Envelope EnvelopeIntersection(const Envelope r, const Envelope s) {
 }
 
 /*
- * Don't check intersection between r and s. Need to be done on calling code 
+ * Don't check intersection between r and s. Need to be done on calling code
  */
 const Envelope EnvelopeIntersection2(const Envelope r, const Envelope s) {
     Envelope result = {

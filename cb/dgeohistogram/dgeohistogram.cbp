@@ -125,6 +125,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../minskew.h" />
+		<Unit filename="../../steulerskew.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Unit filename="../../sthist.c">
 			<Option compilerVar="CC" />
 		</Unit>

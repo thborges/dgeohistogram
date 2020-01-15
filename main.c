@@ -124,15 +124,21 @@ int main(int argc, char* argv[]) {
 
 	// create euler histogram
 	euler_histogram *eh = NULL;
-	if (ht == HTEULER || ht == HTHIBRID) {
+	if (ht == HTEULER) {
 		eh = eh_generate_hist(ds, spec, CHECKR);
 		euler_print_hist(ds, eh);
 	}
 
-	eulerskew_hist *esh = NULL;
+    //create eulerskew histogram
+	//eulerskew_hist *esh = NULL;
+	eulerskew_histogram *esh = NULL;
+	GList *eulerskew_buckets = NULL;
 	if (ht == HTHIBRID) {
-		// esh = eulerskew_generate_hist(eh, 2)
-		// imprime
+		 //esh = eulerskew_generate_hist(ds, 500);
+        eulerskew_buckets = eulerskew_generate_hist(ds, 500);
+        //eulerskew_print_hist(ds, minskewh);
+        esh = eulerskew_generate_hist_with_euler(ds, spec, CHECKR, eulerskew_buckets);
+        eulerskew_print_hist(ds, esh);
 	}
 
 	// the user specified a query?
@@ -233,6 +239,8 @@ int main(int argc, char* argv[]) {
 			rhq = minskew_search_hist(minskewh, query);
 		else if (ht == HTEULER)
 			rhq = euler_search_hist(eh, query);
+        else if (ht == HTHIBRID)
+            rhq = eulerskew_search_hist(esh,query);
 
 		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
 
