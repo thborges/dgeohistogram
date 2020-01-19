@@ -148,7 +148,9 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 										//printf("%d",aux_area);
 										//areasum[x][y] += aux_area;
 										face->areasum += aux_area;
-									}
+									}else
+										printf("Error getting area for %lld\n", l->gid);
+
 								}else{
 									face->areasum += aux_area;
 								}
@@ -191,6 +193,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
                 }
             }
         }
+
 
         if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
             GEOSGeom_destroy(geo);

@@ -737,6 +737,7 @@ void insert_data_edge_vertice(euler_histogram *ehA, euler_histogram *ehIntermed)
 
 	    	}
 
+
 	    	//arestas infeirores
 	    	if(	yr == 0 && xr < ehIntermed->xqtd-1){
 		    	//calculo porcentagem face

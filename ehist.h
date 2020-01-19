@@ -9,6 +9,7 @@
 
 typedef struct {
 	double cardin;
+	double cardin_prop;
     double avg_height;
     double avg_width;
     double avg_area;
