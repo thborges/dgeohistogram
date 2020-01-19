@@ -4,13 +4,8 @@
 #include <float.h>
 #include <math.h>
 
-#define GET_VERT_EDGE(x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE(x, y) (x * (2*eh->yqtd+1) + 2*y)
-
-#define GET_VERT_EDGE_EHR(x, y) ((x == ehr->xqtd) ? (x * (2*ehr->yqtd+1) + y) : (x * (2*ehr->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE_EHR(x, y) (x * (2*ehr->yqtd+1) + 2*y)
-#define GET_VERT_EDGE_EHS(x, y) ((x == ehs->xqtd) ? (x * (2*ehs->yqtd+1) + y) : (x * (2*ehs->yqtd+1) + 2*y + 1))
-#define GET_HORZ_EDGE_EHS(x, y) (x * (2*ehs->yqtd+1) + 2*y)
+#define GET_VERT_EDGE(eh,x, y) ((x == eh->xqtd) ? (x * (2*eh->yqtd+1) + y) : (x * (2*eh->yqtd+1) + 2*y + 1))
+#define GET_HORZ_EDGE(eh,x, y) (x * (2*eh->yqtd+1) + 2*y)
 
 void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psizex, double psizey) {
     assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
@@ -50,7 +45,7 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 
             // horizontal edge at vertex v
             if (i < eh->xqtd) {
-                int e = GET_HORZ_EDGE(i, j);
+                int e = GET_HORZ_EDGE(eh,i, j);
                 eh->edges[e].mbr.MinX = eh->xtics[i];
                 eh->edges[e].mbr.MaxX = eh->xtics[i+1];
                 eh->edges[e].mbr.MinY = eh->ytics[j];
@@ -60,7 +55,7 @@ void eh_alloc(dataset *ds, euler_histogram *eh, int xqtd, int yqtd, double psize
 
             // vertical edge at vertex v
             if (j < eh->yqtd) {
-                int e = GET_VERT_EDGE(i, j);
+                int e = GET_VERT_EDGE(eh,i, j);
                 eh->edges[e].mbr.MinY = eh->ytics[j];
                 eh->edges[e].mbr.MaxY = eh->ytics[j+1];
                 eh->edges[e].mbr.MinX = eh->xtics[i];
@@ -99,10 +94,6 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
         if (xfim < eh->xqtd) xfim++;
         if (yfim < eh->yqtd) yfim++;
 
-    	int xspan = xfim - xini + 1;
-    	int yspan = yfim - yini + 1;
-
-
         for(int x = xini; x <= xfim; x++) {
             Envelope rs;
             rs.MinX = eh->xtics[x];
@@ -131,6 +122,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 							double delta_x = (ev2.MaxX - ev2.MinX);
 							double delta_y = (ev2.MaxY - ev2.MinY);
 							double area = delta_x * delta_y;
+
 							face->avg_width += (delta_x - face->avg_width) / face->cardin;
 							face->avg_height += (delta_y - face->avg_height) / face->cardin;
 							face->avg_area += (area - face->avg_area) / face->cardin;
@@ -146,7 +138,6 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 									//double aux_area = 0;
 									if (GEOSArea(clipped, &aux_area)) {
 										//printf("%d",aux_area);
-										//areasum[x][y] += aux_area;
 										face->areasum += aux_area;
 									}else
 										printf("Error getting area for %lld\n", l->gid);
@@ -169,7 +160,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 
 					// horizontal edge
 					if (x < eh->xqtd) {
-						int e = GET_HORZ_EDGE(x, y);
+						int e = GET_HORZ_EDGE(eh,x, y);
 						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
 							double delta_x = ev2.MaxX - ev2.MinX;
 							eh->edges[e].cardin += 1;
@@ -181,7 +172,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 
 					// vertical edge
 					if (y < eh->yqtd) {
-						int e = GET_VERT_EDGE(x, y);
+						int e = GET_VERT_EDGE(eh,x, y);
 						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
 							double delta_y = ev2.MaxY - ev2.MinY;
 							eh->edges[e].cardin += 1;
@@ -198,18 +189,6 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
         if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
             GEOSGeom_destroy(geo);
     }
-
-    /*
-	for(int x = 0; x < eh->xqtd; x++) {
-		for(int y = 0; y < eh->yqtd; y++) {
-
-			euler_face *cell = &eh->faces[x*eh->yqtd +y];
-
-			if(cell->usedarea.MinX == 1.7976931348623157e+308)
-			printf("MinX = %f MaxX = %f MinY = %f MaxY = %f \n",cell->usedarea.MinX,cell->usedarea.MaxX,cell->usedarea.MinY,cell->usedarea.MaxY);
-		}
-	}*/
-
 
 }
 
@@ -255,7 +234,7 @@ euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,
 
 			// horizontal edge at vertex v
 			if (i < eh_real->xqtd) {
-				int e = GET_HORZ_EDGE(i, j);
+				int e = GET_HORZ_EDGE(eh_real,i, j);
 				eh_real->edges[e].mbr.MinX = eh_real->xtics[i];
 				eh_real->edges[e].mbr.MaxX = eh_real->xtics[i+1];
 				eh_real->edges[e].mbr.MinY = eh_real->ytics[j];
@@ -265,7 +244,7 @@ euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *eh,
 
 			// vertical edge at vertex v
 			if (j < eh_real->yqtd) {
-				int e = GET_VERT_EDGE(i, j);
+				int e = GET_VERT_EDGE(eh_real,i, j);
 				eh_real->edges[e].mbr.MinY = eh_real->ytics[j];
 				eh_real->edges[e].mbr.MaxY = eh_real->ytics[j+1];
 				eh_real->edges[e].mbr.MinX = eh_real->xtics[i];
@@ -396,7 +375,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
             // horizontal edge
             if (x < eh->xqtd) {
-                int e = GET_HORZ_EDGE(x, y);
+                int e = GET_HORZ_EDGE(eh,x, y);
                 if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
                     if(eh->edges[e].mbr.MinY != query.MinY && eh->edges[e+1].mbr.MinY != query.MaxY) {
                         Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
@@ -410,7 +389,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
 
             // vertical edge
             if (y < eh->yqtd) {
-                int e = GET_VERT_EDGE(x, y);
+                int e = GET_VERT_EDGE(eh,x, y);
                 if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query)){
                     if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e+1].mbr.MinX != query.MaxX) {
                         Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
@@ -485,7 +464,7 @@ void euler_print_hist(char *name, euler_histogram *eh) {
 
             // horizontal edge
             if (x < eh->xqtd) {
-                int e = GET_HORZ_EDGE(x, y);
+                int e = GET_HORZ_EDGE(eh,x, y);
                 fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
                         eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
                 fprintf(f, "'properties': {");
@@ -497,7 +476,7 @@ void euler_print_hist(char *name, euler_histogram *eh) {
 
             // vertical edge
             if (y < eh->yqtd) {
-                int e = GET_VERT_EDGE(x, y);
+                int e = GET_VERT_EDGE(eh,x, y);
                 fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
                         eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
                 fprintf(f, "'properties': {");
@@ -571,12 +550,6 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
     double wx = inters.MaxX - inters.MinX;
     double wy = inters.MaxY - inters.MinY;
 
-    if(avgl_x == 0.0)
-    	printf("media x zerada \n");
-    if(avgl_y == 0.0)
-    	printf("media y zerada \n");
-    if(ehr_face->cardin == 0.0)
-    	printf("face zerada \n");
 
     double qtdobjl = ehr_face->cardin *
         MIN(1,(avgl_x+wx)/ux) *
@@ -603,266 +576,6 @@ double estimate_intersections_mamoulis_papadias(Envelope el, Envelope er, Envelo
     double res = qtdobjl * qtdobjr * minX * minY;
 
     return res;
-}
-
-
-int euler_join_cardinality(dataset *dr,
-        dataset *ds,
-        euler_histogram* ehr,
-        euler_histogram* ehs,
-        rtree_root* rtree_r,
-        rtree_root* rtree_s,
-        double* stddev) {
-
-
-    double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
-    double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
-    double xend = MIN(dr->metadata.hist.mbr.MaxX, ds->metadata.hist.mbr.MaxX);
-    double yend = MIN(dr->metadata.hist.mbr.MaxY, ds->metadata.hist.mbr.MaxY);
-
-    unsigned int N = ceil((xend - xini) * (yend - yini));
-	double mean = 0.0;
-	double M2 = 0.0;
-	double sum_error = 0.0;
-
-    int xdr_start = 0;
-    while (xdr_start < ehr->xqtd && ehr->xtics[xdr_start+1] < xini)
-        xdr_start++;
-    int xdr_end = xdr_start+1;
-    while (xdr_end < ehr->xqtd && ehr->xtics[xdr_end] <= xend)
-        xdr_end++;
-    if (xdr_start == ehr->xqtd)
-        return 0;
-
-    // skip non-intersect area on y
-    int ydr_start = 0;
-    while (ydr_start < ehr->yqtd && ehr->ytics[ydr_start+1] < yini)
-        ydr_start++;
-    int ydr_end = ydr_start+1;
-    while (ydr_end < ehr->yqtd && ehr->ytics[ydr_end] <= yend)
-        ydr_end++;
-    if (ydr_start == ehr->yqtd)
-        return 0;
-
-    int xds_atu = 0;
-    float result = 0;
-    for(int xr = xdr_start; xr < xdr_end; xr++) {
-
-        while(xds_atu < ehs->xqtd && ehs->xtics[xds_atu+1] < ehr->xtics[xr]) // skip when end of s < start of r
-            xds_atu++;
-        int xds_end = xds_atu+1;
-        while(xds_end < ehs->xqtd && ehs->xtics[xds_end] <= ehr->xtics[xr+1]) // increment when end of s < start of r
-            xds_end++;
-
-        int yds_atu = 0;
-
-        Envelope er;
-        Envelope es;
-        er.MinX = ehr->xtics[xr];
-        er.MaxX = ehr->xtics[xr+1];
-
-        for(int yr = ydr_start; yr < ydr_end; yr++) {
-
-            while(yds_atu < ehs->yqtd && ehs->ytics[yds_atu+1] < ehr->ytics[yr]) // skip when end of s < start of r
-                yds_atu++;
-            int yds_end = yds_atu+1;
-            while(yds_end < ehs->yqtd && ehs->ytics[yds_end] <= ehr->ytics[yr+1]) // increment when end of s < start of r
-                yds_end++;
-
-            er.MinY = ehr->ytics[yr];
-            er.MaxY = ehr->ytics[yr+1];
-            double erarea = ENVELOPE_AREA(er);
-
-            for(int xs = xds_atu; xs < xds_end; xs++) {
-                es.MinX = ehs->xtics[xs];
-                es.MaxX = ehs->xtics[xs+1];
-
-                for(int ys = yds_atu; ys < yds_end; ys++) {
-                    double estimated_result = 0;
-
-                    es.MinY = ehs->ytics[ys];
-                    es.MaxY = ehs->ytics[ys+1];
-
-                    char i = ENVELOPE_INTERSECTS(er, es);
-                    assert(i != 0);
-
-                    euler_face *ehr_face = &ehr->faces[xr*ehr->yqtd +yr];
-                    euler_face *ehs_face = &ehs->faces[xs*ehs->yqtd +ys];
-                    Envelope inters = EnvelopeIntersection2(er, es);
-                    double int_area = ENVELOPE_AREA(inters);
-
-                    printf("ehr_face[%d][%d].card = %f, avg_h = %f, avg_w = %f\n"
-                            "ehs_face[%d][%d].card = %f, avg_h = %f, avg_w = %f\n", xr, yr, ehr_face->cardin,ehr_face->avg_height, ehr_face->avg_width, xs, ys, ehs_face->cardin, ehs_face->avg_height, ehs_face->avg_width);
-
-                    double intersections = 0;
-                    double p = 1;
-                    if(ehr_face->cardin >= 1 || ehs_face->cardin >= 1){
-                        intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehr_face, ehs_face);
-
-                        if(intersections< 1.0)
-                            intersections = 0;
-                    }
-                    result +=  intersections;
-                    estimated_result += intersections;
-
-
-                    //vertice
-                    int vr = xr * (ehr->yqtd+1) + yr;
-                    int vs = xs * (ehs->yqtd+1) + ys;
-
-                    if(ehs->vertexes[vs].x == ehr->vertexes[vr].x && ehs->vertexes[vs].y == ehr->vertexes[vr].y ){
-                        result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                        estimated_result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                    }
-
-                    //aresta horizontal
-                    int ar = GET_HORZ_EDGE_EHR(xr, yr);
-                    int as = GET_HORZ_EDGE_EHS(xs, ys);
-                    if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
-                        printf("ar = %d, as = %d\n", ar, as);
-                        Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
-                        double int_length = inters.MaxX - inters.MinX;
-                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
-                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
-
-                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
-
-                        double cardin_ar = ehr->edges[ar].cardin;
-                        double cardin_as = ehr->edges[as].cardin;
-                        result -=  cardin_ar * cardin_as * p;
-                        estimated_result -=  cardin_ar * cardin_as * p;
-                        //result -= estimate_intersections_mp_edges_horz(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
-                    }
-
-                    ar = GET_VERT_EDGE_EHR(xr, yr);
-                    as = GET_VERT_EDGE_EHS(xs, ys);
-                    if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr)){
-                        Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
-                        double int_length = inters.MaxY - inters.MinY;
-                        double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxY - ehr->edges[ar].mbr.MinY);
-                        double fraction_as = int_length / (ehs->edges[as].mbr.MaxY - ehs->edges[as].mbr.MinY);
-
-                        double p = MIN(1, ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
-                        printf(" edge p = %f\n", ehr->edges[ar].avg_projection + ehs->edges[as].avg_projection);
-
-                        double cardin_ar = ehr->edges[ar].cardin;
-                        double cardin_as = ehr->edges[as].cardin;
-                        result -=  cardin_ar * cardin_as * p;
-                        estimated_result -=  cardin_ar * cardin_as * p;
-                        //result -= estimate_intersections_mp_edges_vert(ehr->edges[ar].mbr, ehs->edges[as].mbr, inters, &ehr->edges[ar], &ehs->edges[as]);
-                    }
-                        //double real_cardin = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
-                        double real_cardin = 1;
-                        int error = abs(estimated_result - real_cardin);
-                        double delta = error - mean;
-                        assert(!isnan(delta));
-
-		                mean += delta/(double)N;
-                        assert(!isnan(mean));
-                        M2 += delta*(error - mean);
-                        sum_error += error;
-
-
-                }
-            }
-        }
-    }
-
-
-    *stddev = sqrt(M2/(double)N);
-    assert(!isnan(*stddev));
-    return round(result);
-}
-
-
-int euler_spatial_join(euler_histogram* ehr, euler_histogram* ehs){
-    if(!ENVELOPE_INTERSECTS(ehr->mbr, ehs->mbr))
-        return 0;
-
-    double result = 0;
-
-    double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
-    double yini = MAX(ehr->ytics[0], ehs->ytics[0]);
-    double xfim = MIN(ehr->mbr.MaxX, ehs->mbr.MaxX);
-    double yfim = MIN(ehr->mbr.MaxY, ehs->mbr.MaxY);
-
-    for(int xr = xini; xr <= xfim; xr++){
-        Envelope er, es;
-        er.MinX = ehr->xtics[xr];
-        er.MaxX = ehr->xtics[xr+1];
-
-        for(int yr = yini; yr <= yfim; yr++){
-            er.MinY = ehr->xtics[yr];
-            er.MaxY = ehr->xtics[yr+1];
-
-            for(int xs = xini; xs <= xfim; xs++){
-                es.MinX = ehs->xtics[xs];
-                es.MaxX = ehs->xtics[xs+1];
-
-                for(int ys = yini; ys <= yfim; ys++){
-                    es.MinY = ehs->xtics[ys];
-                    es.MaxY = ehs->xtics[ys+1];
-                    if(ENVELOPE_INTERSECTS(er, es)){
-                        //face
-                        euler_face *ehr_face = &ehr->faces[xr*ehs->yqtd +yr];
-                        euler_face *ehs_face = &ehr->faces[xs*ehs->yqtd +ys];
-
-                        Envelope inters = EnvelopeIntersection(er, es);
-                        double int_area = ENVELOPE_AREA(inters);
-                        double face_area = ENVELOPE_AREA(es);
-                        double fraction = int_area / face_area;
-                        //result += fraction * face->cardin;
-                        if(ehr_face->avg_height + ehs_face->avg_height >= 1 && ehr_face->avg_width + ehs_face->avg_width >= 1)
-                            result += fraction * ehs_face->cardin;
-                        else{
-                            double p =  ehr_face->avg_area + ehs_face->avg_area + ehr_face->avg_height * ehs_face->avg_width+ehs_face->avg_height * ehr_face->avg_width;
-
-                            result += fraction * ehs_face->cardin * p;
-                        }
-
-                        //vertice
-                        int vr = xr * (ehr->yqtd+1) + yr;
-                        int vs = xs * (ehs->yqtd+1) + ys;
-                        if (ENVELOPE_CONTAINSP(es, ehr->vertexes[vr].x, ehr->vertexes[vr].y)){
-                            result += ehr->vertexes[vr].cardin * ehs->vertexes[vs].cardin;
-                        }
-
-                        //aresta horizontal
-                        int ar = GET_HORZ_EDGE_EHR(xr, yr);
-                        int as = GET_HORZ_EDGE_EHS(xs, ys);
-                        if (ENVELOPE_INTERSECTS(ehs->edges[as].mbr, er)){
-                            if(ehs->edges[as].mbr.MinY != es.MinY && ehs->edges[as+1].mbr.MinY != es.MaxY) {
-                                Envelope inters = EnvelopeIntersection(es, ehs->edges[as].mbr);
-                                double int_length = inters.MaxX - inters.MinX;
-                                double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
-                                double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
-                                double p = MIN(1, fraction_ar * ehs->edges[ar].cardin + fraction_as * ehs->edges[as].cardin);
-                                result -=  ehr->edges[ar].cardin * ehs->edges[as].cardin * p;
-                            }
-                        }
-
-                        ar = GET_VERT_EDGE_EHR(xr, yr);
-                        as = GET_VERT_EDGE_EHS(xs, ys);
-                        if (ENVELOPE_INTERSECTS(ehs->edges[as].mbr, er)){
-                            if (ehs->edges[as].mbr.MinX != es.MinX && ehs->edges[as+1].mbr.MinX != es.MaxX) {
-                                Envelope inters = EnvelopeIntersection(es, ehs->edges[as].mbr);
-                                double int_length = inters.MaxY - inters.MinY;
-                                double fraction_ar = int_length / (ehr->edges[ar].mbr.MaxX - ehr->edges[ar].mbr.MinX);
-                                double fraction_as = int_length / (ehs->edges[as].mbr.MaxX - ehs->edges[as].mbr.MinX);
-                                double p = MIN(1, fraction_ar * ehs->edges[ar].cardin + fraction_as * ehs->edges[as].cardin);
-                                double fraction = int_length / (ehs->edges[as].mbr.MaxY - ehr->edges[as].mbr.MinY);
-                                result -=  ehr->edges[ar].cardin * ehs->edges[as].cardin * p;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    return round(result);
-
 }
 
 

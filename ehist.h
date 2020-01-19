@@ -46,8 +46,10 @@ euler_histogram *eh_generate_hist(dataset *ds, HistogramGenerateSpec spec, enum 
 
 euler_histogram *eh_generate_hreal(dataset *ds,dataset *dsb,euler_histogram *ehA,enum JoinPredicateCheck pcheck);
 
-euler_histogram *eh_generate_intermed(dataset *ds,dataset *dsb,euler_histogram *ehA,euler_histogram *ehB);
-euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,dataset *dsc,euler_histogram *ehA,euler_histogram *ehB,euler_histogram *ehC);
+euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb,euler_histogram *ehA,euler_histogram *ehB);
+
+void salvaArquivo(euler_histogram *ehA, euler_histogram *ehIntermed, euler_histogram *ehC, dataset *dsc);
+
 
 double estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
         euler_edge *ehr_face, euler_edge *ehs_face);
