@@ -108,15 +108,35 @@ void eulerskew_calculate_skew_reduction(dataset_histogram *dh, eulerskew_face *b
 
 GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
-	GList *minskewhist = NULL;
+
+	minskewLists *listaEulerskew = NULL;
+
 	dataset_histogram *dh = &ds->metadata.hist;
 
-	eulerskew_face *first_bucket = g_new0(eulerskew_face, 1);
-	first_bucket->mbr = ds->metadata.hist.mbr;
+	eulerskew_face *first_bucket  = g_new0(eulerskew_face, 1);
+	eulerskew_edge  *first_Edge = g_new0(eulerskew_edge, 1);
+	eulerskew_vertex *first_Vertex = g_new0(eulerskew_vertex, 1);
+
+
+	first_bucket->mbr = ds->metadata.hist.mbr; //o primeiro bucket será as extremidades do histograma minskew
+	first_Edge->mbr.MinX = ds->metadata.hist.mbr.MinX;
+    first_Edge->mbr.MinY = ds->metadata.hist.mbr.MinY;
+    first_Edge->mbr.MaxX = ds->metadata.hist.mbr.MaxX;
+    first_Edge->mbr.MaxY = ds->metadata.hist.mbr.MaxY;
+    first_Vertex->x = ds->metadata.hist.mbr.MinX;
+    first_Vertex->y = ds->metadata.hist.mbr.MinY;
+
+
+
+
 	eulerskew_calculate_bucket_with_mbr(&ds->metadata.hist, first_bucket);
 
 	int buckets = 1;
-	minskewhist = g_list_append(minskewhist, first_bucket);
+
+	listaEulerskew->bucketsList = g_list_append(listaEulerskew->bucketsList, first_bucket);
+	listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, first_Edge);
+	listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, first_Vertex);
+
 	double global_skew = first_bucket->skew;
 
 	while (buckets < buckets_num) {
@@ -124,8 +144,19 @@ GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		double skew_reduction = 0;
 
 		GList *item;
-		g_list_foreach(item, minskewhist) {
-			eulerskew_face *bucket = (eulerskew_face *)item->data;
+		g_list_foreach(item, listaEulerskew->bucketsList) {
+
+			eulerskew_face *bucket = (eulerskew_face * )item->data;
+			eulerskew_edge *bucketEdge = (eulerskew_edge *)item->data;
+			eulerskew_vertex *bucketVertex = (eulerskew_vertex *)item->data;
+
+            bucketEdge->mbr.MinX = bucket->mbr.MinX;
+            bucketEdge->mbr.MinY = bucket->mbr.MinY;
+            bucketEdge->mbr.MaxX = bucket->mbr.MaxX;
+            bucketEdge->mbr.MaxY = bucket->mbr.MaxY;
+            bucketVertex->x = bucket->mbr.MinX;
+            bucketVertex->y = bucket->mbr.MinY;
+
 
 			if (isnan(bucket->skew_reduction)) {
 				eulerskew_calculate_skew_reduction(dh, bucket);
@@ -160,13 +191,16 @@ GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// add the new bucket b2
 		eulerskew_face *newb = g_new(eulerskew_face, 1);
 		*newb = newb2;
-		minskewhist = g_list_append(minskewhist, newb);
+
+		listaEulerskew->bucketsList = g_list_append(listaEulerskew->bucketsList, newb);
+		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, newb);
+		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, newb);
 
 
 		buckets++;
 	}
 
-	return minskewhist;
+	return listaEulerskew;
 }
 /*
 

@@ -62,6 +62,14 @@ typedef struct {
 	int n;
 } variance_result_eulerskew;
 
+typedef struct{
+    GList *bucketsList;
+    GList *EdgesList;
+    GList *VertexesList;
+}minskewLists;
+
+
+
 void eulerskew_get_ini_fim(dataset_histogram *dh, Envelope ev, int *xini, int *xfim, int *yini, int *yfim);
 
 variance_result_eulerskew eulerskew_calculate_skew_row_col(dataset_histogram *dh, int xini, int xfim, int yini, int yfim);
