@@ -132,13 +132,13 @@ int main(int argc, char* argv[]) {
     //create eulerskew histogram
 	//eulerskew_hist *esh = NULL;
 	eulerskew_histogram *esh = NULL;
-	GList *eulerskew_buckets = NULL;
+	minskewLists *eulerskew_buckets = NULL;
 	if (ht == HTHIBRID) {
 		 //esh = eulerskew_generate_hist(ds, 500);
         eulerskew_buckets = eulerskew_generate_hist(ds, 500);
         //eulerskew_print_hist(ds, minskewh);
-        esh = eulerskew_generate_hist_with_euler(ds, spec, CHECKR, eulerskew_buckets);
-        eulerskew_print_hist(ds, esh);
+        //esh = eulerskew_generate_hist_with_euler(ds, spec, CHECKR, eulerskew_buckets);
+        eulerskew_print_hist(ds, eulerskew_buckets);
 	}
 
 	// the user specified a query?

@@ -78,7 +78,7 @@ void eulerskew_calculate_bucket_with_mbr(dataset_histogram *dh, eulerskew_face *
 
 void eulerskew_calculate_skew_reduction(dataset_histogram *dh, eulerskew_face *bucket);
 
-GList *eulerskew_generate_hist(dataset *ds, int buckets_num);
+minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num);
 
 //void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey);
 void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey, GList *minskewhist);
@@ -96,7 +96,7 @@ eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGe
 
 int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2);
 
-void eulerskew_print_hist(dataset *ds, eulerskew_histogram *eh);
+void eulerskew_print_hist(dataset *ds, minskewLists *eh);
 
 double eulerskew_estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
         eulerskew_edge *ehr_face, eulerskew_edge *ehs_face);

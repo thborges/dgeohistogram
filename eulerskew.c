@@ -65,8 +65,8 @@ void eulerskew_calculate_skew_reduction(dataset_histogram *dh, eulerskew_face *b
 	int xini, xfim, yini, yfim;
 	eulerskew_get_ini_fim(dh, bucket->mbr, &xini, &xfim, &yini, &yfim);
 
-	int xqtd = xfim-xini+1;
-	int yqtd = yfim-yini+1;
+	//int xqtd = xfim-xini+1;
+	//int yqtd = yfim-yini+1;
 
 	bucket->skew_reduction = 0;
 
@@ -106,36 +106,34 @@ void eulerskew_calculate_skew_reduction(dataset_histogram *dh, eulerskew_face *b
 	}
 }
 
-GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
+minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 
-	minskewLists *listaEulerskew = NULL;
+	minskewLists *listaEulerskew = g_new0(minskewLists, 1);
 
 	dataset_histogram *dh = &ds->metadata.hist;
 
 	eulerskew_face *first_bucket  = g_new0(eulerskew_face, 1);
-	eulerskew_edge  *first_Edge = g_new0(eulerskew_edge, 1);
-	eulerskew_vertex *first_Vertex = g_new0(eulerskew_vertex, 1);
+	/*eulerskew_edge  *first_Edge = g_new0(eulerskew_edge, 1);
+	eulerskew_vertex *first_Vertex = g_new0(eulerskew_vertex, 1);*/
 
 
 	first_bucket->mbr = ds->metadata.hist.mbr; //o primeiro bucket será as extremidades do histograma minskew
-	first_Edge->mbr.MinX = ds->metadata.hist.mbr.MinX;
+
+	/*first_Edge->mbr.MinX = ds->metadata.hist.mbr.MinX;
     first_Edge->mbr.MinY = ds->metadata.hist.mbr.MinY;
     first_Edge->mbr.MaxX = ds->metadata.hist.mbr.MaxX;
     first_Edge->mbr.MaxY = ds->metadata.hist.mbr.MaxY;
     first_Vertex->x = ds->metadata.hist.mbr.MinX;
-    first_Vertex->y = ds->metadata.hist.mbr.MinY;
-
-
-
+    first_Vertex->y = ds->metadata.hist.mbr.MinY;*/
 
 	eulerskew_calculate_bucket_with_mbr(&ds->metadata.hist, first_bucket);
 
 	int buckets = 1;
 
 	listaEulerskew->bucketsList = g_list_append(listaEulerskew->bucketsList, first_bucket);
-	listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, first_Edge);
-	listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, first_Vertex);
+/*	listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, first_Edge);
+	listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, first_Vertex);*/
 
 	double global_skew = first_bucket->skew;
 
@@ -147,7 +145,7 @@ GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		g_list_foreach(item, listaEulerskew->bucketsList) {
 
 			eulerskew_face *bucket = (eulerskew_face * )item->data;
-			eulerskew_edge *bucketEdge = (eulerskew_edge *)item->data;
+	/*		eulerskew_edge *bucketEdge = (eulerskew_edge *)item->data;
 			eulerskew_vertex *bucketVertex = (eulerskew_vertex *)item->data;
 
             bucketEdge->mbr.MinX = bucket->mbr.MinX;
@@ -156,7 +154,7 @@ GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
             bucketEdge->mbr.MaxY = bucket->mbr.MaxY;
             bucketVertex->x = bucket->mbr.MinX;
             bucketVertex->y = bucket->mbr.MinY;
-
+	*/
 
 			if (isnan(bucket->skew_reduction)) {
 				eulerskew_calculate_skew_reduction(dh, bucket);
@@ -193,11 +191,39 @@ GList *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		*newb = newb2;
 
 		listaEulerskew->bucketsList = g_list_append(listaEulerskew->bucketsList, newb);
-		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, newb);
+/*		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, newb);
 		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, newb);
-
+*/
 
 		buckets++;
+	}
+
+
+	GList *item;
+	g_list_foreach(item, listaEulerskew->bucketsList) {
+		eulerskew_face *bucket = (eulerskew_face * )item->data;
+
+		// example
+		// eulerskew_edge edges[] = g_new0(eulerskew_edge, 10);
+		// dges[0].mbr.MinX = asdklfsl.
+
+		// horizontal edge 1
+		eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
+	    edgeh1->mbr.MinX = bucket->mbr.MinX;
+        edgeh1->mbr.MinY = bucket->mbr.MinY;
+        edgeh1->mbr.MaxX = bucket->mbr.MaxX;
+        edgeh1->mbr.MaxY = bucket->mbr.MinY;
+		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
+
+		// horizontal edge 2
+		// vertical edge 1
+		// vertical edge 2
+
+		// horizontal point 1
+		// horizontal point 2
+		// vertical point 1
+		// vertical point 2
+
 	}
 
 	return listaEulerskew;
@@ -265,6 +291,73 @@ void eulerskew_print_hist(dataset *ds, GList *hist) {
 	fclose(f);
 }
 */
+
+
+void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
+    char filename[100];
+
+    char *prefix = getenv("HISTOPREFIX");
+    prefix = prefix != NULL ? prefix : "";
+
+    sprintf(filename, "histogram/%seulerskew-%s.geojson", prefix, ds->metadata.name);
+    FILE *f = fopen(filename, "wb");
+    if (f == NULL) {
+        perror("Error printing histogram");
+        return;
+    }
+
+    fprintf(f, "{'type': 'FeatureCollection', 'features': [\n");
+
+	GList *item;
+
+	// face
+	g_list_foreach(item, eh->bucketsList) {
+		eulerskew_face *ef = (eulerskew_face * )item->data;
+        fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
+        fprintf(f, "[%.15lf, %.15lf],", ef->mbr.MinX, ef->mbr.MinY);
+        fprintf(f, "[%.15lf, %.15lf],", ef->mbr.MaxX, ef->mbr.MinY);
+        fprintf(f, "[%.15lf, %.15lf],", ef->mbr.MaxX, ef->mbr.MaxY);
+        fprintf(f, "[%.15lf, %.15lf],", ef->mbr.MinX, ef->mbr.MaxY);
+        fprintf(f, "[%.15lf, %.15lf]",  ef->mbr.MinX, ef->mbr.MinY);
+        fprintf(f, "]]}, 'properties': {");
+        //fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
+        fprintf(f, "\"card\": %lf,", ef->cardin);
+        //fprintf(f, "\"avg_heigth\": %lf,", eh->faces[x*eh->yqtd + y].avg_height);
+        //fprintf(f, "\"avg_width\": %lf,", eh->faces[x*eh->yqtd + y].avg_width);
+        //fprintf(f, "\"avg_area\": %lf,", eh->faces[x*eh->yqtd + y].avg_area);
+        //fprintf(f, "\"face_area\": %lf,", eh->xtics[0]*eh->ytics[0] );
+        fprintf(f, "\"type\": \"face\",");
+        fprintf(f, "}},\n");
+    }
+
+	// edges
+	g_list_foreach(item, eh->EdgesList) {
+		eulerskew_edge *eh = (eulerskew_edge * )item->data;
+        fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
+        eh->mbr.MinX, eh->mbr.MinY, eh->mbr.MaxX, eh->mbr.MaxY);
+        fprintf(f, "'properties': {");
+        //fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
+        fprintf(f, "\"card\": %lf,", (double)0);
+        fprintf(f, "\"type\": \"edge\",");
+        fprintf(f, "}},\n");
+	}
+
+    // vertex
+	g_list_foreach(item, eh->VertexesList) {
+		eulerskew_vertex *v = (eulerskew_vertex * )item->data;
+
+        fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%.15lf, %.15lf]},", v->x, v->y);
+        fprintf(f, "'properties': {");
+        //fprintf(f, "\"name\": \"v:%d.%d\",", v->x, v->y);
+        fprintf(f, "\"card\": %lf,", (double)0);
+        fprintf(f, "\"type\": \"vertex\",");
+        fprintf(f, "}},\n");
+	}
+
+    fprintf(f, "]}\n");
+    fclose(f);
+}
+
 //
 void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey, GList *minskewhist) {
     assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
@@ -563,95 +656,6 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2) {
 
     return round(result);
 }
-
-void eulerskew_print_hist(dataset *ds, eulerskew_histogram *eh) {
-    char filename[100];
-
-    char *prefix = getenv("HISTOPREFIX");
-    prefix = prefix != NULL ? prefix : "";
-
-    sprintf(filename, "histogram/%seuler-%s.geojson", prefix, ds->metadata.name);
-    FILE *f = fopen(filename, "wb");
-    if (f == NULL) {
-        perror("Error printing histogram");
-        return;
-    }
-
-    fprintf(f, "{'type': 'FeatureCollection', 'features': [\n");
-
-    int v = 0;
-    Envelope env;
-    for(int x = 0; x <= eh->xqtd; x++) {
-        env.MinX = eh->xtics[x];
-        if (x < eh->xqtd)
-            env.MaxX = eh->xtics[x+1];
-
-        for(int y = 0; y <= eh->yqtd; y++) {
-            env.MinY = eh->ytics[y];
-            if (y < eh->yqtd)
-                env.MaxY = eh->ytics[y+1];
-
-            // face
-            if (x < eh->xqtd && y < eh->yqtd) {
-                fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-                fprintf(f, "[%.15lf, %.15lf],", env.MinX, env.MinY);
-                fprintf(f, "[%.15lf, %.15lf],", env.MaxX, env.MinY);
-                fprintf(f, "[%.15lf, %.15lf],", env.MaxX, env.MaxY);
-                fprintf(f, "[%.15lf, %.15lf],", env.MinX, env.MaxY);
-                fprintf(f, "[%.15lf, %.15lf]",  env.MinX, env.MinY);
-                fprintf(f, "]]}, 'properties': {");
-                fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
-                fprintf(f, "\"card\": %lf,", eh->faces[x*eh->yqtd + y].cardin);
-                fprintf(f, "\"avg_heigth\": %lf,", eh->faces[x*eh->yqtd + y].avg_height);
-                fprintf(f, "\"avg_width\": %lf,", eh->faces[x*eh->yqtd + y].avg_width);
-                fprintf(f, "\"avg_area\": %lf,", eh->faces[x*eh->yqtd + y].avg_area);
-                fprintf(f, "\"face_area\": %lf,", eh->xtics[0]*eh->ytics[0] );
-                fprintf(f, "\"type\": \"face\",");
-                fprintf(f, "}},\n");
-            }
-
-            // vertex
-            fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%.15lf, %.15lf]},",
-                    eh->vertexes[v].x, eh->vertexes[v].y);
-            fprintf(f, "'properties': {");
-            fprintf(f, "\"name\": \"v:%d.%d\",", x, y);
-            fprintf(f, "\"card\": %lf,", eh->vertexes[v].cardin);
-            fprintf(f, "\"type\": \"vertex\",");
-            fprintf(f, "}},\n");
-            v++;
-
-
-            // horizontal edge
-            if (x < eh->xqtd) {
-                int e = GET_HORZ_EDGE(x, y);
-                fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
-                        eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
-                fprintf(f, "'properties': {");
-                fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
-                fprintf(f, "\"card\": %lf,", eh->edges[e].cardin);
-                fprintf(f, "\"type\": \"edgeh\",");
-                fprintf(f, "}},\n");
-            }
-
-            // vertical edge
-            if (y < eh->yqtd) {
-                int e = GET_VERT_EDGE(x, y);
-                fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
-                        eh->edges[e].mbr.MinX, eh->edges[e].mbr.MinY, eh->edges[e].mbr.MaxX, eh->edges[e].mbr.MaxY);
-                fprintf(f, "'properties': {");
-                fprintf(f, "\"name\": \"ev:%d.%d\",", x, y);
-                fprintf(f, "\"card\": %lf,", eh->edges[e].cardin);
-                fprintf(f, "\"type\": \"edgev\",");
-                fprintf(f, "}},\n");
-            }
-
-        }
-    }
-
-    fprintf(f, "]}\n");
-    fclose(f);
-}
-
 
 double eulerskew_estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
         eulerskew_edge *ehr_face, eulerskew_edge *ehs_face) {
