@@ -216,8 +216,29 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
 
 		// horizontal edge 2
+        eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
+	    edgeh2->mbr.MinX = bucket->mbr.MinX;
+        edgeh2->mbr.MinY = bucket->mbr.MaxY;
+        edgeh2->mbr.MaxX = bucket->mbr.MaxX;
+        edgeh2->mbr.MaxY = bucket->mbr.MaxY;
+		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh2);
+
 		// vertical edge 1
+		eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
+	    edgev1->mbr.MinX = bucket->mbr.MinX;
+        edgev1->mbr.MinY = bucket->mbr.MaxY;
+        edgev1->mbr.MaxX = bucket->mbr.MinX;
+        edgev1->mbr.MaxY = bucket->mbr.MaxY;
+		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
+
 		// vertical edge 2
+        eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
+	    edgev2->mbr.MinX = bucket->mbr.MaxX;
+        edgev2->mbr.MinY = bucket->mbr.MaxY;
+        edgev2->mbr.MaxX = bucket->mbr.MaxX;
+        edgev2->mbr.MaxY = bucket->mbr.MaxY;
+		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
+
 
 		// horizontal point 1
 		// horizontal point 2
@@ -330,11 +351,13 @@ void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
         fprintf(f, "}},\n");
     }
 
+    GList *item2;
 	// edges
-	g_list_foreach(item, eh->EdgesList) {
-		eulerskew_edge *eh = (eulerskew_edge * )item->data;
+	//horizontal 1
+	g_list_foreach(item2, eh->EdgesList) {
+		eulerskew_edge *ee = (eulerskew_edge * )item2->data;
         fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [[%.15lf, %.15lf], [%.15lf, %.15lf]]},",
-        eh->mbr.MinX, eh->mbr.MinY, eh->mbr.MaxX, eh->mbr.MaxY);
+        ee->mbr.MinX, ee->mbr.MinY, ee->mbr.MaxX, ee->mbr.MaxY);
         fprintf(f, "'properties': {");
         //fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
         fprintf(f, "\"card\": %lf,", (double)0);
