@@ -226,7 +226,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// vertical edge 1
 		eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
 	    edgev1->mbr.MinX = bucket->mbr.MinX;
-        edgev1->mbr.MinY = bucket->mbr.MaxY;
+        edgev1->mbr.MinY = bucket->mbr.MinY;
         edgev1->mbr.MaxX = bucket->mbr.MinX;
         edgev1->mbr.MaxY = bucket->mbr.MaxY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
@@ -234,16 +234,34 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// vertical edge 2
         eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
 	    edgev2->mbr.MinX = bucket->mbr.MaxX;
-        edgev2->mbr.MinY = bucket->mbr.MaxY;
+        edgev2->mbr.MinY = bucket->mbr.MinY;
         edgev2->mbr.MaxX = bucket->mbr.MaxX;
         edgev2->mbr.MaxY = bucket->mbr.MaxY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
 
 
-		// horizontal point 1
-		// horizontal point 2
-		// vertical point 1
-		// vertical point 2
+		// below left
+		eulerskew_vertex *vertexbl = g_new0(eulerskew_vertex,1);
+		vertexbl->x = bucket->mbr.MinX;
+		vertexbl->y = bucket->mbr.MinY;
+		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbl);
+
+		// above left
+		eulerskew_vertex *vertexal = g_new0(eulerskew_vertex,1);
+		vertexal->x = bucket->mbr.MinX;
+		vertexal->y = bucket->mbr.MaxY;
+		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexal);
+		// below right
+
+		eulerskew_vertex *vertexbr = g_new0(eulerskew_vertex,1);
+		vertexbr->x = bucket->mbr.MaxX;
+		vertexbr->y = bucket->mbr.MinY;
+		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbr);
+		// above right
+		eulerskew_vertex *vertexar = g_new0(eulerskew_vertex,1);
+		vertexar->x = bucket->mbr.MaxX;
+		vertexar->y = bucket->mbr.MaxY;
+		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexar);
 
 	}
 
@@ -343,10 +361,10 @@ void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
         fprintf(f, "]]}, 'properties': {");
         //fprintf(f, "\"name\": \"f:%d.%d\",", x, y);
         fprintf(f, "\"card\": %lf,", ef->cardin);
-        //fprintf(f, "\"avg_heigth\": %lf,", eh->faces[x*eh->yqtd + y].avg_height);
-        //fprintf(f, "\"avg_width\": %lf,", eh->faces[x*eh->yqtd + y].avg_width);
-        //fprintf(f, "\"avg_area\": %lf,", eh->faces[x*eh->yqtd + y].avg_area);
-        //fprintf(f, "\"face_area\": %lf,", eh->xtics[0]*eh->ytics[0] );
+        fprintf(f, "\"avg_heigth\": %lf,", ef->avg_height);
+        fprintf(f, "\"avg_width\": %lf,", ef->avg_width);
+        fprintf(f, "\"avg_area\": %lf,", ef->avg_area);
+        fprintf(f, "\"face_area\": %lf,", (ef->mbr.MinX - ef->mbr.MaxX) * (ef->mbr.MinY - ef->mbr.MaxY));
         fprintf(f, "\"type\": \"face\",");
         fprintf(f, "}},\n");
     }
@@ -360,7 +378,7 @@ void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
         ee->mbr.MinX, ee->mbr.MinY, ee->mbr.MaxX, ee->mbr.MaxY);
         fprintf(f, "'properties': {");
         //fprintf(f, "\"name\": \"eh:%d.%d\",", x, y);
-        fprintf(f, "\"card\": %lf,", (double)0);
+        fprintf(f, "\"card\": %lf,", ee->cardin);
         fprintf(f, "\"type\": \"edge\",");
         fprintf(f, "}},\n");
 	}
@@ -372,7 +390,7 @@ void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
         fprintf(f, "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [%.15lf, %.15lf]},", v->x, v->y);
         fprintf(f, "'properties': {");
         //fprintf(f, "\"name\": \"v:%d.%d\",", v->x, v->y);
-        fprintf(f, "\"card\": %lf,", (double)0);
+        fprintf(f, "\"card\": %lf,", v->cardin);
         fprintf(f, "\"type\": \"vertex\",");
         fprintf(f, "}},\n");
 	}
@@ -382,7 +400,7 @@ void eulerskew_print_hist(dataset *ds, minskewLists *eh) {
 }
 
 //
-void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey, GList *minskewhist) {
+void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey) {
     assert(xqtd > 0 && yqtd > 0 && "X and Y must be greater than zero.");
     eh->xqtd = xqtd;
     eh->yqtd = yqtd;
@@ -407,7 +425,7 @@ void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, d
     for(int i = 0; i < eh->yqtd; i++)
         eh->ytics[i] = yini + (psizey * i);
     eh->ytics[eh->yqtd] = ds->metadata.hist.mbr.MaxY;
-
+    /*
 
     GList *item;
 		g_list_foreach(item, minskewhist) {
@@ -454,11 +472,12 @@ void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, d
     }
 
 		}
+		*/
 
 
 }
 
-void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPredicateCheck pcheck) {
+void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPredicateCheck pcheck, minskewLists *ml) {
 
     dataset_iter di;
     dataset_foreach(di, ds) {
@@ -497,9 +516,12 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
                 GEOSGeom_destroy(clipped);
 
                 // face
-                if (x < eh->xqtd && y < eh->yqtd) {
+                GList *item;
+
+                g_list_foreach(item, ml->bucketsList) {
                     if (ENVELOPE_INTERSECTS(ev2, rs)) {
-                        eulerskew_face *face = &eh->faces[x*eh->yqtd +y];
+                        //eulerskew_face *face = &ml->faces[x*ml->yqtd +y];
+                        eulerskew_face *face = (eulerskew_face * )item->data;
                         face->cardin += 1;
                         double delta_x = (ev2.MaxX - ev2.MinX);
                         double delta_y = (ev2.MaxY - ev2.MinY);
@@ -510,34 +532,55 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
                     }
 
                 }
-
+                //GList *item2;
                 // vertex
-                int v = x * (eh->yqtd+1) + y;
-                if (ENVELOPE_CONTAINSP(ev2, eh->vertexes[v].x, eh->vertexes[v].y))
-                    eh->vertexes[v].cardin += 1;
+                g_list_foreach(item, ml->VertexesList) {
+                eulerskew_vertex *vertex = (eulerskew_vertex * )item->data;
+                //int v = x * (ml->yqtd+1) + y;
+                if (ENVELOPE_CONTAINSP(ev2, vertex->x, vertex->y)){
+                vertex->cardin += 1;
+
+                }
+
+                }
+
 
                 // horizontal edge
-                if (x < eh->xqtd) {
-                    int e = GET_HORZ_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
+                //GList *item3;
+                	g_list_foreach(item, ml->EdgesList) {
+                    eulerskew_edge *ee = (eulerskew_edge * )item->data;
+
+
+                    if((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY)){ //entra no if se a aresta for horizontal
+
+                    if (ENVELOPE_INTERSECTS(ee->mbr, ev2)){
                         double delta_x = ev2.MaxX - ev2.MinX;
-                        eh->edges[e].cardin += 1;
-                        double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
-                        eh->edges[e].avg_projection += (delta_x- eh->edges[e].avg_projection ) / eh->edges[e].cardin;
+                        ee->cardin += 1;
+                        double edge_size = (ee->mbr.MaxX - ee->mbr.MinX);
+                        ee->avg_projection += (delta_x- ee->avg_projection ) / ee->cardin;
                     }
-                    //eh->avg_projection +=
+
+
+                    }else{
+
+                    if (ENVELOPE_INTERSECTS(ee->mbr, ev2)){
+                        double delta_y = ev2.MaxY - ev2.MinY;
+                        ee->cardin += 1;
+                        double edge_size = (ee->mbr.MaxY - ee->mbr.MinY);
+                        ee->avg_projection += (delta_y - ee->avg_projection ) / ee->cardin;
+                    }
+
+
+
+                    }
+
+                    //int e = GET_HORZ_EDGE(x, y);
+
+                    //ml->avg_projection +=
                 }
 
                 // vertical edge
-                if (y < eh->yqtd) {
-                    int e = GET_VERT_EDGE(x, y);
-                    if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
-                        double delta_y = ev2.MaxY - ev2.MinY;
-                        eh->edges[e].cardin += 1;
-                        double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
-                        eh->edges[e].avg_projection += (delta_y - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
-                    }
-                }
+
             }
         }
 
@@ -546,7 +589,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     }
 }
 
-void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, GList *minskewhist) {
+void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, GList *minskewLists) {
 
     double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
     double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -562,11 +605,11 @@ void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, doubl
     if ((rangey / psizey) > MAX)
         psizey = rangey / MAX;
 
-    eulerskew_alloc(ds, eh, ceil(rangex / psizex), ceil(rangey / psizey), psizex, psizey,minskewhist);
-    eulerskew_hash_ds_objects(ds, eh, pcheck);
+    eulerskew_alloc(ds, eh, ceil(rangex / psizex), ceil(rangey / psizey), psizex, psizey);
+    eulerskew_hash_ds_objects(ds, eh, pcheck, minskewLists);
 };
 
-void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, int fsizey, enum JoinPredicateCheck pcheck, GList *minskewhist) {
+void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, int fsizey, enum JoinPredicateCheck pcheck, GList *minskewLists) {
 
     double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
     double rangey = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
@@ -574,24 +617,24 @@ void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, in
     double psizex = rangex / fsizex;
     double psizey = rangey / fsizey;
 
-    eulerskew_alloc(ds, eh, fsizex, fsizey, psizex, psizey, minskewhist);
-    eulerskew_hash_ds_objects(ds, eh, pcheck);
+    eulerskew_alloc(ds, eh, fsizex, fsizey, psizex, psizey);
+    eulerskew_hash_ds_objects(ds, eh, pcheck, minskewLists);
 };
 
-eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, GList *minskewhist) {
+eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, GList *minskewLists) {
 
     eulerskew_histogram *eh = g_new(eulerskew_histogram, 1);
     eh->mbr = ds->metadata.hist.mbr;
 
     if (spec.sm == HSPLIT_FIX)
-        eulerskew_generate_fix(ds, eh, spec.xqtd, spec.yqtd, pcheck,minskewhist);
+        eulerskew_generate_fix(ds, eh, spec.xqtd, spec.yqtd, pcheck,minskewLists);
     else if (spec.sm == HSPLIT_AVG)
-        eulerskew_generate_hw(ds, eh, ds->metadata.x_average, ds->metadata.y_average, pcheck, minskewhist);
+        eulerskew_generate_hw(ds, eh, ds->metadata.x_average, ds->metadata.y_average, pcheck, minskewLists);
     else if (spec.sm == HSPLIT_AVG_STD)
         eulerskew_generate_hw(ds, eh,
                 ds->metadata.x_average + dataset_meta_stddev(ds->metadata, x),
                 ds->metadata.y_average + dataset_meta_stddev(ds->metadata, y),
-                pcheck, minskewhist);
+                pcheck, minskewLists);
     else {
         fprintf(stderr, "Histogram Split Method not implemented.\n");
     }

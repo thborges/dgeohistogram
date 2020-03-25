@@ -136,8 +136,9 @@ int main(int argc, char* argv[]) {
 	if (ht == HTHIBRID) {
 		 //esh = eulerskew_generate_hist(ds, 500);
         eulerskew_buckets = eulerskew_generate_hist(ds, 500);
+        //eulerskew_hash_ds_objects(ds, CHECKR,eulerskew_buckets);
         //eulerskew_print_hist(ds, minskewh);
-        //esh = eulerskew_generate_hist_with_euler(ds, spec, CHECKR, eulerskew_buckets);
+        esh = eulerskew_generate_hist_with_euler(ds, spec, CHECKR, eulerskew_buckets);
         eulerskew_print_hist(ds, eulerskew_buckets);
 	}
 

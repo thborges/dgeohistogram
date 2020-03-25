@@ -81,9 +81,9 @@ void eulerskew_calculate_skew_reduction(dataset_histogram *dh, eulerskew_face *b
 minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num);
 
 //void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey);
-void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey, GList *minskewhist);
+void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, double psizex, double psizey);
 
-void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPredicateCheck pcheck);
+void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPredicateCheck pcheck, minskewLists *ml);
 
 //void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck);
 void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, GList *minskewhist) ;
