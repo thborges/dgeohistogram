@@ -18,4 +18,8 @@ make
 
 make install (as root)
 
+To configure the dgeohistogram, use, in the main folder:
 
+./configure
+
+make
