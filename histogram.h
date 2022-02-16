@@ -42,6 +42,7 @@ typedef struct {
 	enum HistogramSplitMethod sm;
 	int xqtd;
 	int yqtd;
+	int split_quantity;
 } HistogramGenerateSpec;
 	
 typedef struct {
@@ -52,10 +53,10 @@ typedef struct {
 	double inters;
 } multiway_histogram_estimate;
 
-void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, int split_method_point);
-void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_method_point);
-void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_method_point);
-void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_method_point);
+void histogram_generate(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck);
+void histogram_generate_cells_fix(dataset *ds, double psizex, double psizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_quantity);
+void histogram_generate_fix(dataset *ds, int fsizex, int fsizey, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_quantity);
+void histogram_generate_hw(dataset *ds, double x, double y, enum HistogramHashMethod hm, enum JoinPredicateCheck pcheck, int split_quantity);
 void histogram_distribute(dataset *ds);
 void histogram_print(dataset *ds, histogram_type type);
 void histogram_print_geojson(dataset *ds);

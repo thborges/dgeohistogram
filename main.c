@@ -52,17 +52,34 @@ int main(int argc, char* argv[]) {
 	}
 
 	enum HistogramHashMethod hm = HHASH_AREAFRAC;
-	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
+	if (strcmp(argv[2], "mbrc") == 0)
+		hm = HHASH_MBRCENTER;
+	else if (strcmp(argv[2], "centr") == 0)
+		hm = HHASH_CENTROID;
+	else if(strcmp(argv[2], "areaf") == 0)
+		hm = HHASH_AREAFRAC;
+	else if(strcmp(argv[2], "areafs") == 0)
+		hm = HHASH_AREAFRACSPLIT;
+	else {
+		printf("Histogram hash %s does not exists.\n", argv[2]);
+		exit(1);
+	}
 
 	int argatu = 3;
 	int xqtd = 0, yqtd = 0;
-
-
+	enum HistogramSplitMethod sm = HSPLIT_AVG_STD;
     if (strcmp(argv[argatu], "fix") == 0) {
 		sm = HSPLIT_FIX;
 		argatu++;
 		xqtd = atoi(argv[argatu++]);
 		yqtd = atoi(argv[argatu++]);
+	} else if (strcmp(argv[argatu], "avg") == 0) {
+		sm = HSPLIT_AVG;
+	} else if (strcmp(argv[argatu], "avg") == 0) {
+		sm = HSPLIT_AVG_STD;
+	} else {
+		printf("Histogram split %s does not exists.\n", argv[argatu]);
+		exit(1);
 	}
 
     //histograma a
@@ -80,16 +97,15 @@ int main(int argc, char* argv[]) {
     spec.sm = sm;
     spec.xqtd = xqtd;
     spec.yqtd = yqtd;
-
-    int split_method = 1;
+	spec.split_quantity = 0; // only for HHASH_AREAFRACSPLIT (Isabella)
 
 	// chamar a função que cria o histograma
 	printf("Criando hist. euler para: %s\n", dsA->metadata.name);
-	histogram_generate(dsA, spec, 0, split_method);
+	histogram_generate(dsA, spec, 0);
 	histogram_print_geojson(dsA);
 
 	printf("Criando hist. euler para: %s\n", dsB->metadata.name);
-	histogram_generate(dsB, spec, 0, split_method);
+	histogram_generate(dsB, spec, 0);
 	histogram_print_geojson(dsB);
 
 
