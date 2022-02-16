@@ -92,7 +92,7 @@ double hash_envelope_area_fraction(dataset_histogram *dh, Envelope ev, double ob
 
             Envelope inters = EnvelopeIntersection(ev, rs);
             double intarea = ENVELOPE_AREA(inters);
-            double rsarea = ENVELOPE_AREA(rs);
+            //double rsarea = ENVELOPE_AREA(rs);
             double fraction;
             if (intarea <= 0.0) { // parallel to one axis
                 bool parallel_y = (ev.MaxX - ev.MinX < 1e-30);
@@ -724,14 +724,12 @@ void histogram_build_metadata(dataset *ds, enum JoinPredicateCheck pcheck) {
     char first = 1;
     dataset_iter di;
     dataset_foreach(di, ds) {
-        double x, y;
         dataset_leaf *leaf = get_join_pair_leaf(di.item, pcheck);
 
         // metadata: dataset extent
         double new_x = leaf->mbr.MaxX - leaf->mbr.MinX;
         double new_y = leaf->mbr.MaxY - leaf->mbr.MinY;
         //printf("%20.10f\n", new_x);
-        double oldmx, oldmy;
         if (first) {
             first = 0;
             ds->metadata.hist.mbr = leaf->mbr;
@@ -866,7 +864,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
 
             er.MinY = hr->ytics[yr];
             er.MaxY = hr->ytics[yr+1];
-            double erarea = ENVELOPE_AREA(er);
+            //double erarea = ENVELOPE_AREA(er);
 
             for(int xs = xds_atu; xs < xds_end; xs++) {
                 es.MinX = hs->xtics[xs];
@@ -881,16 +879,16 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
 
 
                     Envelope inters = EnvelopeIntersection2(er, es);
-                    double intarea = ENVELOPE_AREA(inters);
-                    double hrfraction = intarea / erarea;
-                    double hsfraction = intarea / ENVELOPE_AREA(es);
+                    //double intarea = ENVELOPE_AREA(inters);
+                    //double hrfraction = intarea / erarea;
+                    //double hsfraction = intarea / ENVELOPE_AREA(es);
 
                     histogram_cell *rcell = &hr->hcells[xr*hr->yqtd + yr];
                     histogram_cell *scell = &hs->hcells[xs*hs->yqtd + ys];
                     printf("rcell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xr, yr, rcell->cardin, rcell->avgheight, rcell->avgwidth);
                     printf("scell[%d][%d] \t cardin: %f \t avgheight: %f \t avgwidth: %f\n", xs, ys, scell->cardin, scell->avgheight, scell->avgwidth);
 
-                    double intersections;
+                    double intersections = 0;
                     if (rcell->cardin >= 1 || scell->cardin >= 1) {
                         intersections = estimate_intersections_mamoulis_papadias_grade(er, es, inters, rcell, scell);
                         if (intersections < 1.0)
@@ -901,7 +899,7 @@ int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rt
                     double estimated = intersections;
                     //double real = real_cardin_euler_histogram_cell(rtree_r, rtree_s, inters);
                     double real = 1;
-                    int error = abs(estimated - real);
+                    double error = fabs(estimated - real);
                     double delta = error - mean;
 
                     assert(!isnan(delta));

@@ -12,18 +12,18 @@ extern "C" {
 #include <assert.h>
 
 struct Envelope { 
-	union {
+	/*union {
 		struct {
 			__m128d Min;
 			__m128d Max;
 		};
-		struct {
+		struct {*/
 			double MinX;
 			double MinY;
 			double MaxX;
 			double MaxY;
-		};
-	};
+		//};
+//	};
 };
 
 typedef struct Envelope Envelope;

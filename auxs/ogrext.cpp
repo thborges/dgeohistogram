@@ -59,7 +59,7 @@ void print_geojson_mbr_local(const Envelope e, const char *id) {
 }
 
 Envelope OGRGetEnvelope(OGRGeometryH ogrg) {
-	Envelope result;
+	//Envelope result;
 	OGREnvelope ev;
 	OGR_G_GetEnvelope(ogrg, &ev);
 	return Envelope{ev.MinX, ev.MinY, ev.MaxX, ev.MaxY};
@@ -67,7 +67,7 @@ Envelope OGRGetEnvelope(OGRGeometryH ogrg) {
 
 int OGRGetNumPoints(OGRGeometryH ogrg) {
 	OGRLinearRing* auxring;
-	int rings, geos, total;
+	int geos, total = 0;
 	int type = wkbFlatten(((OGRGeometry *) ogrg)->getGeometryType());
 	switch (type) {
 		case wkbPoint:

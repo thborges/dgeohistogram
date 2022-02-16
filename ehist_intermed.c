@@ -182,7 +182,7 @@ void salvaArquivo(euler_histogram *ehA, euler_histogram *ehIntermed, euler_histo
 
 			int vr = i * (ehA->yqtd+1) + j;
             euler_face *ehI_face = &ehIntermed->faces[i*ehIntermed->yqtd +j];
-            euler_face *ehReal_face = &ehC->faces[i*ehC->yqtd +j];
+            //euler_face *ehReal_face = &ehC->faces[i*ehC->yqtd +j];
 
             //calculo arestas
             int ahA = GET_HORZ_EDGE(ehIntermed,i, j);
@@ -548,10 +548,10 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb, euler_histo
     double xend = MIN(ds->metadata.hist.mbr.MaxX, dsb->metadata.hist.mbr.MaxX);
     double yend = MIN(ds->metadata.hist.mbr.MaxY, dsb->metadata.hist.mbr.MaxY);
 
-    unsigned int N = ceil((xend - xini) * (yend - yini));
-	double mean = 0.0;
-	double M2 = 0.0;
-	double sum_error = 0.0;
+    //unsigned int N = ceil((xend - xini) * (yend - yini));
+	//double mean = 0.0;
+	//double M2 = 0.0;
+	//double sum_error = 0.0;
 
     int xdr_start = 0;
     while (xdr_start < ehA->xqtd && ehA->xtics[xdr_start+1] < xini)
@@ -603,7 +603,7 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb, euler_histo
 
             er.MinY = ehA->ytics[yr];
             er.MaxY = ehA->ytics[yr+1];
-            double erarea = ENVELOPE_AREA(er);
+            //double erarea = ENVELOPE_AREA(er);
 
             euler_face *ehA_face = &ehA->faces[xr*ehA->yqtd +yr];
             euler_face *ehI_face = &ehIntermed->faces[xr*ehIntermed->yqtd +yr];
@@ -615,7 +615,7 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb, euler_histo
                 es.MaxX = ehB->xtics[xs+1];
 
                 for(int ys = yds_atu; ys < yds_end; ys++) {
-                    double estimated_result = 0;
+                    //double estimated_result = 0;
 
                     es.MinY = ehB->ytics[ys];
                     es.MaxY = ehB->ytics[ys+1];
@@ -625,11 +625,11 @@ euler_histogram *eh_generate_intermed_real(dataset *ds,dataset *dsb, euler_histo
 
                     euler_face *ehB_face = &ehB->faces[xs*ehB->yqtd +ys];
                     Envelope inters = EnvelopeIntersection2(er, es);
-                    double int_area = ENVELOPE_AREA(inters);
+                    //double int_area = ENVELOPE_AREA(inters);
 
 
                     double intersections = 0.0;
-                    double p = 1;
+                    //double p = 1;
                     if(ehA_face->cardin > 0.0 && ehB_face->cardin > 0.0){
                     	//intersections = estimate_intersections_mamoulis_papadias(er, es, inters, ehA_face, ehB_face);
 

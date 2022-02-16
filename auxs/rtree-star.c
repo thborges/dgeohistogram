@@ -162,7 +162,7 @@ rtree_node *rtree_split_star_leaf(rtree_root *root, rtree_node *n, rtree_node *p
 	int i;
 	int usedtotal = n->used+1;
 	
-	GEOSGeometryH ngeo_chull = NULL;//OGR_G_ConvexHull(ngeo);
+	//GEOSGeometryH ngeo_chull = NULL;//OGR_G_ConvexHull(ngeo);
 
 	//add new entry
 	rtree_leaf *leavesx = g_new0(rtree_leaf, usedtotal);

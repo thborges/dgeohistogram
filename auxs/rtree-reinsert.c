@@ -729,7 +729,7 @@ void rlazy_reinsert_on_parent(rtree_node *n, rtree_root *root, GList **parents, 
 			}
 		}*/
 
-		int t=0;
+		//int t=0;
 		int lastoverlap = -1;
 		int choosed = -1;
 		do {

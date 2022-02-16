@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 		printf("Use: %s [x y] file1.shp [x2 y2] file2.shp file3.shp\n", argv[0]);
 		return 1;
 	}
-	enum HistogramType ht = HTEULER;
+	//enum HistogramType ht = HTEULER;
 
 	enum HistogramHashMethod hm = HHASH_AREAFRAC;
 	enum HistogramSplitMethod sm = HSPLIT_FIX;
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
 	//com real e sem o intermed
 	//ehIntermed = eh_generate_intermed(dsC,dsA,ehReal,ehA);
 	//com real e com intermed
-	ehIntermed = eh_generate_intermed_real(dsA,dsB,dsC,ehA,ehB, ehReal);
+	ehIntermed = eh_generate_intermed_real(dsA,dsB,ehA,ehB);
 
 	//escolhe dataset A ou para Intermediario
 	euler_print_hist("intermediario",ehIntermed);

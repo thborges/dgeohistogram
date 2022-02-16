@@ -257,7 +257,7 @@ rtree_node *rtree_split_lazy_leaf(rtree_root *root, rtree_node *n, rtree_node *p
 	rtree_node *new_leaf = rtree_new_node(root, LEAF);
 	int usedtotal = n->used+1;
 
-	GEOSGeometryH ngeo_chull = NULL;//OGR_G_ConvexHull(ngeo);
+	//GEOSGeometryH ngeo_chull = NULL;//OGR_G_ConvexHull(ngeo);
 	
 	//add new entry (being added to node)
 	rtree_leaf *leaves = g_new0(rtree_leaf, usedtotal);

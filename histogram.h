@@ -64,6 +64,7 @@ void histogram_print_estimative(char *name, multiway_histogram_estimate *estimat
 double histogram_search_hist(dataset_histogram *dh, Envelope query);
 
 int histogram_join_cardinality(dataset *dr, dataset *ds, rtree_root* rtree_r, rtree_root* rtree_s, double* stddev);
+void envelope_update(Envelope *e, double X, double Y);
 #ifdef __cplusplus
 }
 #endif

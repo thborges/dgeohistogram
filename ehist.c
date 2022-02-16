@@ -164,7 +164,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
 							double delta_x = ev2.MaxX - ev2.MinX;
 							eh->edges[e].cardin += 1;
-							double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
+							//double edge_size = (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
 							eh->edges[e].avg_projection += (delta_x- eh->edges[e].avg_projection ) / eh->edges[e].cardin;
 						}
 						//eh->avg_projection +=
@@ -176,7 +176,7 @@ void eh_hash_ds_objects(dataset *ds, euler_histogram *eh, enum JoinPredicateChec
 						if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, ev2)){
 							double delta_y = ev2.MaxY - ev2.MinY;
 							eh->edges[e].cardin += 1;
-							double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
+							//double edge_size = (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
 							eh->edges[e].avg_projection += (delta_y - eh->edges[e].avg_projection ) / eh->edges[e].cardin;
 						}
 					}
@@ -667,7 +667,7 @@ dataset *dh_l, dataset *dh_r) {
 		//if(result == 0)
 			//printf("result 0");
 
-		double coef_area = 0;
+		//double coef_area = 0;
 		if (line_to_polygon) {
 			/* disabling this increases the estimation a litle bit for J1,J2
 			avgr_x = MIN(wx,avgr_x);

@@ -53,8 +53,8 @@ void minskew_calculate_skew_reduction(dataset_histogram *dh, minskew_bucket *buc
 	int xini, xfim, yini, yfim;
 	get_ini_fim(dh, bucket->mbr, &xini, &xfim, &yini, &yfim);
 
-	int xqtd = xfim-xini+1;
-	int yqtd = yfim-yini+1;
+	//int xqtd = xfim-xini+1;
+	//int yqtd = yfim-yini+1;
 
 	bucket->skew_reduction = 0;
 

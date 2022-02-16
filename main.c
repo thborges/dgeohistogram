@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 	}
 
     euler_histogram *ehIntermed = NULL;
-    ehIntermed = eh_generate_intermed(dsA,dsB,ehA,ehB);
+    ehIntermed = eh_generate_intermed_real(dsA,dsB,ehA,ehB);
 
     //escolhe dataset A ou para Intermediario
     euler_print_hist("intermediario",ehIntermed);
@@ -129,11 +129,11 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 
 	OGRLayerH layer = OGR_DS_GetLayer(ogr_ds, 0);
 	OGR_L_ResetReading(layer);
-	int layer_count = OGR_L_GetFeatureCount(layer, FALSE);
+	//int layer_count = OGR_L_GetFeatureCount(layer, FALSE);
 
 	results->temp_ogr_layer = layer;
 
-	clock_t cs = clock();
+	//clock_t cs = clock();
 
 	unsigned read = 0;
 	OGRFeatureH feature;
@@ -162,8 +162,8 @@ dataset *read_geos(char *shpfile, OGRDataSourceH ogr_ds) {
 		//print_progress_gauge(read, layer_count);
 	}
 
-	clock_t cf = clock();
-	double runtime_diff_us = (cf-cs) * 1000. / CLOCKS_PER_SEC;
+	//clock_t cf = clock();
+	//double runtime_diff_us = (cf-cs) * 1000. / CLOCKS_PER_SEC;
 
 	//printf("%4s|%4s|%'10d|%10s|%10s|%10s|%10s|%10s|%10s|%10.1f| %s\n", "N", "N", results->metadata.count, "N", "N", "N", "N", "N", "N", runtime_diff_us, shpfile);
 
