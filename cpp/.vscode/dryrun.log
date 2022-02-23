@@ -1,0 +1,17 @@
+make all --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/thborges/projects/dgeohistogram/cpp'
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/glibwrap.c -o rtree/glibwrap.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/ogrext.c -o rtree/ogrext.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/rtree-reinsert.c -o rtree/rtree-reinsert.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/rtree-star.c -o rtree/rtree-star.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/rtree-wquery.c -o rtree/rtree-wquery.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/rtree.c -o rtree/rtree.o
+clang -std=c11 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c rtree/utils.c -o rtree/utils.o
+clang++ -std=c++17 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c src/Dataset.cpp -o src/Dataset.o
+clang++ -std=c++17 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c src/SpatialGridHistogramIHWAF.cpp -o src/SpatialGridHistogramIHWAF.o
+clang++ -std=c++17 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c src/SpatialGridHistogramMP.cpp -o src/SpatialGridHistogramMP.o
+clang++ -std=c++17 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree -c experiments/wquery.cpp -o experiments/wquery.o
+clang++ -std=c++17 -Wno-missing-braces -Wno-unused-variable  -Wall -ggdb -O0 -D_GNU_SOURCE -DHAVE_ISNAN=1 -I/opt/local/include -I/usr/include/gdal -Iinclude -Irtree rtree/glibwrap.o rtree/ogrext.o rtree/rtree-reinsert.o rtree/rtree-star.o rtree/rtree-wquery.o rtree/rtree.o rtree/utils.o src/Dataset.o src/SpatialGridHistogramIHWAF.o src/SpatialGridHistogramMP.o experiments/wquery.o -o experiments/wquery.exp -L/opt/local/lib -L/usr/lib -lgdal -lgeos -lgeos_c
+ln -sf experiments/wquery.exp experiments/wquery
+make: Leaving directory `/Users/thborges/projects/dgeohistogram/cpp'
+ 
