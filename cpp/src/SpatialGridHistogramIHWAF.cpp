@@ -31,47 +31,13 @@ SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
     fillHistogramProportionalOverlap(ds);
 }
 
-void SpatialGridHistogramIHWAF::getIntersectionIdxs(const DatasetMetadata& meta, const Envelope& query, 
-	int *xini, int *xfim, int *yini, int *yfim) {
-
-	// prevent values of x and y out of histogram bounds
-	if (!query.intersects(meta.mbr)) {
-		*xini = *yini = 0;
-		*xfim = *yfim = -1;
-	} else {
-		// prevent values of x and y out of histogram bounds
-		Envelope nquery = query.intersection(meta.mbr);
-
-		*xini = (nquery.MinX - meta.mbr.MinX) / xsize;
-		*xfim = (nquery.MaxX - meta.mbr.MinX) / xsize;
-		*yini = (nquery.MinY - meta.mbr.MinY) / ysize;
-		*yfim = (nquery.MaxY - meta.mbr.MinY) / ysize;
-
-		if (*xfim == xqtd) (*xfim)--;
-		if (*yfim == yqtd) (*yfim)--;
-   
-		while (xtics[*xini]     > query.MinX) (*xini)--;
-		while (xtics[(*xfim)+1] < query.MaxX) (*xfim)++;
-		while (ytics[*yini]     > query.MinY) (*yini)--;
-		while (ytics[(*yfim)+1] < query.MaxY) (*yfim)++;
-
-		if (*xini < 0 && *xfim >= xqtd)
-            throw std::runtime_error("x is out of histogram bounds.");
-
-		if (*yini < 0 && *yfim >= yqtd)
-            throw std::runtime_error("y is out of histogram bounds.");
-	}
-}
-
 void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
-    
-    const DatasetMetadata& meta = ds.metadata();
     
     for(DatasetEntry de : ds.geoms()) {
         double objarea = de.mbr.area();
         
         int xini, xfim, yini, yfim;
-        getIntersectionIdxs(meta, de.mbr, &xini, &xfim, &yini, &yfim);	
+        getIntersectionIdxs(de.mbr, &xini, &xfim, &yini, &yfim);	
 
         double sum_fraction = 0;
         for(int x = xini; x <= xfim; x++) {
@@ -107,6 +73,10 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
 
                 auto *cell = getHistogramCell(x, y);
                 cell->cardin += fraction;
+                
+                // used area in the cell
+                cell->usedarea.merge(inters);
+
                 cell->objcount += 1.0;
 
                 // average length, online average calculation
@@ -121,28 +91,17 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
 
 double SpatialGridHistogramIHWAF::estimateWQuery(const Envelope& query) {
     double result = 0.0;
+    if (!query.intersects(mbr()))
+        return result;
+    Envelope nquery = query.intersection(mbr());
+    
+    int xini, xfim, yini, yfim;
+    getIntersectionIdxs(nquery, &xini, &xfim, &yini, &yfim);
 
-    int xini = (query.MinX - mbr->MinX) / xsize;
-    int xfim = (query.MaxX - mbr->MinX) / xsize;
-    int yini = (query.MinY - mbr->MinY) / ysize;
-    int yfim = (query.MaxY - mbr->MinY) / ysize;
-
-    xfim = std::min(xfim, xqtd-1);
-    yfim = std::min(yfim, yqtd-1);
-    xini = std::max(xini, 0);
-    yini = std::max(yini, 0);
-
-    const double epsilon = 1e-100;
-    if (query.MaxX - xtics[xfim] < epsilon && xfim > 0) {
-        xfim--;
-    }
-    if (query.MaxY - ytics[yfim] < epsilon && yfim > 0) {
-        yfim--;
-    }
-    if (xfim < xini)
-        xini = xfim;
-    if (yfim < yini)
-        yini = yfim;
+    assert(getColumnX(xini) <= nquery.MinX);
+    assert(getColumnX(xfim+1) >= nquery.MaxX);
+    assert(getRowY(yini) <= nquery.MinY);
+    assert(getRowY(yfim+1) >= nquery.MaxY);
 
     for(int x = xini; x <= xfim; x++) {
         Envelope rs;
@@ -153,19 +112,31 @@ double SpatialGridHistogramIHWAF::estimateWQuery(const Envelope& query) {
             rs.MinY = ytics[y];
             rs.MaxY = ytics[y+1];
 
-            SpatialGridHistogramCellImproved *cell = &hcells[x * yqtd + y];
-            if (query.intersects(rs)) {
-                /* this formula came from the following paper of same authors:
-                   Nikos Mamoulis and Dimitris Papadias. “Advances in Spatial and Temporal Databases”. 
-                   In: ed. by Christian S. Jensen et al. Vol. 2121. Lecture Notes in Computer Science. 
-                   Springer, 2001. Chap. Selectivity Estimation of Complex Spatial Queries, pp. 155–174.
-                   See also Equation 2.2 in de Oliveira, T.B. thesis */
+            auto *cell = getHistogramCell(x, y);
+            if (nquery.intersects(cell->usedarea)) {
+                /* See de OLIVEIRA, T. B. Efficient Processing of Multiway Spatial Join Queries 
+                 * in Distributed Systems. 152 p. Tese (Doutorado) — Instituto de Informática, 
+                 * Universidade Federal de Goiás, Goiânia, GO, Brasil, 2017.
+                 */
                 
-                Envelope inters = query.intersection(rs);
+                double avg_x = cell->avg_x;
+                double avg_y = cell->avg_y;
+
+                // observing that objects generally doesn't overlap in both axis,
+                // (e.g. political land limits)
+	            // fix the probability of intersection in one of them
+	            double ux = cell->usedarea.MaxX - cell->usedarea.MinX;
+	            double uy = cell->usedarea.MaxY - cell->usedarea.MinY;
+	            if (avg_x > avg_y)
+		            avg_x = std::min(avg_x, avg_x/(avg_y * cell->objcount / uy));
+	            else
+		            avg_y = std::min(avg_y, avg_y/(avg_x * cell->objcount / ux));
+
+                Envelope wqueryadj = nquery.intersection(cell->usedarea);
 
                 // uniformity assumption! objects aren't uniform located at the cell
-                double xprob = std::min(1.0, (cell->avg_x + inters.width()) / rs.width());
-                double yprob = std::min(1.0, (cell->avg_y + inters.length()) / rs.length());
+                double xprob = std::min(1.0, (avg_x + wqueryadj.width()) / cell->usedarea.width());
+                double yprob = std::min(1.0, (avg_y + wqueryadj.length()) / cell->usedarea.length());
                 result += cell->cardin * xprob * yprob;
             }
         }

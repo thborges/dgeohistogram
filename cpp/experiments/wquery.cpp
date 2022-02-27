@@ -9,17 +9,11 @@
 #include "Dataset.hpp"
 #include "SpatialGridHistogramMP.hpp"
 #include "SpatialGridHistogramIHWAF.hpp"
-#include "RandomWQueryExperiment.hpp"
+#include "SpatialHistogramMinskew.hpp"
+#include "UniformWQueryExperiment.hpp"
 
-void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename) {
-	std::cout << "Built grid histogram " << hist.name() << " with " << 
-	hist.columns() << "x" << hist.rows() << " cols/rows" << std::endl;
-	std::string histname(filename);
-	histname += "." + hist.name() + ".geojson";
-	hist.printGeoJson(histname);
-	std::cout << "Generated " << histname << " with the histogram data." << std::endl;
-}
-
+void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename);
+void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename);
 extern "C" void geos_messages(const char *fmt, ...);
 
 int main(int argc, char *argv[]) {
@@ -35,6 +29,7 @@ int main(int argc, char *argv[]) {
 		Dataset ds(filename);
 		std::cout << "Loaded " << filename << ". Objects: " << ds.size() << std::endl;
 
+		// IHWAF histogram
 		SpatialGridHistogramIHWAF histIHWAF(ds);
 		printMessageAndGenGeoJson(histIHWAF, filename);
 
@@ -42,10 +37,19 @@ int main(int argc, char *argv[]) {
 		SpatialGridHistogramMP histMP(ds, histIHWAF.columns(), histIHWAF.rows());
 		printMessageAndGenGeoJson(histMP, filename);
 
+		// MinSkew histogram
+		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
+		//SpatialHistogramMinskew histMinSkew(histMP, 1000);
+		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
+		printMessageAndGenGeoJson(histMinSkew, filename);
+
+		// Histogram list to experiment with
 		std::vector<SpatialHistogram*> hists;
 		hists.push_back(&histMP);
 		hists.push_back(&histIHWAF);
+		hists.push_back(&histMinSkew);
 
+		// Query sizes
 		std::vector<double> qsizes;
 		qsizes.push_back(0.01);
 		qsizes.push_back(0.05);
@@ -55,7 +59,7 @@ int main(int argc, char *argv[]) {
 		qsizes.push_back(0.25);
 		qsizes.push_back(0.30);
 
-		RandomWQueryExperiment exp(ds, hists, qsizes);
+		UniformWQueryExperiment exp(ds, hists, qsizes);
 		exp.run();
 	}
 	catch (const std::exception& e) {
@@ -65,3 +69,20 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename) {
+	std::cout << "Built grid histogram " << hist.name() << " with " << 
+	hist.bucketCount() << " buckets" << std::endl;
+	std::string histname(filename);
+	histname += "." + hist.name() + ".geojson";
+	hist.printGeoJson(histname);
+	std::cout << "Generated " << histname << " with the histogram data." << std::endl;
+}
+
+void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename) {
+	std::cout << "Built grid histogram " << hist.name() << " with " << 
+	hist.columns() << "x" << hist.rows() << " cols/rows" << std::endl;
+	std::string histname(filename);
+	histname += "." + hist.name() + ".geojson";
+	hist.printGeoJson(histname);
+	std::cout << "Generated " << histname << " with the histogram data." << std::endl;
+}

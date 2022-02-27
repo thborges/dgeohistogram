@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 		yqtd = atoi(argv[argatu++]);
 	} else if (strcmp(argv[argatu], "avg") == 0) {
 		sm = HSPLIT_AVG;
-	} else if (strcmp(argv[argatu], "avg") == 0) {
+	} else if (strcmp(argv[argatu], "avgstd") == 0) {
 		sm = HSPLIT_AVG_STD;
 	} else {
 		printf("Histogram split %s does not exists.\n", argv[argatu]);
@@ -100,11 +100,11 @@ int main(int argc, char* argv[]) {
 	spec.split_quantity = 0; // only for HHASH_AREAFRACSPLIT (Isabella)
 
 	// chamar a função que cria o histograma
-	printf("Criando hist. euler para: %s\n", dsA->metadata.name);
+	printf("Criando histograma para: %s\n", dsA->metadata.name);
 	histogram_generate(dsA, spec, 0);
 	histogram_print_geojson(dsA);
 
-	printf("Criando hist. euler para: %s\n", dsB->metadata.name);
+	printf("Criando histograma para: %s\n", dsB->metadata.name);
 	histogram_generate(dsB, spec, 0);
 	histogram_print_geojson(dsB);
 

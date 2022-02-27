@@ -19,16 +19,35 @@
 class SpatialGridHistogramIHWAF: public SpatialGridHistogramTemplate<SpatialGridHistogramCellImproved> {
 	public:
 		SpatialGridHistogramIHWAF(Dataset& ds);
-		virtual double estimateWQuery(const Envelope& wquery);
+		virtual double estimateWQuery(const Envelope& wquery) override;
 		
-		virtual const std::string name() {
+		virtual const std::string name() override {
 			return "IHWAF";
+		}
+		
+		virtual double getCellCardin(int x, int y) override {
+			return getHistogramCell(x, y)->cardin;
+		}
+
+		virtual double getCellObjCount(int x, int y) override {
+			return getHistogramCell(x, y)->objcount;
+		}
+
+		virtual double getCellAvgX(int x, int y) override {
+			return getHistogramCell(x, y)->avg_x;
+		}
+
+		virtual double getCellAvgY(int x, int y) override {
+			return getHistogramCell(x, y)->avg_y;
+		}
+
+		virtual const Envelope getUsedArea(int x, int y) override {
+			auto cell = getHistogramCell(x, y);
+			return cell->usedarea;
 		}
 
 	private:
 		void fillHistogramProportionalOverlap(Dataset& ds);
-        void getIntersectionIdxs(const DatasetMetadata& meta, 
-            const Envelope& query, int *xini, int *xfim, int *yini, int *yfim);
 };
 
 

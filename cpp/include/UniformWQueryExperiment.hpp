@@ -14,9 +14,9 @@
 #include "rtree.h"
 #include "rtree-star.h"
 
-class RandomWQueryExperiment: public GenericExperiment {
+class UniformWQueryExperiment: public GenericExperiment {
 public:
-    RandomWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs, 
+    UniformWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs, 
 		std::vector<double> qsizes): ds(d), hists(hs), 
 		query_sizes(qsizes) {}
 
@@ -25,12 +25,13 @@ public:
 		rtree_root *rtree = NULL;
 		rtree = rtree_new_rstar(30, 10);
 
+		std::printf("Building R*-Tree\n");
 		for(const DatasetEntry& de: ds.geoms()) {
 			EnvelopeC env{de.mbr.MinX, de.mbr.MinY, de.mbr.MaxX, de.mbr.MaxY};
 			rtree_append(rtree, de.geo, env);
 		}
 
-		printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
+		std::printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
 		const DatasetMetadata& meta = ds.metadata();
 		rtree_window_stat stats;
 		double width = meta.mbr.MaxX - meta.mbr.MinX;
@@ -51,7 +52,6 @@ public:
 				M2[i] = 0.0;
 				sum_error[i] = 0.0;
 			}
-			int n = 0;
 
 			double wsize = width * query_size;
 			double hsize = height * query_size;
@@ -63,6 +63,7 @@ public:
 
 			//std::printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
 
+			int n = 0;
 			int qryno = 0;
 			while (n < qtd) {
 				n++;
@@ -75,7 +76,7 @@ public:
 				Envelope query{queryc.MinX, queryc.MinY, queryc.MaxX, queryc.MaxY};
 
 				char wkt[512];
-				std::sprintf(wkt, "POLYGON((%e %e, %e %e, %e %e, %e %e, %e %e))",
+				std::sprintf(wkt, "POLYGON((%lf %lf, %lf %lf, %lf %lf, %lf %lf, %lf %lf))",
 					query.MinX, query.MinY,
 					query.MaxX, query.MinY,
 					query.MaxX, query.MaxY,
@@ -115,7 +116,7 @@ public:
 			}
 		
 			for(int i = 0; i < hs; i++) {
-				printf("%3.2f\t%f\t%f\t%f\t%s\t%s\n",
+				std::printf("%3.2lf\t%lf\t%lf\t%lf\t%s\t%s\n",
 					query_size, 
 					sum_ei[i] / (double)sum_ri[i],
 					sqrt(M2[i]/(double)n),
@@ -123,6 +124,7 @@ public:
 					hists[i]->name().c_str(),
 					ds.metadata().name.c_str());
 			}
+			std::printf("\n");
 		}
 	}
 

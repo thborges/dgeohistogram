@@ -26,6 +26,7 @@ struct SpatialGridHistogramCellImproved {
 	size_t points;
 	double objcount;
 	double areasum;
+	Envelope usedarea;
 
 	SpatialGridHistogramCellImproved() {
 		cardin = 0;

@@ -6,3 +6,5 @@ histComp
 *.geojson
 /Debug/
 tmp/*
+.clangd
+.vscode

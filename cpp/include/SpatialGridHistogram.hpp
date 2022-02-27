@@ -20,6 +20,56 @@ class SpatialGridHistogram: public SpatialHistogram {
 	public:
         int columns() { return xqtd; };
         int rows() { return yqtd; };
+        virtual double getColumnX(int i) { return xtics[i]; };
+        virtual double getRowY(int j) { return ytics[j]; };
+        virtual double getCellCardin(int x, int y) = 0;
+        virtual double getCellObjCount(int x, int y) = 0;
+        virtual double getCellAvgX(int x, int y) = 0;
+        virtual double getCellAvgY(int x, int y) = 0;
+        virtual const Envelope getUsedArea(int x, int y) = 0;
+        virtual double getXSize() { return xsize; };
+        virtual double getYSize() { return ysize; };
+
+        virtual void getIntersectionIdxs(const Envelope& query, 
+            int *xini, int *xfim, int *yini, int *yfim) {
+
+            // prevent values of x and y out of histogram bounds
+            if (!query.intersects(mbr())) {
+                *xini = *yini = 0;
+                *xfim = *yfim = -1;
+            } else {
+                // prevent values of x and y out of histogram bounds
+                Envelope nquery = query.intersection(mbr());
+
+                *xini = (nquery.MinX - mbr->MinX) / xsize;
+                *xfim = (nquery.MaxX - mbr->MinX) / xsize;
+                *yini = (nquery.MinY - mbr->MinY) / ysize;
+                *yfim = (nquery.MaxY - mbr->MinY) / ysize;
+
+                //if (*xfim == xqtd) (*xfim)--;
+                //if (*yfim == yqtd) (*yfim)--;
+                // turn back one cell, due to rouding errors
+	            if (*xini > 0) (*xini)--;
+	            if (*xfim > 0) (*xfim)--;
+	            if (*yini > 0) (*yini)--;
+	            if (*yfim > 0) (*yfim)--;
+        
+                while (xtics[*xini+1]   < query.MinX && *xini < xqtd) 
+                    (*xini)++;
+                while (xtics[(*xfim)+1] < query.MaxX && *xfim < xqtd-1)
+                    (*xfim)++;
+                while (ytics[*yini+1]   < query.MinY && *yini < yqtd)
+                    (*yini)++;
+                while (ytics[(*yfim)+1] < query.MaxY && *yfim < yqtd-1)
+                    (*yfim)++;
+
+                if (*xini < 0 || *xfim >= xqtd)
+                    throw std::runtime_error("x is out of histogram bounds.");
+
+                if (*yini < 0 || *yfim >= yqtd)
+                    throw std::runtime_error("y is out of histogram bounds.");
+            }
+        }
 
 	protected:
         int xqtd;
@@ -64,6 +114,8 @@ protected:
     };
     
     virtual celltype *getHistogramCell(int x, int y) {
+        assert(x < xqtd);
+        assert(y < yqtd);
         return &hcells[x * yqtd + y];
     }
 
@@ -104,4 +156,5 @@ protected:
         output << "]}\n";
         output.close();
     }
+
 };

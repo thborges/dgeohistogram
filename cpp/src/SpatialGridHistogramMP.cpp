@@ -43,28 +43,16 @@ void SpatialGridHistogramMP::fillHistogramMbrCenter(Dataset& ds) {
 
 double SpatialGridHistogramMP::estimateWQuery(const Envelope& query) {
     double result = 0.0;
+    if (!query.intersects(mbr()))
+        return result;
+    Envelope nquery = query.intersection(mbr());
+    int xini, xfim, yini, yfim;
+    getIntersectionIdxs(nquery, &xini, &xfim, &yini, &yfim);
 
-    int xini = (query.MinX - mbr->MinX) / xsize;
-    int xfim = (query.MaxX - mbr->MinX) / xsize;
-    int yini = (query.MinY - mbr->MinY) / ysize;
-    int yfim = (query.MaxY - mbr->MinY) / ysize;
-
-    xfim = std::min(xfim, xqtd-1);
-    yfim = std::min(yfim, yqtd-1);
-    xini = std::max(xini, 0);
-    yini = std::max(yini, 0);
-
-    const double epsilon = 1e-100;
-    if (query.MaxX - xtics[xfim] < epsilon && xfim > 0) {
-        xfim--;
-    }
-    if (query.MaxY - ytics[yfim] < epsilon && yfim > 0) {
-        yfim--;
-    }
-    if (xfim < xini)
-        xini = xfim;
-    if (yfim < yini)
-        yini = yfim;
+    assert(getColumnX(xini) <= nquery.MinX);
+    assert(getColumnX(xfim+1) >= nquery.MaxX);
+    assert(getRowY(yini) <= nquery.MinY);
+    assert(getRowY(yfim+1) >= nquery.MaxY);
 
     for(int x = xini; x <= xfim; x++) {
         Envelope rs;
