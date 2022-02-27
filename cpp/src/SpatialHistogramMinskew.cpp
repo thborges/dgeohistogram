@@ -1,10 +1,19 @@
 
-#include "SpatialHistogramMinskew.hpp"
+/*
+ * Minskew Spatial Histogram based on the work
+ * Swarup Acharya, Viswanath Poosala, and Sridhar Ramaswamy. Selectivity Estimation 
+ * in Spatial Databases”. In: SIGMOD Record 28.2 (1999), pp. 13–24.
+ *
+ *  Created on: 2022-02-23
+ *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
+ */
+
+#include "../include/SpatialHistogramMinskew.hpp"
 
 SpatialHistogramMinskew::SpatialHistogramMinskew(SpatialGridHistogram &hist, 
 	int bucketsNeeded): basehist(hist) {
     this->bucketsNeeded = bucketsNeeded;
-	this->mbr = basehist.mbr;
+	this->hmbr = basehist.mbr();
 	generateBuckets();
 }
 
@@ -14,12 +23,6 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 	// store them; or a sweep line algorithm
 	for(MinskewBucket& b : buckets) {
 		if (wquery.intersects(b.usedarea)) {
-			/* this formula came from the following paper of same authors:
-				Nikos Mamoulis and Dimitris Papadias. “Advances in Spatial and Temporal Databases”. 
-				In: ed. by Christian S. Jensen et al. Vol. 2121. Lecture Notes in Computer Science. 
-				Springer, 2001. Chap. Selectivity Estimation of Complex Spatial Queries, pp. 155–174.
-				See also Equation 2.2 in de Oliveira, T.B. thesis */
-
 			#define IMPROVED_IHWAF
 			//#define DEFAULT_MP
 			//#define AREA_BASED
@@ -34,6 +37,11 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 			#endif
 
 			#ifdef DEFAULT_MP
+			/* this formula came from the following paper of same authors:
+				Nikos Mamoulis and Dimitris Papadias. “Advances in Spatial and Temporal Databases”. 
+				In: ed. by Christian S. Jensen et al. Vol. 2121. Lecture Notes in Computer Science. 
+				Springer, 2001. Chap. Selectivity Estimation of Complex Spatial Queries, pp. 155–174.
+				See also Equation 2.2 in de Oliveira, T.B. thesis */
 			// uniformity assumption! objects aren't uniform located at the cell
 			Envelope inters = wquery.intersection(b.mbr);
 			double xprob = std::min(1.0, (b.avg_x + inters.width()) / b.mbr.width());
@@ -42,6 +50,10 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 			#endif
 
 			#ifdef IMPROVED_IHWAF
+			/* See de OLIVEIRA, T. B. Efficient Processing of Multiway Spatial Join Queries 
+ 			 * in Distributed Systems. 152 p. Tese (Doutorado) — Instituto de Informática, 
+			 * Universidade Federal de Goiás, Goiânia, GO, Brasil, 2017.
+			 */
 			double avg_x = b.avg_x;
 			double avg_y = b.avg_y;
 
@@ -81,7 +93,8 @@ VarianceResult SpatialHistogramMinskew::calculateSkewRowCol(int xini, int xfim,
 		for(int j = yini; j <= yfim; j++) {
 			r.n++;
 			
-			double v = basehist.getCellCardin(i, j);
+			SpatialHistogramCellDefault *cell = basehist.getHistogramCell(i, j);
+			double v = cell->cardin;
 			double delta = v - r.mean;
 			r.mean += delta/(double)r.n;
 			M2 += delta * (v - r.mean);
@@ -89,13 +102,16 @@ VarianceResult SpatialHistogramMinskew::calculateSkewRowCol(int xini, int xfim,
 			// MinSkew doesn't have average lengths. This is an improvement.
 			double nqtd = (r.cardin+v);
 			if (nqtd > 0.0) {
-				r.avg_x = ((r.avg_x * r.cardin) + (v * basehist.getCellAvgX(i, j))) / nqtd;
-				r.avg_y = ((r.avg_y * r.cardin) + (v * basehist.getCellAvgY(i, j))) / nqtd;
+				r.avg_x = ((r.avg_x * r.cardin) + (v * cell->avg_x)) / nqtd;
+				r.avg_y = ((r.avg_y * r.cardin) + (v * cell->avg_y)) / nqtd;
 				r.cardin = nqtd;
 			}
 
-			r.objcount += basehist.getCellObjCount(i, j);
-			r.usedarea.merge(basehist.getUsedArea(i, j));
+			SpatialHistogramCellImproved *celli = dynamic_cast<SpatialHistogramCellImproved*>(cell);
+			if (celli) {
+				r.objcount += celli->objcount;
+				r.usedarea.merge(celli->usedarea);
+			}
 		}
 	}
 
@@ -105,10 +121,10 @@ VarianceResult SpatialHistogramMinskew::calculateSkewRowCol(int xini, int xfim,
 
 void SpatialHistogramMinskew::getBucketIntersectionIdxs(const Envelope& bucket, 
     int *xini, int *xfim, int *yini, int *yfim) {
-	*xini = (bucket.MinX - mbr->MinX) / basehist.getXSize();
-	*xfim = (bucket.MaxX - mbr->MinX) / basehist.getXSize();
-	*yini = (bucket.MinY - mbr->MinY) / basehist.getYSize();
-	*yfim = (bucket.MaxY - mbr->MinY) / basehist.getYSize();
+	*xini = (bucket.MinX - hmbr.MinX) / basehist.getXSize();
+	*xfim = (bucket.MaxX - hmbr.MinX) / basehist.getXSize();
+	*yini = (bucket.MinY - hmbr.MinY) / basehist.getYSize();
+	*yfim = (bucket.MaxY - hmbr.MinY) / basehist.getYSize();
 
 	// turn back one cell, due to rouding errors
 	if (*xini > 0) (*xini)--;

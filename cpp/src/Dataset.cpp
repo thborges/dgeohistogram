@@ -5,7 +5,7 @@
  *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
  */
 
-#include "Dataset.hpp"
+#include "../include/Dataset.hpp"
 #include <iostream>
 
 Dataset::Dataset(const std::string filename) {

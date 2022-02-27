@@ -14,40 +14,26 @@
 #include "Dataset.hpp"
 #include "Envelope.hpp"
 #include "SpatialGridHistogram.hpp"
-#include "SpatialGridHistogramCellTypes.hpp"
+#include "SpatialHistogramCellTypes.hpp"
 
-class SpatialGridHistogramIHWAF: public SpatialGridHistogramTemplate<SpatialGridHistogramCellImproved> {
-	public:
-		SpatialGridHistogramIHWAF(Dataset& ds);
-		virtual double estimateWQuery(const Envelope& wquery) override;
-		
-		virtual const std::string name() override {
-			return "IHWAF";
-		}
-		
-		virtual double getCellCardin(int x, int y) override {
-			return getHistogramCell(x, y)->cardin;
-		}
+class SpatialGridHistogramIHWAF: public SpatialGridHistogram {
+public:
+	SpatialGridHistogramIHWAF(Dataset& ds);
+	~SpatialGridHistogramIHWAF();
 
-		virtual double getCellObjCount(int x, int y) override {
-			return getHistogramCell(x, y)->objcount;
-		}
+	virtual double estimateWQuery(const Envelope& wquery) override;
+	
+	virtual const std::string name() override {
+		return "IHWAF";
+	}
 
-		virtual double getCellAvgX(int x, int y) override {
-			return getHistogramCell(x, y)->avg_x;
-		}
+protected:
+	SpatialHistogramCellImproved* hcells;
+	SpatialHistogramCellImproved* getHistogramCell(int x, int y) override;
+	virtual void allocCells(int size) override;
 
-		virtual double getCellAvgY(int x, int y) override {
-			return getHistogramCell(x, y)->avg_y;
-		}
-
-		virtual const Envelope getUsedArea(int x, int y) override {
-			auto cell = getHistogramCell(x, y);
-			return cell->usedarea;
-		}
-
-	private:
-		void fillHistogramProportionalOverlap(Dataset& ds);
+private:
+	void fillHistogramProportionalOverlap(Dataset& ds);
 };
 
 

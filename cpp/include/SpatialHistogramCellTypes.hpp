@@ -7,31 +7,31 @@
 
 #pragma once
 
-struct SpatialGridHistogramCellDefault {
-	size_t cardin;
+#include "Envelope.hpp"
+
+class SpatialHistogramCellDefault {
+public:
+	double cardin;
 	double avg_x;
 	double avg_y;
 
-	SpatialGridHistogramCellDefault() {
+	SpatialHistogramCellDefault() {
 		cardin = 0;
 		avg_x = 0;
 		avg_y = 0;
 	}
+
+	virtual void _empty() {};
 };
 
-struct SpatialGridHistogramCellImproved {
-	double cardin;
-	double avg_x;
-	double avg_y;
+class SpatialHistogramCellImproved: public SpatialHistogramCellDefault {
+public:
 	size_t points;
 	double objcount;
 	double areasum;
 	Envelope usedarea;
 
-	SpatialGridHistogramCellImproved() {
-		cardin = 0;
-		avg_x = 0;
-		avg_y = 0;
+	SpatialHistogramCellImproved() {
         points = 0;
 		objcount = 0;
 		areasum = 0;

@@ -9,15 +9,18 @@
 
 #include <string>
 #include "Envelope.hpp"
-#include "Property.hpp"
 
 class SpatialHistogram {
 public:
+	virtual ~SpatialHistogram() {};
+
 	virtual void printGeoJson(const std::string& filename) = 0;
 	virtual double estimateWQuery(const Envelope& wquery) = 0;
 	virtual const std::string name() = 0;
-	virtual ~SpatialHistogram() {};
 
-	Property<Envelope> mbr;
+	virtual Envelope const & mbr() { return hmbr; };
+
+protected:
+	Envelope hmbr;
 };
 

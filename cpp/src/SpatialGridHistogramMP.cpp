@@ -1,9 +1,31 @@
+/*
+ * Grid Spatial Histogram based on the work
+ * Nikos Mamoulis and Dimitris Papadias. “Multiway Spatial Joins”. In: 
+ * ACM Transactions on Database Systems 26.4 (2001), pp. 424–475
+ *
+ *  Created on: 2022-02-15
+ *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
+ */
 
-#include "SpatialGridHistogramMP.hpp"
+#include "../include/SpatialGridHistogramMP.hpp"
+
+void SpatialGridHistogramMP::allocCells(int size) {
+    hcells = new SpatialHistogramCellDefault[size];
+}
+
+SpatialGridHistogramMP::~SpatialGridHistogramMP() {
+    delete[] hcells;
+}
 
 SpatialGridHistogramMP::SpatialGridHistogramMP(Dataset& ds, int xqtd, int yqtd) {
     histogramAlloc(ds, xqtd, yqtd);
     fillHistogramMbrCenter(ds);
+}
+
+SpatialHistogramCellDefault* SpatialGridHistogramMP::getHistogramCell(int x, int y) {
+    assert(x < xqtd);
+    assert(y < yqtd);
+    return &hcells[x * yqtd + y];
 }
 
 void SpatialGridHistogramMP::fillHistogramMbrCenter(Dataset& ds) {
@@ -15,7 +37,7 @@ void SpatialGridHistogramMP::fillHistogramMbrCenter(Dataset& ds) {
 
         int xp = (x - meta.mbr.MinX) / this->xsize;
         int yp = (y - meta.mbr.MinY) / this->ysize;
-        SpatialGridHistogramCellDefault *cell = &hcells[xp * yqtd + yp];
+        SpatialHistogramCellDefault *cell = getHistogramCell(xp, yp);
         cell->cardin++;
 
         Envelope rs;

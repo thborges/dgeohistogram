@@ -1,5 +1,28 @@
+/*
+ * Improved Grid Spatial Histogram based on the work
+ * de Oliveira, T. B. (2017). Efficient Processing of Multiway Spatial Join Queries in 
+ * Distributed Systems. PhD thesis, Instituto de Informática, Universidade Federal de Goiás,
+ * Goiânia, GO, Brasil.
+ *
+ *  Created on: 2022-02-16
+ *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
+ */
 
-#include "SpatialGridHistogramIHWAF.hpp"
+#include "../include/SpatialGridHistogramIHWAF.hpp"
+
+void SpatialGridHistogramIHWAF::allocCells(int size) {
+    hcells = new SpatialHistogramCellImproved[size];
+}
+
+SpatialGridHistogramIHWAF::~SpatialGridHistogramIHWAF() {
+    delete[] hcells;
+}
+
+SpatialHistogramCellImproved* SpatialGridHistogramIHWAF::getHistogramCell(int x, int y) {
+    assert(x < xqtd);
+    assert(y < yqtd);
+    return &hcells[x * yqtd + y];
+}
 
 SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
 
@@ -20,7 +43,7 @@ SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
 	qtd_y = std::max(5, qtd_y);
 
 	// at most 2MB per histogram
-	const double upper_bound_cell_number = 2*1024*1024 / sizeof(SpatialGridHistogramCellImproved);
+	const double upper_bound_cell_number = 2*1024*1024 / sizeof(SpatialHistogramCellImproved);
 	double adjust = std::sqrt((qtd_x * qtd_y) / upper_bound_cell_number);
 	if (adjust > 1.0) {
 		qtd_x = ceil(rangex / (psizex * adjust));
@@ -71,7 +94,7 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
                 }
                 sum_fraction += fraction;
 
-                auto *cell = getHistogramCell(x, y);
+                SpatialHistogramCellImproved *cell = getHistogramCell(x, y);
                 cell->cardin += fraction;
                 
                 // used area in the cell

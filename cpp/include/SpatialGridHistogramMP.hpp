@@ -13,39 +13,26 @@
 #include "Dataset.hpp"
 #include "Envelope.hpp"
 #include "SpatialGridHistogram.hpp"
-#include "SpatialGridHistogramCellTypes.hpp"
+#include "SpatialHistogramCellTypes.hpp"
 
-class SpatialGridHistogramMP: public SpatialGridHistogramTemplate<SpatialGridHistogramCellDefault> {
-	public:
-		SpatialGridHistogramMP(Dataset& ds, int xqtd, int yqtd);
-		virtual double estimateWQuery(const Envelope& wquery) override;
-		
-		virtual const std::string name() override {
-			return "MP";
-		}
+class SpatialGridHistogramMP: public SpatialGridHistogram {
+public:
+	SpatialGridHistogramMP(Dataset& ds, int xqtd, int yqtd);
+	~SpatialGridHistogramMP();
 
-		virtual double getCellCardin(int x, int y) override {
-			return getHistogramCell(x, y)->cardin;
-		}
+	virtual double estimateWQuery(const Envelope& wquery) override;
+	
+	virtual const std::string name() override {
+		return "MP";
+	}
+	
+protected:
+	SpatialHistogramCellDefault *hcells;
+	virtual SpatialHistogramCellDefault* getHistogramCell(int x, int y) override;
+	virtual void allocCells(int size) override;
 
-		virtual double getCellObjCount(int x, int y) override {
-			return getCellCardin(x, y);
-		}
-
-		virtual double getCellAvgX(int x, int y) override {
-			return getHistogramCell(x, y)->avg_x;
-		}
-
-		virtual double getCellAvgY(int x, int y) override {
-			return getHistogramCell(x, y)->avg_y;
-		}
-
-		virtual const Envelope getUsedArea(int x, int y) override {
-			return Envelope(xtics[x], ytics[y], xtics[x+1], ytics[y+1]);
-		}
-		
-	private:
-		void fillHistogramMbrCenter(Dataset& ds);
+private:
+	void fillHistogramMbrCenter(Dataset& ds);
 };
 
 
