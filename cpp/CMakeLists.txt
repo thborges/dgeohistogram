@@ -50,7 +50,7 @@ file(GLOB wquery_SRC CONFIGURE_DEPENDS
 )
 
 add_executable(wquery ${wquery_SRC})
-target_link_libraries(wquery gdal geos_c)
+target_link_libraries(wquery gdal geos geos_c)
 
 set_target_properties(wquery PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"

@@ -13,6 +13,7 @@
 
 #include "rtree.h"
 #include "rtree-star.h"
+#include "rtree-lazy.h"
 
 class UniformWQueryExperiment: public GenericExperiment {
 public:
@@ -23,9 +24,9 @@ public:
     const virtual void run() {
 		// cria uma r*
 		rtree_root *rtree = NULL;
-		rtree = rtree_new_rstar(30, 10);
+		rtree = rtree_new_r0(30, 10);
 
-		std::printf("Building R*-Tree\n");
+		std::printf("Building R0-Tree\n");
 		for(const DatasetEntry& de: ds.geoms()) {
 			EnvelopeC env{de.mbr.MinX, de.mbr.MinY, de.mbr.MaxX, de.mbr.MaxY};
 			rtree_append(rtree, de.geo, env);
@@ -94,7 +95,7 @@ public:
 				for(int i = 0; i < hs; i++) {
 					// histogram estimate cardinality
 					int rhq = hists[i]->estimateWQuery(query);
-					//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
+					//printf("%d %7s:\tr: %5d, e: %5d, %5d\n", n, hists[i]->name().c_str(), riq, rhq, rhq - riq);
 
 					int error = abs(rhq-riq);
 
@@ -116,11 +117,11 @@ public:
 			}
 		
 			for(int i = 0; i < hs; i++) {
-				std::printf("%3.2lf\t%lf\t%lf\t%lf\t%s\t%s\n",
+				std::printf("%3.2lf\t%lf\t%lf\t%i\t%s\t%s\n",
 					query_size, 
 					sum_ei[i] / (double)sum_ri[i],
 					sqrt(M2[i]/(double)n),
-					sum_error[i],
+					(int)sum_error[i],
 					hists[i]->name().c_str(),
 					ds.metadata().name.c_str());
 			}

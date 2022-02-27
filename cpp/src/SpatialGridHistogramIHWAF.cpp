@@ -29,8 +29,8 @@ SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
     // IHWAF uses average length of objets to decide the
     // histogram granularity (quantity of cells or split method)
     const DatasetMetadata& metadata = ds.metadata();
-    double psizex = metadata.x_average + 4*metadata.x_stdev();
-    double psizey = metadata.y_average + 4*metadata.y_stdev();
+    double psizex = metadata.x_average + 6*metadata.x_stdev();
+    double psizey = metadata.y_average + 6*metadata.y_stdev();
 
     double rangex = metadata.mbr.MaxX - metadata.mbr.MinX;
     double rangey = metadata.mbr.MaxY - metadata.mbr.MinY;
@@ -62,7 +62,6 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
         int xini, xfim, yini, yfim;
         getIntersectionIdxs(de.mbr, &xini, &xfim, &yini, &yfim);	
 
-        double sum_fraction = 0;
         for(int x = xini; x <= xfim; x++) {
             Envelope rs;
             rs.MinX = xtics[x];
@@ -92,7 +91,6 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
                 else {
                     fraction = intarea / objarea;
                 }
-                sum_fraction += fraction;
 
                 SpatialHistogramCellImproved *cell = getHistogramCell(x, y);
                 cell->cardin += fraction;
@@ -103,10 +101,8 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
                 cell->objcount += 1.0;
 
                 // average length, online average calculation
-                double delta_x = (inters.MaxX - inters.MinX);
-                double delta_y = (inters.MaxY - inters.MinY);
-                cell->avg_x += (delta_x - cell->avg_x) / cell->objcount;
-                cell->avg_y += (delta_y - cell->avg_y) / cell->objcount;
+                cell->avg_x += (inters.width() - cell->avg_x) / cell->objcount;
+                cell->avg_y += (inters.length() - cell->avg_y) / cell->objcount;
             }
         }
     }
@@ -160,6 +156,7 @@ double SpatialGridHistogramIHWAF::estimateWQuery(const Envelope& query) {
                 // uniformity assumption! objects aren't uniform located at the cell
                 double xprob = std::min(1.0, (avg_x + wqueryadj.width()) / cell->usedarea.width());
                 double yprob = std::min(1.0, (avg_y + wqueryadj.length()) / cell->usedarea.length());
+
                 result += cell->cardin * xprob * yprob;
             }
         }

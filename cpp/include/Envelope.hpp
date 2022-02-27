@@ -52,6 +52,10 @@ struct Envelope {
 			MinX <= mbr2.MaxX && MinY <= mbr2.MaxY && mbr2.MinX <= MaxX && mbr2.MinY <= MaxY;
 	}
 
+	bool contains(double x, double y) const {
+		return !isEmpty() && x >= MinX && x <= MaxX && y >= MinY && y <= MaxY;
+	}
+
 	Envelope intersection(const Envelope& r) const {
 		if (intersects(r)) {
 			return Envelope{

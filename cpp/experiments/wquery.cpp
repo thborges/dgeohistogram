@@ -9,6 +9,7 @@
 #include "Dataset.hpp"
 #include "SpatialGridHistogramMP.hpp"
 #include "SpatialGridHistogramIHWAF.hpp"
+#include "SpatialGridHistogramEuler.hpp"
 #include "SpatialHistogramMinskew.hpp"
 #include "UniformWQueryExperiment.hpp"
 
@@ -43,15 +44,20 @@ int main(int argc, char *argv[]) {
 		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
 		printMessageAndGenGeoJson(histMinSkew, filename);
 
+		// Euler histogram
+		SpatialGridHistogramEuler histEuler(ds, histIHWAF.columns(), histIHWAF.rows());
+		printMessageAndGenGeoJson(histEuler, filename);
+
 		// Histogram list to experiment with
 		std::vector<SpatialHistogram*> hists;
 		hists.push_back(&histMP);
 		hists.push_back(&histIHWAF);
 		hists.push_back(&histMinSkew);
+		hists.push_back(&histEuler);
 
 		// Query sizes
 		std::vector<double> qsizes;
-		qsizes.push_back(0.01);
+		//qsizes.push_back(0.01);
 		qsizes.push_back(0.05);
 		qsizes.push_back(0.10);
 		qsizes.push_back(0.15);
@@ -70,19 +76,17 @@ int main(int argc, char *argv[]) {
 }
 
 void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename) {
-	std::cout << "Built grid histogram " << hist.name() << " with " << 
-	hist.bucketCount() << " buckets" << std::endl;
+	std::cout << hist.name() << "\t" << hist.bucketCount() << "\t";
 	std::string histname(filename);
 	histname += "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
-	std::cout << "Generated " << histname << " with the histogram data." << std::endl;
+	std::cout << histname << std::endl;
 }
 
 void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename) {
-	std::cout << "Built grid histogram " << hist.name() << " with " << 
-	hist.columns() << "x" << hist.rows() << " cols/rows" << std::endl;
+	std::cout << hist.name() << "\t" << hist.columns() << "x" << hist.rows() << "\t";
 	std::string histname(filename);
 	histname += "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
-	std::cout << "Generated " << histname << " with the histogram data." << std::endl;
+	std::cout << histname << std::endl;
 }

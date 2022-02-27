@@ -119,41 +119,10 @@ VarianceResult SpatialHistogramMinskew::calculateSkewRowCol(int xini, int xfim,
 	return r;
 }
 
-void SpatialHistogramMinskew::getBucketIntersectionIdxs(const Envelope& bucket, 
-    int *xini, int *xfim, int *yini, int *yfim) {
-	*xini = (bucket.MinX - hmbr.MinX) / basehist.getXSize();
-	*xfim = (bucket.MaxX - hmbr.MinX) / basehist.getXSize();
-	*yini = (bucket.MinY - hmbr.MinY) / basehist.getYSize();
-	*yfim = (bucket.MaxY - hmbr.MinY) / basehist.getYSize();
-
-	// turn back one cell, due to rouding errors
-	if (*xini > 0) (*xini)--;
-	if (*xfim > 0) (*xfim)--;
-	if (*yini > 0) (*yini)--;
-	if (*yfim > 0) (*yfim)--;
-
-	// Forward to the correct cell
-	// Observe that some loops are inclusive (i.e., <= xfim and <= yfim).
-	while (basehist.getColumnX(*xini) < bucket.MinX)
-		(*xini)++;
-	while (basehist.getColumnX(*xfim+1) < bucket.MaxX)
-		(*xfim)++;
-	while (basehist.getRowY(*yini) < bucket.MinY)
-		(*yini)++;
-	while (basehist.getRowY(*yfim+1) < bucket.MaxY)
-		(*yfim)++;
-
-	if (*xini < 0 || *xfim >= basehist.columns())
-		throw std::runtime_error("x is out of histogram bounds.");
-
-	if (*yini < 0 || *yfim >= basehist.rows())
-		throw std::runtime_error("y is out of histogram bounds.");
-}
-
 void SpatialHistogramMinskew::calculateBucketWithMbr(MinskewBucket &bucket) {
 	
 	int xini, xfim, yini, yfim;
-	getBucketIntersectionIdxs(bucket.mbr, &xini, &xfim, &yini, &yfim);
+	basehist.getIntersectionIdxs(bucket.mbr, &xini, &xfim, &yini, &yfim);
 	VarianceResult vr = calculateSkewRowCol(xini, xfim, yini, yfim);
 	bucket.skew = vr.n * vr.variance;
 	bucket.cardin = vr.cardin;
@@ -167,7 +136,7 @@ void SpatialHistogramMinskew::calculateBucketWithMbr(MinskewBucket &bucket) {
 void SpatialHistogramMinskew::minskewCalculateSkewReduction(MinskewBucket &bucket) {
 
 	int xini, xfim, yini, yfim;
-	getBucketIntersectionIdxs(bucket.mbr, &xini, &xfim, &yini, &yfim);
+	basehist.getIntersectionIdxs(bucket.mbr, &xini, &xfim, &yini, &yfim);
 
 	bucket.skew_reduction = 0;
 
@@ -273,26 +242,27 @@ void SpatialHistogramMinskew::printGeoJson(const std::string& filename) {
 	output.precision(15);
 	output << "{\"type\": \"FeatureCollection\", \"features\": [\n";
 
+	bool first = true;
 	for(MinskewBucket& b : buckets) {
-		output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[";
-		output << "[" << b.usedarea.MinX << "," << b.usedarea.MinY << "],";
-		output << "[" << b.usedarea.MaxX << "," << b.usedarea.MinY << "],";
-		output << "[" << b.usedarea.MaxX << "," << b.usedarea.MaxY << "],";
-		output << "[" << b.usedarea.MinX << "," << b.usedarea.MaxY << "],";
-		output << "[" << b.usedarea.MinX << "," << b.usedarea.MinY << "]";
-		output << "]]}, \"properties\": {";
-		output << "\"name\": \"" << b.id << "\",";
-		output << "\"card\": " << b.cardin << ",";
-		output << "\"avg_x\": " << b.avg_x << ",";
-		output << "\"avg_y\": " << b.avg_y << ",";
-		output << "\"skew\": " << b.skew;
-		//output << "\"avg_x\": " << hcells[x*yqtd + y].avg_x << ",";
-		//output << "\"avg_y\": " << hcells[x*yqtd + y].avg_y;
-		
-		if (&b == &buckets.back())
-			output << "}}\n";
-		else
-			output << "}},\n";
+		if (!b.usedarea.isEmpty()) {
+			if (!first)
+				output << ",\n";
+			first = false;
+			output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[";
+			output << "[" << b.usedarea.MinX << "," << b.usedarea.MinY << "],";
+			output << "[" << b.usedarea.MaxX << "," << b.usedarea.MinY << "],";
+			output << "[" << b.usedarea.MaxX << "," << b.usedarea.MaxY << "],";
+			output << "[" << b.usedarea.MinX << "," << b.usedarea.MaxY << "],";
+			output << "[" << b.usedarea.MinX << "," << b.usedarea.MinY << "]";
+			output << "]]}, \"properties\": {";
+			output << "\"name\": \"" << b.id << "\",";
+			output << "\"card\": " << b.cardin << ",";
+			output << "\"avg_x\": " << b.avg_x << ",";
+			output << "\"avg_y\": " << b.avg_y << ",";
+			output << "\"skew\": " << b.skew << "}}";
+			//output << "\"avg_x\": " << hcells[x*yqtd + y].avg_x << ",";
+			//output << "\"avg_y\": " << hcells[x*yqtd + y].avg_y;
+		}
 	}
 
 	output << "]}\n";

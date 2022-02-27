@@ -46,20 +46,9 @@ void SpatialGridHistogramMP::fillHistogramMbrCenter(Dataset& ds) {
         rs.MinY = ytics[yp];
         rs.MaxY = ytics[yp+1];
         Envelope inters = de.mbr.intersection(rs);
-        double delta_x = abs(inters.MaxX - inters.MinX);
-        double delta_y = abs(inters.MaxY - inters.MinY);
-        cell->avg_x += delta_x;
-        cell->avg_y += delta_y;
-    }
-
-    for(int x = 0; x < xqtd; x++) {
-        for(int y = 0; y < yqtd; y++) {
-            auto *cell = getHistogramCell(x, y);
-            if (cell->cardin > 0.0) {
-                cell->avg_x /= cell->cardin;
-                cell->avg_y /= cell->cardin;
-            }
-        }
+        cell->avg_x += (inters.width() - cell->avg_x) / cell->cardin;
+        cell->avg_y += (inters.length() - cell->avg_y) / cell->cardin;
+        
     }
 }
 

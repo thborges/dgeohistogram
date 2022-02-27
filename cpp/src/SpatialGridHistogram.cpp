@@ -62,13 +62,13 @@ void SpatialGridHistogram::getIntersectionIdxs(const Envelope& query,
         if (*yini > 0) (*yini)--;
         if (*yfim > 0) (*yfim)--;
 
-        while (xtics[*xini+1]   < query.MinX && *xini < xqtd) 
+        while (xtics[*xini+1]   <= query.MinX && *xini < xqtd) 
             (*xini)++;
-        while (xtics[(*xfim)+1] < query.MaxX && *xfim < xqtd-1)
+        while (xtics[(*xfim)+1] < query.MaxX && *xfim < xqtd)
             (*xfim)++;
-        while (ytics[*yini+1]   < query.MinY && *yini < yqtd)
+        while (ytics[*yini+1]   <= query.MinY && *yini < yqtd)
             (*yini)++;
-        while (ytics[(*yfim)+1] < query.MaxY && *yfim < yqtd-1)
+        while (ytics[(*yfim)+1] < query.MaxY && *yfim < yqtd)
             (*yfim)++;
 
         if (*xini < 0 || *xfim >= xqtd)

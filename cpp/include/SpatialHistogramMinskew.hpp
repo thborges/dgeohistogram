@@ -64,6 +64,4 @@ class SpatialHistogramMinskew: public SpatialHistogram {
         void minskewCalculateSkewReduction(MinskewBucket &bucket);
 		void calculateBucketWithMbr(MinskewBucket &bucket);
 		VarianceResult calculateSkewRowCol(int xini, int xfim, int yini, int yfim);
-		virtual void getBucketIntersectionIdxs(const Envelope& query, 
-            int *xini, int *xfim, int *yini, int *yfim);
 };
