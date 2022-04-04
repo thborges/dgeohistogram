@@ -11,9 +11,11 @@
 #include "SpatialGridHistogramIHWAF.hpp"
 #include "SpatialGridHistogramEuler.hpp"
 #include "SpatialHistogramMinskew.hpp"
+#include "SpatialHistogramAB.hpp"
 #include "UniformWQueryExperiment.hpp"
 
 void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename);
+void printMessageAndGenGeoJson(SpatialHistogramAB& hist, const std::string& filename);
 void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename);
 extern "C" void geos_messages(const char *fmt, ...);
 
@@ -48,12 +50,17 @@ int main(int argc, char *argv[]) {
 		SpatialGridHistogramEuler histEuler(ds, histIHWAF.columns(), histIHWAF.rows());
 		printMessageAndGenGeoJson(histEuler, filename);
 
+		// AB histogram
+		SpatialHistogramAB histAB(ds, histIHWAF.columns(), histIHWAF.rows());
+		printMessageAndGenGeoJson(histAB, filename);
+
 		// Histogram list to experiment with
 		std::vector<SpatialHistogram*> hists;
 		hists.push_back(&histMP);
 		hists.push_back(&histIHWAF);
 		hists.push_back(&histMinSkew);
 		hists.push_back(&histEuler);
+		hists.push_back(&histAB);
 
 		// Query sizes
 		std::vector<double> qsizes;
@@ -77,6 +84,14 @@ int main(int argc, char *argv[]) {
 
 void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename) {
 	std::cout << hist.name() << "\t" << hist.bucketCount() << "\t";
+	std::string histname(filename);
+	histname += "." + hist.name() + ".geojson";
+	hist.printGeoJson(histname);
+	std::cout << histname << std::endl;
+}
+
+void printMessageAndGenGeoJson(SpatialHistogramAB& hist, const std::string& filename) {
+	std::cout << hist.name() << "\t" << hist.getcolumns() << "x" << hist.getrows() << "\t";
 	std::string histname(filename);
 	histname += "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
