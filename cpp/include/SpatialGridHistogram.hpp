@@ -12,6 +12,7 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <cassert>
 #include "Dataset.hpp"
 #include "Envelope.hpp"
 #include "SpatialHistogram.hpp"
