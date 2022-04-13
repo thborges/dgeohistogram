@@ -81,7 +81,7 @@ SpatialHistogramAB::SpatialHistogramAB(Dataset& ds, int columns, int rows)
     auto objects = ds.geoms();
     objects.sort([](const DatasetEntry& a, const DatasetEntry& b)
     {
-        return a.mbr.area() < b.mbr.area();
+        return a.mbr.area() > b.mbr.area();
     });
 
     for(const DatasetEntry& object : objects) {
