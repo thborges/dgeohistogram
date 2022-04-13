@@ -47,6 +47,7 @@ public:
 
     int getcolumns() const { return columns;}
     int getrows() const { return rows;}
+    int getNumBuckets() const { return buckets.size(); }
 
 private:
     std::vector<ABBucket> buckets;

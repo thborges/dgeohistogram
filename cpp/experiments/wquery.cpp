@@ -91,7 +91,7 @@ void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string&
 }
 
 void printMessageAndGenGeoJson(SpatialHistogramAB& hist, const std::string& filename) {
-	std::cout << hist.name() << "\t" << hist.getcolumns() << "x" << hist.getrows() << "\t";
+	std::cout << hist.name() << "\t" << hist.getcolumns() << "x" << hist.getrows() << "\t" << hist.getNumBuckets() << " buckets" << "\t";
 	std::string histname(filename);
 	histname += "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
