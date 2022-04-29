@@ -15,10 +15,12 @@
 #include "rtree-star.h"
 #include "rtree-lazy.h"
 
+#include <chrono>
+
 class UniformWQueryExperiment: public GenericExperiment {
 public:
-    UniformWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs, 
-		std::vector<double> qsizes): ds(d), hists(hs), 
+    UniformWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs,
+		std::vector<double> qsizes): ds(d), hists(hs),
 		query_sizes(qsizes) {}
 
     const virtual void run() {
@@ -32,7 +34,7 @@ public:
 			rtree_append(rtree, de.geo, env);
 		}
 
-		std::printf("\nSize\tARE\t\tSTD\t\tSUM\t\tMethod\tName\n");
+		std::printf("\nSize\tARE\t\tSTD\t\tSUM\tTime\t\tMethod\tName\n");
 		const DatasetMetadata& meta = ds.metadata();
 		rtree_window_stat stats;
 		double width = meta.mbr.MaxX - meta.mbr.MinX;
@@ -46,12 +48,14 @@ public:
 			double mean[hs];
 			double M2[hs];
 			double sum_error[hs];
+			double sum_time[hs];
 			for(int i = 0; i < hs; i++) {
 				sum_ei[i] = 0.0;
 				sum_ri[i] = 0.0;
 				mean[i] = 0.0;
 				M2[i] = 0.0;
 				sum_error[i] = 0.0;
+				sum_time[i] = 0.0;
 			}
 
 			double wsize = width * query_size;
@@ -66,6 +70,7 @@ public:
 
 			int n = 0;
 			int qryno = 0;
+
 			while (n < qtd) {
 				n++;
 
@@ -83,7 +88,7 @@ public:
 					query.MaxX, query.MaxY,
 					query.MinX, query.MaxY,
 					query.MinX, query.MinY);
-			
+
 				GEOSGeometryH geoquery = GEOSGeomFromWKT(wkt);
 
 				memset(&stats, 0, sizeof(rtree_window_stat));
@@ -94,7 +99,12 @@ public:
 
 				for(int i = 0; i < hs; i++) {
 					// histogram estimate cardinality
+					auto start = std::chrono::system_clock::now();
+
 					int rhq = hists[i]->estimateWQuery(query);
+
+					std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
+					sum_time[i] += elapsed.count();
 					//printf("%d %7s:\tr: %5d, e: %5d, %5d\n", n, hists[i]->name().c_str(), riq, rhq, rhq - riq);
 
 					int error = abs(rhq-riq);
@@ -115,13 +125,16 @@ public:
 				g_list_free(results);
 				qryno++;
 			}
-		
+
 			for(int i = 0; i < hs; i++) {
-				std::printf("%3.2lf\t%lf\t%lf\t%i\t%s\t%s\n",
-					query_size, 
+				double avg_time = sum_time[i] / qtd;
+
+				std::printf("%3.2lf\t%lf\t%lf\t%i\t%lf\t%s\t%s\n",
+					query_size,
 					sum_ei[i] / (double)sum_ri[i],
 					sqrt(M2[i]/(double)n),
 					(int)sum_error[i],
+					avg_time,
 					hists[i]->name().c_str(),
 					ds.metadata().name.c_str());
 			}
