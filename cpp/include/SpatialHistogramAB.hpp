@@ -48,6 +48,10 @@ public:
     int getcolumns() const { return columns;}
     int getrows() const { return rows;}
     int getNumBuckets() const { return buckets.size(); }
+    double getSize() const override {
+        size_t bytes = buckets.size() * sizeof(ABBucket);
+        return (bytes/(1000.0)); 
+    }
 
 private:
     std::vector<ABBucket> buckets;

@@ -46,6 +46,11 @@ class SpatialHistogramMinskew: public SpatialHistogram {
 		SpatialHistogramMinskew(SpatialGridHistogram &hist, int bucket_num);
 		virtual double estimateWQuery(const Envelope& wquery) override;
 		
+		double getSize() const override {
+			size_t bytes = buckets.size() * sizeof(MinskewBucket);
+			return (bytes/(1000.0));
+		}
+
 		virtual const std::string name() override {
 			return "MinSkew";
 		};

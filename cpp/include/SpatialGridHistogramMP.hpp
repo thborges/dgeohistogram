@@ -21,6 +21,13 @@ public:
 	~SpatialGridHistogramMP();
 
 	virtual double estimateWQuery(const Envelope& wquery) override;
+
+	double getSize() const override 
+    {
+        size_t bytes = (xqtd+1)*(yqtd+1)*sizeof(double);
+        bytes += (xqtd*yqtd) * sizeof(SpatialHistogramCellDefault);
+        return (bytes/(1000.0));
+    }
 	
 	virtual const std::string name() override {
 		return "MP";

@@ -46,6 +46,15 @@ public:
 	~SpatialGridHistogramEuler();
 
 	virtual double estimateWQuery(const Envelope& wquery) override;
+
+    double getSize() const override 
+    {
+        size_t bytes = (xqtd+1)*(yqtd+1)*sizeof(double);
+        bytes += (xqtd*yqtd) * sizeof(SpatialHistogramCellImproved);
+        bytes += ((xqtd+1) * yqtd) + ((yqtd+1) * xqtd) * sizeof(EulerHistogramEdge);
+        bytes += (xqtd+1) * (yqtd+1) * sizeof(EulerHistogramVertex);
+        return (bytes/(1000.0));
+    }
 	
 	virtual const std::string name() override {
 		return "Euler";

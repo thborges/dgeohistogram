@@ -16,6 +16,7 @@ public:
 
 	virtual void printGeoJson(const std::string& filename) = 0;
 	virtual double estimateWQuery(const Envelope& wquery) = 0;
+	virtual double getSize() const = 0;
 	virtual const std::string name() = 0;
 
 	virtual Envelope const & mbr() { return hmbr; };

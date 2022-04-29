@@ -26,6 +26,7 @@ public:
         virtual double getRowY(int j) const { return ytics[j]; };
         virtual double getXSize() const { return xsize; };
         virtual double getYSize() const { return ysize; };
+        virtual double getSize() const { return (((xqtd+1) * (yqtd+1) * sizeof(double))/(1000.0)); }
         virtual const std::string name() = 0;
         virtual void getIntersectionIdxs(const Envelope& query, int *xini, int *xfim, int *yini, int *yfim);
         virtual SpatialHistogramCellDefault* getHistogramCell(int x, int y) = 0;
