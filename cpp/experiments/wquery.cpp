@@ -32,35 +32,13 @@ int main(int argc, char *argv[]) {
 		Dataset ds(filename);
 		std::cout << "Loaded " << filename << ". Objects: " << ds.size() << std::endl;
 
-		// IHWAF histogram
-		SpatialGridHistogramIHWAF histIHWAF(ds);
-		printMessageAndGenGeoJson(histIHWAF, filename);
-
-		// Mamoulis/Papadias histogram
-		SpatialGridHistogramMP histMP(ds, histIHWAF.columns(), histIHWAF.rows());
-		printMessageAndGenGeoJson(histMP, filename);
-
-		// MinSkew histogram
-		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
-		//SpatialHistogramMinskew histMinSkew(histMP, 1000);
-		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
-		printMessageAndGenGeoJson(histMinSkew, filename);
-
-		// Euler histogram
-		SpatialGridHistogramEuler histEuler(ds, histIHWAF.columns(), histIHWAF.rows());
-		printMessageAndGenGeoJson(histEuler, filename);
-
-		// AB histogram
-		SpatialHistogramAB histAB(ds, histIHWAF.columns(), histIHWAF.rows());
-		printMessageAndGenGeoJson(histAB, filename);
-
-		// Histogram list to experiment with
-		std::vector<SpatialHistogram*> hists;
-		hists.push_back(&histMP);
-		hists.push_back(&histIHWAF);
-		hists.push_back(&histMinSkew);
-		hists.push_back(&histEuler);
-		hists.push_back(&histAB);
+		const DatasetMetadata& metadata = ds.metadata();
+    	double dsw = metadata.mbr.MaxX - metadata.mbr.MinX;
+    	double dsh = metadata.mbr.MaxY - metadata.mbr.MinY;
+		double ratio = dsw / dsh;
+		int cols = ceil(dsw / ratio);
+		int rows = ceil(dsh / ratio);
+		printf("%dx%d\n", cols, rows);
 
 		// Query sizes
 		std::vector<double> qsizes;
@@ -72,8 +50,48 @@ int main(int argc, char *argv[]) {
 		qsizes.push_back(0.25);
 		qsizes.push_back(0.30);
 
-		UniformWQueryExperiment exp(ds, hists, qsizes);
-		exp.run();
+		std::vector<double> factors;
+		factors.push_back(4.0);
+		factors.push_back(6.0);
+		factors.push_back(8.0);
+
+		// IHWAF histogram
+		SpatialGridHistogramIHWAF histIHWAF(ds);
+		printMessageAndGenGeoJson(histIHWAF, filename);
+		
+		// MinSkew histogram
+		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
+		//SpatialHistogramMinskew histMinSkew(histMP, 1000);
+		//SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
+		//printMessageAndGenGeoJson(histMinSkew, filename);
+
+		for (auto factor : factors) {
+			printf("%.2lf times\n", factor);
+
+			// Mamoulis/Papadias histogram
+			SpatialGridHistogramMP histMP(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			printMessageAndGenGeoJson(histMP, filename);
+
+			// Euler histogram
+			SpatialGridHistogramEuler histEuler(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			printMessageAndGenGeoJson(histEuler, filename);
+
+			// AB histogram
+			SpatialHistogramAB histAB(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			printMessageAndGenGeoJson(histAB, filename);
+
+			// Histogram list to experiment with
+			std::vector<SpatialHistogram*> hists;
+			hists.push_back(&histMP);
+			//hists.push_back(&histIHWAF);
+			//hists.push_back(&histMinSkew);
+			hists.push_back(&histEuler);
+			hists.push_back(&histAB);
+
+			UniformWQueryExperiment exp(ds, hists, qsizes);
+			exp.run();
+		}
+
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what();
