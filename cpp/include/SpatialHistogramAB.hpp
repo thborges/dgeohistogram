@@ -17,18 +17,18 @@
 #include "SpatialGridHistogram.hpp"
 
 struct ABBucket {
-    int id;
-    double cardin;
+    int ID;
+    double Cardinality;
 
-    Envelope outer;
-    Envelope inner;
+    int MinCellX, MinCellY;
+    int MaxCellX, MaxCellY;
 
-    bool contains(const Envelope& mbr) const
+    bool contains(int minCellX, int minCellY, int maxCellX, int maxCellY) const
     {
-        return mbr.MinX >= outer.MinX && mbr.MinX <= inner.MinX &&
-               mbr.MaxX >= inner.MaxX && mbr.MaxX <= outer.MaxX &&
-               mbr.MinY >= outer.MinY && mbr.MinY <= inner.MinY &&
-               mbr.MaxY >= inner.MaxY && mbr.MaxY <= outer.MaxY;
+        return MinCellX == minCellX &&
+               MinCellY == minCellY &&
+               MaxCellX == maxCellX &&
+               MaxCellY == maxCellY;
     }
 };
 
@@ -62,7 +62,12 @@ private:
     double bottomLeftX;
     double bottomLeftY;
 
+    void getCell(double x, double y, int* cellX, int* cellY);
     ABBucket getMBRBucket(const Envelope& mbr);
+    void getCellBottomLeft(int cellX, int cellY, double* x, double* y);
+    void getCellTopRight(int cellX, int cellY, double* x, double* y);
+    Envelope getOuterRect(ABBucket);
+    Envelope getInnerRect(ABBucket);
     double intersectionEstimation(const Envelope& wquery);
     double withinEstimation(const Envelope& wquery);
 };

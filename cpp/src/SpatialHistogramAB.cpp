@@ -2,63 +2,32 @@
 
 #include <algorithm>
 
+void SpatialHistogramAB::getCell(double x, double y, int* cellX, int* cellY)
+{
+    *cellX = std::floor((x - bottomLeftX) / cellWidth);
+    *cellY = std::floor((y - bottomLeftY) / cellHeight);
+}
+
 ABBucket SpatialHistogramAB::getMBRBucket(const Envelope& mbr)
 {
+    int minCellX, minCellY;
+    getCell(mbr.MinX, mbr.MinY, &minCellX, &minCellY);
+    int maxCellX, maxCellY;
+    getCell(mbr.MaxX, mbr.MaxY, &maxCellX, &maxCellY);
+
     for (ABBucket& bucket : buckets) {
-        if (bucket.contains(mbr)) {
-            bucket.cardin++;
+        if (bucket.contains(minCellX, minCellY, maxCellX, maxCellY)) {
+            bucket.Cardinality++;
             return bucket;
         }
     }
 
     ABBucket newBucket;
-    newBucket.cardin = 0;
-
-    int minCellX = std::floor((mbr.MinX - bottomLeftX) / cellWidth);
-    int minCellY = std::floor((mbr.MinY - bottomLeftY) / cellHeight);
-
-    int maxCellX = std::floor((mbr.MaxX - bottomLeftX) / cellWidth);
-    int maxCellY = std::floor((mbr.MaxY - bottomLeftY) / cellHeight);
-
-    newBucket.outer.MinX = bottomLeftX + minCellX * cellWidth;
-    newBucket.outer.MinY = bottomLeftY + minCellY * cellHeight;
-
-    if (minCellX == maxCellX && minCellY == maxCellY)
-    {
-        newBucket.outer.MaxX = newBucket.outer.MinX + cellWidth;
-        newBucket.outer.MaxY = newBucket.outer.MinY + cellHeight;
-
-        const double centerX = newBucket.outer.MinX + (cellWidth/2.0);
-        const double centerY = newBucket.outer.MinY + (cellHeight/2.0);
-
-        newBucket.inner.MinX = centerX;
-        newBucket.inner.MinY = centerY;
-        newBucket.inner.MaxX = centerX;
-        newBucket.inner.MaxY = centerY;
-    }
-    else if ((maxCellX - minCellX) == 1 || (maxCellY - minCellY) == 1)
-    {
-        newBucket.outer.MaxX = bottomLeftX + maxCellX * cellWidth + cellWidth;
-        newBucket.outer.MaxY = bottomLeftY + maxCellY * cellHeight + cellHeight;
-
-        const double centerX = (newBucket.outer.MaxX - newBucket.outer.MinX) / 2.0;
-        const double centerY = (newBucket.outer.MaxY - newBucket.outer.MinY) / 2.0;
-
-        newBucket.inner.MinX = centerX;
-        newBucket.inner.MinY = centerY;
-        newBucket.inner.MaxX = centerX;
-        newBucket.inner.MaxY = centerY;
-    }
-    else
-    {
-        newBucket.outer.MaxX = bottomLeftX + maxCellX * cellWidth + cellWidth;
-        newBucket.outer.MaxY = bottomLeftY + maxCellY * cellHeight + cellHeight;
-
-        newBucket.inner.MinX = newBucket.outer.MinX + cellWidth;
-        newBucket.inner.MinY = newBucket.outer.MinY + cellHeight;
-        newBucket.inner.MaxX = newBucket.outer.MaxX - cellWidth;
-        newBucket.inner.MaxY = newBucket.outer.MaxY - cellHeight;
-    }
+    newBucket.MinCellX = minCellX;
+    newBucket.MinCellY = minCellY;
+    newBucket.MaxCellX = maxCellX;
+    newBucket.MaxCellY = maxCellY;
+    newBucket.Cardinality = 0;
 
     return newBucket;
 }
@@ -86,9 +55,9 @@ SpatialHistogramAB::SpatialHistogramAB(Dataset& ds, int columns, int rows)
 
     for(const DatasetEntry& object : objects) {
         ABBucket bucket = getMBRBucket(object.mbr);
-        if (bucket.cardin == 0) {
-            bucket.id = buckets.size();
-            bucket.cardin++;
+        if (bucket.Cardinality == 0) {
+            bucket.ID = buckets.size();
+            bucket.Cardinality++;
             buckets.push_back(bucket);
         }
     }
@@ -99,6 +68,53 @@ SpatialHistogramAB::~SpatialHistogramAB()
     buckets.clear();
 }
 
+void SpatialHistogramAB::getCellBottomLeft(int cellX, int cellY, double* x, double* y)
+{
+    *x = bottomLeftX + cellX * cellWidth;
+    *y = bottomLeftY + cellY * cellHeight;
+}
+
+void SpatialHistogramAB::getCellTopRight(int cellX, int cellY, double* x, double* y)
+{
+    *x = bottomLeftX + cellX * cellWidth + cellWidth;
+    *y = bottomLeftY + cellY * cellHeight + cellHeight;
+}
+
+Envelope SpatialHistogramAB::getOuterRect(ABBucket bucket)
+{
+    Envelope outer;
+    getCellBottomLeft(bucket.MinCellX, bucket.MinCellY, &outer.MinX, &outer.MinY);
+    getCellTopRight(bucket.MaxCellX, bucket.MaxCellY, &outer.MaxX, &outer.MaxY);
+    return outer;
+}
+
+Envelope SpatialHistogramAB::getInnerRect(ABBucket bucket)
+{
+    Envelope inner;
+    if ((bucket.MaxCellX - bucket.MinCellX <= 1) ||
+        (bucket.MaxCellY - bucket.MinCellY <= 1))
+    {
+        double minX, minY;
+        double maxX, maxY;
+        getCellBottomLeft(bucket.MinCellX, bucket.MinCellY, &minX, &minY);
+        getCellTopRight(bucket.MaxCellX, bucket.MaxCellY, &maxX, &maxY);
+
+        double middleX = minX + (abs(maxX-minX)/2.0);
+        double middleY = minY + (abs(maxY-minY)/2.0);
+        
+        inner.MinX = middleX;
+        inner.MaxX = middleX;
+        inner.MinY = middleY;
+        inner.MaxY = middleY;
+    }
+    else
+    {
+        getCellTopRight(bucket.MinCellX, bucket.MinCellY, &inner.MinX, &inner.MinY);
+        getCellBottomLeft(bucket.MaxCellX, bucket.MaxCellY, &inner.MaxX, &inner.MaxY);
+    }
+    return inner;
+}
+
 double SpatialHistogramAB::intersectionEstimation(const Envelope& wquery)
 {
     double result = 0.0;
@@ -106,10 +122,13 @@ double SpatialHistogramAB::intersectionEstimation(const Envelope& wquery)
     for (ABBucket& bucket : buckets) {
         double probability;
 
-        if (!wquery.intersects(bucket.outer)) {
+        Envelope inner = getInnerRect(bucket);
+        Envelope outer = getOuterRect(bucket);
+
+        if (!wquery.intersects(outer)) {
             probability = 0.0;
-        } else if (!wquery.intersects(bucket.inner)) {
-            Envelope intersection = wquery.intersection(bucket.outer);
+        } else if (!wquery.intersects(inner)) {
+            Envelope intersection = wquery.intersection(outer);
             probability = std::min<double>(intersection.width()/cellWidth, intersection.length()/cellHeight);
             if (probability > 1.0)
                 probability = 1.0;
@@ -118,7 +137,7 @@ double SpatialHistogramAB::intersectionEstimation(const Envelope& wquery)
             probability = 1.0;
         }
 
-        result += probability * bucket.cardin;
+        result += probability * bucket.Cardinality;
     }
 
     return result;
@@ -131,20 +150,23 @@ double SpatialHistogramAB::withinEstimation(const Envelope& wquery)
     for (ABBucket& bucket : buckets) {
         double probability;
 
-        if (!wquery.contains(bucket.inner) && !wquery.contains(bucket.outer)) {
+        Envelope inner = getInnerRect(bucket);
+        Envelope outer = getOuterRect(bucket);
+
+        if (!wquery.contains(inner) && !wquery.contains(outer)) {
             probability = 0.0;
-        } else if (!wquery.contains(bucket.outer)) {
+        } else if (!wquery.contains(outer)) {
             std::array<double, 4> gaps;
-            gaps[0] = std::abs(wquery.MaxY - bucket.inner.MaxY) * cellHeight;
-            gaps[1] = std::abs(wquery.MaxX - bucket.inner.MaxX) * cellWidth;
-            gaps[2] = std::abs(wquery.MinY - bucket.inner.MinY) * cellHeight;
-            gaps[3] = std::abs(wquery.MinX - bucket.inner.MinX) * cellWidth;
+            gaps[0] = std::abs(wquery.MaxY - inner.MaxY) * cellHeight;
+            gaps[1] = std::abs(wquery.MaxX - inner.MaxX) * cellWidth;
+            gaps[2] = std::abs(wquery.MinY - inner.MinY) * cellHeight;
+            gaps[3] = std::abs(wquery.MinX - inner.MinX) * cellWidth;
             probability = *std::min_element(std::begin(gaps), std::end(gaps));
         } else {
             probability = 1.0;
         }
 
-        result += probability * bucket.cardin;
+        result += probability * bucket.Cardinality;
     }
 
     return result;
@@ -165,23 +187,26 @@ void SpatialHistogramAB::printGeoJson(const std::string& filename)
 
 	bool first = true;
 	for(ABBucket& bucket : buckets) {
+        Envelope inner = getInnerRect(bucket);
+        Envelope outer = getOuterRect(bucket);
+
         if (!first)
             output << ",\n";
         first = false;
         output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [";
-        output << "[[" << bucket.outer.MinX << "," << bucket.outer.MinY << "],";
-        output << "["  << bucket.outer.MaxX << "," << bucket.outer.MinY << "],";
-        output << "["  << bucket.outer.MaxX << "," << bucket.outer.MaxY << "],";
-        output << "["  << bucket.outer.MinX << "," << bucket.outer.MaxY << "],";
-        output << "["  << bucket.outer.MinX << "," << bucket.outer.MinY << "]],";
-        output << "[[" << bucket.inner.MinX << "," << bucket.inner.MinY << "],";
-        output << "["  << bucket.inner.MaxX << "," << bucket.inner.MinY << "],";
-        output << "["  << bucket.inner.MaxX << "," << bucket.inner.MaxY << "],";
-        output << "["  << bucket.inner.MinX << "," << bucket.inner.MaxY << "],";
-        output << "["  << bucket.inner.MinX << "," << bucket.inner.MinY << "]]";
+        output << "[[" << outer.MinX << "," << outer.MinY << "],";
+        output << "["  << outer.MaxX << "," << outer.MinY << "],";
+        output << "["  << outer.MaxX << "," << outer.MaxY << "],";
+        output << "["  << outer.MinX << "," << outer.MaxY << "],";
+        output << "["  << outer.MinX << "," << outer.MinY << "]],";
+        output << "[[" << inner.MinX << "," << inner.MinY << "],";
+        output << "["  << inner.MaxX << "," << inner.MinY << "],";
+        output << "["  << inner.MaxX << "," << inner.MaxY << "],";
+        output << "["  << inner.MinX << "," << inner.MaxY << "],";
+        output << "["  << inner.MinX << "," << inner.MinY << "]]";
         output << "]}, \"properties\": {";
-        output << "\"name\": \"" << bucket.id << "\",";
-        output << "\"card\": " << bucket.cardin << "}}\n";
+        output << "\"name\": \"" << bucket.ID << "\",";
+        output << "\"card\": " << bucket.Cardinality << "}}\n";
 	}
 
 	output << "]}\n";
