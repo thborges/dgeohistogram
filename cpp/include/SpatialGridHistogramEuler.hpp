@@ -51,8 +51,8 @@ public:
     {
         size_t bytes = (xqtd+1)*(yqtd+1)*sizeof(double);
         bytes += (xqtd*yqtd) * sizeof(SpatialHistogramCellImproved);
-        bytes += ((xqtd+1) * yqtd) + ((yqtd+1) * xqtd) * sizeof(EulerHistogramEdge);
-        bytes += (xqtd+1) * (yqtd+1) * sizeof(EulerHistogramVertex);
+        bytes += (((xqtd+1) * yqtd) + ((yqtd+1) * xqtd)) * sizeof(EulerHistogramEdge);
+        bytes += ((xqtd+1) * (yqtd+1)) * sizeof(EulerHistogramVertex);
         return (bytes/(1000.0));
     }
 	
