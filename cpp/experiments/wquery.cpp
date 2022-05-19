@@ -71,15 +71,24 @@ int main(int argc, char *argv[]) {
 
 		for (auto size : gridSizes) {
 			// Mamoulis/Papadias histogram
+			auto start = std::chrono::system_clock::now();
 			SpatialGridHistogramMP histMP(ds, size, size);
+			std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
+			std::cout << elapsed.count() << "s\t";
 			printMessageAndGenGeoJson(histMP, filename);
 
 			// Euler histogram
+			start = std::chrono::system_clock::now();
 			SpatialGridHistogramEuler histEuler(ds, size, size);
+			elapsed = std::chrono::system_clock::now() - start;
+			std::cout << elapsed.count() << "s\t";
 			printMessageAndGenGeoJson(histEuler, filename);
 
 			// AB histogram
+			start = std::chrono::system_clock::now();
 			SpatialHistogramAB histAB(ds, size, size);
+			elapsed = std::chrono::system_clock::now() - start;
+			std::cout << elapsed.count() << "s\t";
 			printMessageAndGenGeoJson(histAB, filename);
 
 			// Histogram list to experiment with
