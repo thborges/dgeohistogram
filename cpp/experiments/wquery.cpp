@@ -50,14 +50,18 @@ int main(int argc, char *argv[]) {
 		qsizes.push_back(0.25);
 		qsizes.push_back(0.30);
 
-		std::vector<double> factors;
-		factors.push_back(4.0);
-		factors.push_back(6.0);
-		factors.push_back(8.0);
+		std::vector<int> gridSizes;
+		gridSizes.push_back(5);
+		gridSizes.push_back(10);
+		gridSizes.push_back(15);
+		gridSizes.push_back(20);
+		gridSizes.push_back(25);
+		gridSizes.push_back(30);
+		gridSizes.push_back(35);
 
 		// IHWAF histogram
-		SpatialGridHistogramIHWAF histIHWAF(ds);
-		printMessageAndGenGeoJson(histIHWAF, filename);
+		//SpatialGridHistogramIHWAF histIHWAF(ds);
+		//printMessageAndGenGeoJson(histIHWAF, filename);
 		
 		// MinSkew histogram
 		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
@@ -65,19 +69,17 @@ int main(int argc, char *argv[]) {
 		//SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
 		//printMessageAndGenGeoJson(histMinSkew, filename);
 
-		for (auto factor : factors) {
-			printf("%.2lf times\n", factor);
-
+		for (auto size : gridSizes) {
 			// Mamoulis/Papadias histogram
-			SpatialGridHistogramMP histMP(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			SpatialGridHistogramMP histMP(ds, size, size);
 			printMessageAndGenGeoJson(histMP, filename);
 
 			// Euler histogram
-			SpatialGridHistogramEuler histEuler(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			SpatialGridHistogramEuler histEuler(ds, size, size);
 			printMessageAndGenGeoJson(histEuler, filename);
 
 			// AB histogram
-			SpatialHistogramAB histAB(ds, factor*histIHWAF.columns(), factor*histIHWAF.rows());
+			SpatialHistogramAB histAB(ds, size, size);
 			printMessageAndGenGeoJson(histAB, filename);
 
 			// Histogram list to experiment with
