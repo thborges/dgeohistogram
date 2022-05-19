@@ -1,5 +1,6 @@
 #include "../include/SpatialHistogramAB.hpp"
 
+#include <array>
 #include <algorithm>
 
 void SpatialHistogramAB::getCell(double x, double y, int* cellX, int* cellY)
