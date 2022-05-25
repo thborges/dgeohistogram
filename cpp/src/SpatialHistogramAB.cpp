@@ -48,13 +48,7 @@ SpatialHistogramAB::SpatialHistogramAB(Dataset& ds, int columns, int rows)
     bottomLeftX = metadata.mbr.MinX;
     bottomLeftY = metadata.mbr.MinY;
 
-    auto objects = ds.geoms();
-    objects.sort([](const DatasetEntry& a, const DatasetEntry& b)
-    {
-        return a.mbr.area() > b.mbr.area();
-    });
-
-    for(const DatasetEntry& object : objects) {
+    for(const DatasetEntry& object : ds.geoms()) {
         ABBucket bucket = getMBRBucket(object.mbr);
         if (bucket.Cardinality == 0) {
             bucket.ID = buckets.size();
