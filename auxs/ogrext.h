@@ -132,6 +132,56 @@ char ENVELOPE_INTERSECTS(const Envelope mbr1, const Envelope mbr2) {
 	return result;
 }
 
+char ENVELOPE_INTERSECTS_EULERSKEW(const Envelope mbr1, const Envelope mbr2) {
+	//IACA_START
+	char result;
+	/*__asm__( // using or
+		"cmpnlepd %3, %4;" 
+		"movmskpd %4, %%ecx;"
+		"cmp $0x0, %%cl;"
+		"jnz 2f;"
+		"cmpnlepd %2, %1;"
+		"movmskpd %1, %%ecx;"
+		"cmp $0x0, %%cl;"
+		"2: setz %0;"
+		: "=r" (result)
+		: "x" (mbr1.Min), "x" (mbr2.Max), "x" (mbr1.Max), "x" (mbr2.Min)
+		: "%ecx");*/
+
+	/*__asm__( // using and
+		"cmplepd %3, %4;" 
+		"movmskpd %4, %%ecx;"
+		"cmp $0x3, %%cl;"
+		"jne 2f;"
+		"cmplepd %2, %1;"
+		"movmskpd %1, %%ecx;"
+		"cmp $0x3, %%cl;"
+		"2: setz %0;"
+		: "=r" (result)
+		: "x" (mbr1.Min), "x" (mbr2.Max), "x" (mbr1.Max), "x" (mbr2.Min)
+		: "%ecx");*/
+
+	/*__asm__ ( // without branch
+		"cmplepd %2, %1;"
+		"cmplepd %3, %4;" 
+		"andpd %1, %4;"
+		"movmskpd %4, %%ebx;"
+		"cmp $0x3, %%bl;"
+		"setz %0;"
+		: "=r" (result)
+		: "x" (mbr1.Min), "x" (mbr2.Max), "x" (mbr1.Max), "x" (mbr2.Min)
+		: "%ebx");*/
+	
+	result = (mbr1.MinX < mbr2.MaxX && mbr1.MinY < mbr2.MaxY && mbr2.MinX < mbr1.MaxX && mbr2.MinY < mbr1.MaxY);
+	/*if (r != result) {
+		print_geojson_mbr_local(mbr1, "0");
+		print_geojson_mbr_local(mbr2, "1");
+		printf("\n");
+	}*/
+	//IACA_END
+	return result;
+}
+
 #define ENVELOPE_CONTAINS(o, i) (i.MinX >= o.MinX && i.MaxX <= o.MaxX && i.MinY >= o.MinY && i.MaxY <= o.MaxY)
 #define ENVELOPE_CONTAINSP(e, x, y) (x >= e.MinX && x <= e.MaxX && y >= e.MinY && y <= e.MaxY)
 #define ENVELOPE_CONTAINSP2(e, x, y) (x > e.MinX && x < e.MaxX && y > e.MinY && y < e.MaxY)

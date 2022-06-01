@@ -217,7 +217,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 		// horizontal edge 1
        eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS(edgeh1->mbr, bucket->mbr)){
+    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgeh1->mbr, bucket->mbr)){
 	    edgeh1->mbr.MinX = bucket->mbr.MinX;
         edgeh1->mbr.MinY = bucket->mbr.MinY;
         edgeh1->mbr.MaxX = bucket->mbr.MaxX;
@@ -227,7 +227,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 		// horizontal edge 2
     eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS(edgeh2->mbr, bucket->mbr)){
+    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgeh2->mbr, bucket->mbr)){
 	    edgeh2->mbr.MinX = bucket->mbr.MinX;
         edgeh2->mbr.MinY = bucket->mbr.MaxY;
         edgeh2->mbr.MaxX = bucket->mbr.MaxX;
@@ -238,7 +238,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 		// vertical edge 1
     eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS(edgev1->mbr, bucket->mbr)){
+    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev1->mbr, bucket->mbr)){
 	    edgev1->mbr.MinX = bucket->mbr.MinX;
         edgev1->mbr.MinY = bucket->mbr.MinY;
         edgev1->mbr.MaxX = bucket->mbr.MinX;
@@ -249,7 +249,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 		// vertical edge 2
     eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS(edgev2->mbr, bucket->mbr)){
+    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev2->mbr, bucket->mbr)){
 	    edgev2->mbr.MinX = bucket->mbr.MaxX;
         edgev2->mbr.MinY = bucket->mbr.MinY;
         edgev2->mbr.MaxX = bucket->mbr.MaxX;
@@ -261,35 +261,31 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 
 		// below left
     	eulerskew_vertex *vertexbl = g_new0(eulerskew_vertex,1);
-    if(!ENVELOPE_INTERSECTS(vertexbl->mbr, bucket->mbr)){
 		vertexbl->x = bucket->mbr.MinX;
 		vertexbl->y = bucket->mbr.MinY;
 		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbl);
-    }
+    
 
 		// above left
-		eulerskew_vertex *vertexal = g_new0(eulerskew_vertex,1);
-    if(!ENVELOPE_INTERSECTS(vertexal->mbr, bucket->mbr)){
-    	vertexal->x = bucket->mbr.MinX;
+		eulerskew_vertex *vertexal = g_new0(eulerskew_vertex,1);    	
+    vertexal->x = bucket->mbr.MinX;
 		vertexal->y = bucket->mbr.MaxY;
 		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexal);
-    }
+    
 
 		// below right
 
 		eulerskew_vertex *vertexbr = g_new0(eulerskew_vertex,1);
-    if(!ENVELOPE_INTERSECTS(vertexbr->mbr, bucket->mbr)){
+
 		vertexbr->x = bucket->mbr.MaxX;
 		vertexbr->y = bucket->mbr.MinY;
 		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbr);
-    }
+    
 		// above right
 		eulerskew_vertex *vertexar = g_new0(eulerskew_vertex,1);
-    if(!ENVELOPE_INTERSECTS(vertexar->mbr, bucket->mbr)){
 		vertexar->x = bucket->mbr.MaxX;
 		vertexar->y = bucket->mbr.MaxY;
 		listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexar);
-    }
 	}
 
 	return listaEulerskew;
