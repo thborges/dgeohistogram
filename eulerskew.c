@@ -198,6 +198,13 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		buckets++;
 	}
 
+  // O HISTOGRAMA MINSKEW É APENAS UMA LISTA DE BUCKETS EM QUE AS EXTREMIDADES DO BUCKETS
+  // SÃO DEFINIDAS POR DOIS PONTOS minX, minY e maxX, maxY.
+
+  //NO HISTOGRAMA MINSKEW O TAMANHO DAS ARESTAS NÃO É ARMAZENADO.
+
+  // O RESTO DO CÓDIGO DESSA FUNÇÃO ARMAZENA AS DIMENSÕES DAS ARESTAS DE ACORDO COM A LOGICA
+  // DO HISTOGRAMA DE EULER.
 
 	GList *item;
 	g_list_foreach(item, listaEulerskew->bucketsList) {
@@ -208,36 +215,47 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// dges[0].mbr.MinX = asdklfsl.
 
 		// horizontal edge 1
-		eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
+    if(!ENVELOPE_INTERSECTS(edgeh1, bucket)){
+      eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
 	    edgeh1->mbr.MinX = bucket->mbr.MinX;
         edgeh1->mbr.MinY = bucket->mbr.MinY;
         edgeh1->mbr.MaxX = bucket->mbr.MaxX;
         edgeh1->mbr.MaxY = bucket->mbr.MinY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
+    }
 
 		// horizontal edge 2
-        eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
+    if(!ENVELOPE_INTERSECTS(edgeh2, bucket)){
+      eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
 	    edgeh2->mbr.MinX = bucket->mbr.MinX;
         edgeh2->mbr.MinY = bucket->mbr.MaxY;
         edgeh2->mbr.MaxX = bucket->mbr.MaxX;
         edgeh2->mbr.MaxY = bucket->mbr.MaxY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh2);
+    }
+        
 
 		// vertical edge 1
-		eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
+    if(!ENVELOPE_INTERSECTS(edgev1, bucket)){
+      	eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
 	    edgev1->mbr.MinX = bucket->mbr.MinX;
         edgev1->mbr.MinY = bucket->mbr.MinY;
         edgev1->mbr.MaxX = bucket->mbr.MinX;
         edgev1->mbr.MaxY = bucket->mbr.MaxY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
+    }
+	
 
 		// vertical edge 2
-        eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
+    if(!ENVELOPE_INTERSECTS(edgev2, bucket)){
+       eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
 	    edgev2->mbr.MinX = bucket->mbr.MaxX;
         edgev2->mbr.MinY = bucket->mbr.MinY;
         edgev2->mbr.MaxX = bucket->mbr.MaxX;
         edgev2->mbr.MaxY = bucket->mbr.MaxY;
 		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
+    }
+       
 
 
 		// below left

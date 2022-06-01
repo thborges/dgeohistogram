@@ -63,8 +63,7 @@ typedef struct {
 } variance_result_eulerskew;
 
 typedef struct{
-    GList *bucketsList;
-    GList *EdgesList;
+    GList *bucketsList;++----dgesList;
     GList *VertexesList;
 }minskewLists;
 
