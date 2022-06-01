@@ -215,8 +215,8 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// dges[0].mbr.MinX = asdklfsl.
 
 		// horizontal edge 1
+       eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
     if(!ENVELOPE_INTERSECTS(edgeh1, bucket)){
-      eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
 	    edgeh1->mbr.MinX = bucket->mbr.MinX;
         edgeh1->mbr.MinY = bucket->mbr.MinY;
         edgeh1->mbr.MaxX = bucket->mbr.MaxX;
@@ -225,8 +225,8 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
     }
 
 		// horizontal edge 2
+    eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
     if(!ENVELOPE_INTERSECTS(edgeh2, bucket)){
-      eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
 	    edgeh2->mbr.MinX = bucket->mbr.MinX;
         edgeh2->mbr.MinY = bucket->mbr.MaxY;
         edgeh2->mbr.MaxX = bucket->mbr.MaxX;
@@ -236,8 +236,8 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
         
 
 		// vertical edge 1
+    eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
     if(!ENVELOPE_INTERSECTS(edgev1, bucket)){
-      	eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
 	    edgev1->mbr.MinX = bucket->mbr.MinX;
         edgev1->mbr.MinY = bucket->mbr.MinY;
         edgev1->mbr.MaxX = bucket->mbr.MinX;
@@ -247,8 +247,8 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 	
 
 		// vertical edge 2
+    eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
     if(!ENVELOPE_INTERSECTS(edgev2, bucket)){
-       eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
 	    edgev2->mbr.MinX = bucket->mbr.MaxX;
         edgev2->mbr.MinY = bucket->mbr.MinY;
         edgev2->mbr.MaxX = bucket->mbr.MaxX;
