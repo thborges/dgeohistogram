@@ -215,47 +215,67 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num) {
 		// eulerskew_edge edges[] = g_new0(eulerskew_edge, 10);
 		// dges[0].mbr.MinX = asdklfsl.
 
-		// horizontal edge 1
-       eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgeh1->mbr, bucket->mbr)){
-	    edgeh1->mbr.MinX = bucket->mbr.MinX;
-        edgeh1->mbr.MinY = bucket->mbr.MinY;
-        edgeh1->mbr.MaxX = bucket->mbr.MaxX;
-        edgeh1->mbr.MaxY = bucket->mbr.MinY;
-		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
-    }
+bool edgeExists = false;
 
-		// horizontal edge 2
-    eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgeh2->mbr, bucket->mbr)){
-	    edgeh2->mbr.MinX = bucket->mbr.MinX;
-        edgeh2->mbr.MinY = bucket->mbr.MaxY;
-        edgeh2->mbr.MaxX = bucket->mbr.MaxX;
-        edgeh2->mbr.MaxY = bucket->mbr.MaxY;
-		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh2);
+GList *edgeGlist;
+Envelope EdgeMbr;
+        EdgeMbr.MinX = bucket->mbr.MinX;
+        EdgeMbr.MinY = bucket->mbr.MinY;
+        EdgeMbr.MaxX = bucket->mbr.MaxX;
+        EdgeMbr.MaxY = bucket->mbr.MinY;
+	g_list_foreach(edgeGlist, listaEulerskew->EdgesList) {
+
+    eulerskew_edge *edge = (eulerskew_edge * )edgeGlist->data;
+		// horizontal edge 1
+
+    if(!ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr)){
+	    edgeExists=true;
+      break;
+
     }
+  }
+    if(!edgeExists){
+      eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
+      edgeh1->mbr = EdgeMbr;
+		  listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
+    }
+  
+		// horizontal edge 2
+
+
+    // eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
+    // if(!ENVELOPE_INTERSECTS_EULERSKEW(edgeh2->mbr, bucket->mbr)){
+	  //   edgeh2->mbr.MinX = bucket->mbr.MinX;
+    //     edgeh2->mbr.MinY = bucket->mbr.MaxY;
+    //     edgeh2->mbr.MaxX = bucket->mbr.MaxX;
+    //     edgeh2->mbr.MaxY = bucket->mbr.MaxY;
+		// listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh2);
+    // }
         
 
 		// vertical edge 1
-    eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev1->mbr, bucket->mbr)){
-	    edgev1->mbr.MinX = bucket->mbr.MinX;
-        edgev1->mbr.MinY = bucket->mbr.MinY;
-        edgev1->mbr.MaxX = bucket->mbr.MinX;
-        edgev1->mbr.MaxY = bucket->mbr.MaxY;
-		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
-    }
+
+    // eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
+    // if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev1->mbr, bucket->mbr)){
+	  //   edgev1->mbr.MinX = bucket->mbr.MinX;
+    //     edgev1->mbr.MinY = bucket->mbr.MinY;
+    //     edgev1->mbr.MaxX = bucket->mbr.MinX;
+    //     edgev1->mbr.MaxY = bucket->mbr.MaxY;
+		// listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
+    // }
 	
 
 		// vertical edge 2
-    eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
-    if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev2->mbr, bucket->mbr)){
-	    edgev2->mbr.MinX = bucket->mbr.MaxX;
-        edgev2->mbr.MinY = bucket->mbr.MinY;
-        edgev2->mbr.MaxX = bucket->mbr.MaxX;
-        edgev2->mbr.MaxY = bucket->mbr.MaxY;
-		listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
-    }
+
+
+    // eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
+    // if(!ENVELOPE_INTERSECTS_EULERSKEW(edgev2->mbr, bucket->mbr)){
+	  //   edgev2->mbr.MinX = bucket->mbr.MaxX;
+    //     edgev2->mbr.MinY = bucket->mbr.MinY;
+    //     edgev2->mbr.MaxX = bucket->mbr.MaxX;
+    //     edgev2->mbr.MaxY = bucket->mbr.MaxY;
+		// listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
+    // }
        
 
 
