@@ -228,7 +228,7 @@ Envelope EdgeMbr;
     eulerskew_edge *edge = (eulerskew_edge * )edgeGlist->data;
 		// horizontal edge 1
 
-    if(!ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr)){
+    if(!ENVELOPE_INTERSECTS(EdgeMbr, edge->mbr)){
 	    edgeExists=true;
       break;
 
