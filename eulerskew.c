@@ -228,8 +228,8 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     edgeExists = false;
     // vertical edge 1
     EdgeMbr.MinX = bucket->mbr.MinX;
-    EdgeMbr.MinY = bucket->mbr.MaxY;
-    EdgeMbr.MaxX = bucket->mbr.MaxX + 1e-10;
+    EdgeMbr.MinY = bucket->mbr.MinY;
+    EdgeMbr.MaxX = bucket->mbr.MinX + 1e-10;
     EdgeMbr.MaxY = bucket->mbr.MaxY;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
