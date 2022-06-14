@@ -132,6 +132,7 @@ char ENVELOPE_INTERSECTS(const Envelope mbr1, const Envelope mbr2) {
 	return result;
 }
 
+static inline __attribute__((always_inline))
 char ENVELOPE_INTERSECTS_EULERSKEW(const Envelope mbr1, const Envelope mbr2) {
 	//IACA_START
 	char result;
