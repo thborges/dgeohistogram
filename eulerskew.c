@@ -185,6 +185,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     GList *edgeGlist;
     Envelope EdgeMbr;
     // horizontal edge 1
+    edgeExists = false;
     EdgeMbr.MinX = bucket->mbr.MinX;
     EdgeMbr.MinY = bucket->mbr.MinY;
     EdgeMbr.MaxX = bucket->mbr.MaxX;
