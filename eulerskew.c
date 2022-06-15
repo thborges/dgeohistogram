@@ -299,7 +299,7 @@ double minskew_search_hist(GList *hist, Envelope query) {
   GList *item;
   g_list_foreach(item, hist) {
     eulerskew_face *b = (eulerskew_face*)item->data;
-    if (ENVELOPE_INTERSECTS(query, b->mbr)) {
+    if (ENVOLEPE_INTERSECTS_EULERSKEW(query, b->mbr)) {
       Envelope inters = EnvelopeIntersection(query, b->mbr);
       double int_area = ENVELOPE_AREA(inters);
       double bucket_area = ENVELOPE_AREA(b->mbr);
@@ -512,7 +512,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
         GList *item;
         g_list_foreach(item, ml->bucketsList)
         {
-          if (ENVELOPE_INTERSECTS(ev2, rs))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(ev2, rs))
           {
             // eulerskew_face *face = &ml->faces[x*ml->yqtd +y];
             eulerskew_face *face = (eulerskew_face *)item->data;
@@ -543,7 +543,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           eulerskew_edge *ee = (eulerskew_edge *)item->data;
           if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
           { // entra no if se a aresta for horizontal
-            if (ENVELOPE_INTERSECTS(ee->mbr, ev2))
+            if (ENVOLEPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
             {
               double delta_x = ev2.MaxX - ev2.MinX;
               ee->cardin += 1;
@@ -553,7 +553,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           }
           else
           {
-            if (ENVELOPE_INTERSECTS(ee->mbr, ev2))
+            if (ENVOLEPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
             {
               double delta_y = ev2.MaxY - ev2.MinY;
               ee->cardin += 1;
@@ -617,7 +617,7 @@ eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGe
 }
 int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
 {
-  if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
+  if (!ENVOLEPE_INTERSECTS_EULERSKEW(query2, eh->mbr))
     return 0;
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
@@ -643,7 +643,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
       // face
       if (x < eh->xqtd && y < eh->yqtd)
       {
-        if (ENVELOPE_INTERSECTS(query, rs))
+        if (ENVOLEPE_INTERSECTS_EULERSKEW(query, rs))
         {
           eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
           Envelope inters = EnvelopeIntersection(query, rs);
@@ -663,7 +663,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
       if (x < eh->xqtd)
       {
         int e = GET_HORZ_EDGE(x, y);
-        if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query))
+        if (ENVOLEPE_INTERSECTS_EULERSKEW(eh->edges[e].mbr, query))
         {
           if (eh->edges[e].mbr.MinY != query.MinY && eh->edges[e + 1].mbr.MinY != query.MaxY)
           {
@@ -679,7 +679,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
       if (y < eh->yqtd)
       {
         int e = GET_VERT_EDGE(x, y);
-        if (ENVELOPE_INTERSECTS(eh->edges[e].mbr, query))
+        if (ENVOLEPE_INTERSECTS_EULERSKEW(eh->edges[e].mbr, query))
         {
           if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e + 1].mbr.MinX != query.MaxX)
           {
@@ -822,7 +822,7 @@ int eulerskew_join_cardinality(dataset *dr,
           double estimated_result = 0;
           es.MinY = ehs->ytics[ys];
           es.MaxY = ehs->ytics[ys + 1];
-          char i = ENVELOPE_INTERSECTS(er, es);
+          char i = ENVOLEPE_INTERSECTS_EULERSKEW(er, es);
           assert(i != 0);
           eulerskew_face *ehr_face = &ehr->faces[xr * ehr->yqtd + yr];
           eulerskew_face *ehs_face = &ehs->faces[xs * ehs->yqtd + ys];
@@ -852,7 +852,7 @@ int eulerskew_join_cardinality(dataset *dr,
           // aresta horizontal
           int ar = GET_HORZ_EDGE_EHR(xr, yr);
           int as = GET_HORZ_EDGE_EHS(xs, ys);
-          if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(ehr->edges[ar].mbr, ehs->edges[as].mbr))
           {
             printf("ar = %d, as = %d\n", ar, as);
             Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
@@ -868,7 +868,7 @@ int eulerskew_join_cardinality(dataset *dr,
           }
           ar = GET_VERT_EDGE_EHR(xr, yr);
           as = GET_VERT_EDGE_EHS(xs, ys);
-          if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(ehr->edges[ar].mbr, ehs->edges[as].mbr))
           {
             Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
             double int_length = inters.MaxY - inters.MinY;
@@ -901,7 +901,7 @@ int eulerskew_join_cardinality(dataset *dr,
 }
 int eulerskew_spatial_join(eulerskew_histogram *ehr, eulerskew_histogram *ehs)
 {
-  if (!ENVELOPE_INTERSECTS(ehr->mbr, ehs->mbr))
+  if (!ENVOLEPE_INTERSECTS_EULERSKEW(ehr->mbr, ehs->mbr))
     return 0;
   double result = 0;
   double xini = MAX(ehr->xtics[0], ehs->xtics[0]);
@@ -925,7 +925,7 @@ int eulerskew_spatial_join(eulerskew_histogram *ehr, eulerskew_histogram *ehs)
         {
           es.MinY = ehs->xtics[ys];
           es.MaxY = ehs->xtics[ys + 1];
-          if (ENVELOPE_INTERSECTS(er, es))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(er, es))
           {
             // face
             eulerskew_face *ehr_face = &ehr->faces[xr * ehs->yqtd + yr];
@@ -952,7 +952,7 @@ int eulerskew_spatial_join(eulerskew_histogram *ehr, eulerskew_histogram *ehs)
             // aresta horizontal
             int ar = GET_HORZ_EDGE_EHR(xr, yr);
             int as = GET_HORZ_EDGE_EHS(xs, ys);
-            if (ENVELOPE_INTERSECTS(ehs->edges[as].mbr, er))
+            if (ENVOLEPE_INTERSECTS_EULERSKEW(ehs->edges[as].mbr, er))
             {
               if (ehs->edges[as].mbr.MinY != es.MinY && ehs->edges[as + 1].mbr.MinY != es.MaxY)
               {
@@ -966,7 +966,7 @@ int eulerskew_spatial_join(eulerskew_histogram *ehr, eulerskew_histogram *ehs)
             }
             ar = GET_VERT_EDGE_EHR(xr, yr);
             as = GET_VERT_EDGE_EHS(xs, ys);
-            if (ENVELOPE_INTERSECTS(ehs->edges[as].mbr, er))
+            if (ENVOLEPE_INTERSECTS_EULERSKEW(ehs->edges[as].mbr, er))
             {
               if (ehs->edges[as].mbr.MinX != es.MinX && ehs->edges[as + 1].mbr.MinX != es.MaxX)
               {
@@ -1048,7 +1048,7 @@ int eulerskew_cardinality_per_face(dataset *dr,
         {
           es.MinY = ehs->ytics[ys];
           es.MaxY = ehs->ytics[ys + 1];
-          char i = ENVELOPE_INTERSECTS(er, es);
+          char i = ENVOLEPE_INTERSECTS_EULERSKEW(er, es);
           assert(i != 0);
           eulerskew_face *ehr_face = &ehr->faces[xr * ehr->yqtd + yr];
           eulerskew_face *ehs_face = &ehs->faces[xs * ehs->yqtd + ys];
@@ -1102,7 +1102,7 @@ int eulerskew_cardinality_per_face(dataset *dr,
           // aresta horizontal
           int ar = GET_HORZ_EDGE_EHR(xr, yr);
           int as = GET_HORZ_EDGE_EHS(xs, ys);
-          if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(ehr->edges[ar].mbr, ehs->edges[as].mbr))
           {
             Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
             double int_length = inters.MaxX - inters.MinX;
@@ -1116,7 +1116,7 @@ int eulerskew_cardinality_per_face(dataset *dr,
           }
           ar = GET_VERT_EDGE_EHR(xr, yr);
           as = GET_VERT_EDGE_EHS(xs, ys);
-          if (ENVELOPE_INTERSECTS(ehr->edges[ar].mbr, ehs->edges[as].mbr))
+          if (ENVOLEPE_INTERSECTS_EULERSKEW(ehr->edges[ar].mbr, ehs->edges[as].mbr))
           {
             Envelope inters = EnvelopeIntersection2(ehr->edges[ar].mbr, ehs->edges[as].mbr);
             double int_length = inters.MaxY - inters.MinY;
