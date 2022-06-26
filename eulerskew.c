@@ -540,13 +540,18 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
         // GList *item3;
         g_list_foreach(item, ml->EdgesList)
         {
+          bool teste = false;
+          bool teste1 = false;
           eulerskew_edge *ee = (eulerskew_edge *)item->data;
           if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
           { // entra no if se a aresta for horizontal
             if (ENVELOPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
             {
               double delta_x = ev2.MaxX - ev2.MinX;
-              ee->cardin += 1;
+              if(!teste){
+                teste = !teste;
+                ee->cardin += 1;
+              }
               double edge_size = (ee->mbr.MaxX - ee->mbr.MinX);
               ee->avg_projection += (delta_x - ee->avg_projection) / ee->cardin;
             }
@@ -556,7 +561,10 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
             if (ENVELOPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
             {
               double delta_y = ev2.MaxY - ev2.MinY;
-              ee->cardin += 1;
+              if(!teste1){
+                teste1 = !teste1;
+                ee->cardin += 1;
+              }
               double edge_size = (ee->mbr.MaxY - ee->mbr.MinY);
               ee->avg_projection += (delta_y - ee->avg_projection) / ee->cardin;
             }
