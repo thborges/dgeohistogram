@@ -538,10 +538,11 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
         }
         // horizontal edge
         // GList *item3;
+        bool teste = false;
+          bool teste1 = false;
         g_list_foreach(item, ml->EdgesList)
         {
-          bool teste = false;
-          bool teste1 = false;
+          
           eulerskew_edge *ee = (eulerskew_edge *)item->data;
           if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
           { // entra no if se a aresta for horizontal
