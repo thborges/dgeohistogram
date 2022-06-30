@@ -479,43 +479,50 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     Envelope ev = l->mbr; // pega mbr do objeto
     GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
     // descobrir a celula de que o objeto intercepta
-    int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize; // descobrir a celula do objeto
-    int xfim = (ev.MaxX - eh->mbr.MinX) / eh->xsize;
-    int yini = (ev.MinY - eh->mbr.MinY) / eh->ysize;
-    int yfim = (ev.MaxY - eh->mbr.MinY) / eh->ysize;
-    if (xfim < eh->xqtd)
-      xfim++;
-    if (yfim < eh->yqtd)
-      yfim++;
-    for (int x = xini; x <= xfim; x++)
-    {
-      Envelope rs;
-      rs.MinX = eh->xtics[x];
-      if (x < eh->xqtd)
-        rs.MaxX = eh->xtics[x + 1];
-      else
-        rs.MaxX = rs.MinX + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
-      for (int y = yini; y <= yfim; y++)
-      {
-        rs.MinY = eh->ytics[y];
-        if (y < eh->yqtd)
-          rs.MaxY = eh->ytics[y + 1];
-        else
-          rs.MaxY = rs.MinY + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
-        GEOSGeometryH clipped = GEOSClipByRect(geo, rs.MinX, rs.MinY, rs.MaxX, rs.MaxY);
-        if (clipped == NULL)
-          continue;
-        Envelope ev2;
-        GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
-        GEOSGeom_destroy(clipped);
+    // int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize; // descobrir a celula do objeto
+    // int xfim = (ev.MaxX - eh->mbr.MinX) / eh->xsize;
+    // int yini = (ev.MinY - eh->mbr.MinY) / eh->ysize;
+    // int yfim = (ev.MaxY - eh->mbr.MinY) / eh->ysize;
+    // if (xfim < eh->xqtd)
+    //   xfim++;
+    // if (yfim < eh->yqtd)
+    //   yfim++;
+    // for (int x = xini; x <= xfim; x++)
+    // {
+    //   
+    //   rs.MinX = eh->xtics[x];
+    //   if (x < eh->xqtd)
+    //     rs.MaxX = eh->xtics[x + 1];
+    //   else
+    //     rs.MaxX = rs.MinX + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
+    //   for (int y = yini; y <= yfim; y++)
+    //   {
+    //     rs.MinY = eh->ytics[y];
+    //     if (y < eh->yqtd)
+    //       rs.MaxY = eh->ytics[y + 1];
+    //     else
+    //       rs.MaxY = rs.MinY + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
+    //     GEOSGeometryH clipped = GEOSClipByRect(geo, rs.MinX, rs.MinY, rs.MaxX, rs.MaxY);
+    //     if (clipped == NULL)
+    //       continue;
+    //     Envelope ev2;
+    //     GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
+    //     GEOSGeom_destroy(clipped);
         // face
         GList *item;
         g_list_foreach(item, ml->bucketsList)
         {
-          if (ENVELOPE_INTERSECTS_EULERSKEW(ev2, rs))
+          eulerskew_face *face = (eulerskew_face *)item->data;
+          if (ENVELOPE_INTERSECTS(face->mbr, rs))
           {
+            GEOSGeometryH clipped = GEOSClipByRect(geo, face->mbr.MinX, face->mbr.MinY, face->mbr.MaxX, face->mbr.MaxY);
+            if (clipped == NULL)
+              continue;
+            Envelope ev2;
+            GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
+            GEOSGeom_destroy(clipped);
             // eulerskew_face *face = &ml->faces[x*ml->yqtd +y];
-            eulerskew_face *face = (eulerskew_face *)item->data;
+            //eulerskew_face *face = (eulerskew_face *)item->data;
             face->cardin += 1;
             double delta_x = (ev2.MaxX - ev2.MinX);
             double delta_y = (ev2.MaxY - ev2.MinY);
@@ -545,7 +552,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           eulerskew_edge *ee = (eulerskew_edge *)item->data;
           if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
           { // entra no if se a aresta for horizontal
-            if (ENVELOPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
+            if (ENVELOPE_INTERSECTS(ee->mbr, rs))
             {
               double delta_x = ev2.MaxX - ev2.MinX;
               ee->cardin += 1;
@@ -555,7 +562,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           }
           else
           {
-            if (ENVELOPE_INTERSECTS_EULERSKEW(ee->mbr, ev2))
+            if (ENVELOPE_INTERSECTS(ee->mbr, rs))
             {
               double delta_y = ev2.MaxY - ev2.MinY;
               ee->cardin += 1;
@@ -567,12 +574,12 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           // ml->avg_projection +=
         }
         // vertical edge
-      }
-    }
+    
     if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
       GEOSGeom_destroy(geo);
   }
 }
+
 void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, GList *minskewLists)
 {
   double rangex = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
