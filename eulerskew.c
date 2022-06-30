@@ -476,7 +476,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
   dataset_foreach(di, ds)
   {
     dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
-    Envelope ev = l->mbr; // pega mbr do objeto
+    Envelope rs = l->mbr; // pega mbr do objeto
     GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
     // descobrir a celula de que o objeto intercepta
     // int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize; // descobrir a celula do objeto
@@ -538,7 +538,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
         {
           eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
           // int v = x * (ml->yqtd+1) + y;
-          if (ENVELOPE_CONTAINSP(ev2, vertex->x, vertex->y))
+          if (ENVELOPE_CONTAINSP(rs, vertex->x, vertex->y))
           {
             vertex->cardin += 1;
           }
@@ -554,7 +554,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           { // entra no if se a aresta for horizontal
             if (ENVELOPE_INTERSECTS(ee->mbr, rs))
             {
-              double delta_x = ev2.MaxX - ev2.MinX;
+              double delta_x = rs.MaxX - rs.MinX;
               ee->cardin += 1;
               double edge_size = (ee->mbr.MaxX - ee->mbr.MinX);
               ee->avg_projection += (delta_x - ee->avg_projection) / ee->cardin;
@@ -564,7 +564,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
           {
             if (ENVELOPE_INTERSECTS(ee->mbr, rs))
             {
-              double delta_y = ev2.MaxY - ev2.MinY;
+              double delta_y = rs.MaxY - rs.MinY;
               ee->cardin += 1;
               double edge_size = (ee->mbr.MaxY - ee->mbr.MinY);
               ee->avg_projection += (delta_y - ee->avg_projection) / ee->cardin;
