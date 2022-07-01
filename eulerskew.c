@@ -193,7 +193,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr))
+      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr) && !edge->checked)
       {
         edgeExists = true;
         break;
@@ -203,6 +203,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     {
       eulerskew_edge *edgeh1 = g_new0(eulerskew_edge, 1);
       edgeh1->mbr = EdgeMbr;
+      edgeh1->checked = true;
       listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh1);
     }
     edgeExists = false;
@@ -214,8 +215,9 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr))
+      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr) && !edge->checked)
       {
+
         edgeExists = true;
         break;
       }
@@ -224,6 +226,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     {
       eulerskew_edge *edgeh2 = g_new0(eulerskew_edge, 1);
       edgeh2->mbr = EdgeMbr;
+      edgeh2->checked = true;
       listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgeh2);
     }
     edgeExists = false;
@@ -235,7 +238,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr))
+      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr) && !edge->checked)
       {
         edgeExists = true;
         break;
@@ -245,6 +248,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     {
       eulerskew_edge *edgev1 = g_new0(eulerskew_edge, 1);
       edgev1->mbr = EdgeMbr;
+      edgev1->checked = true;
       listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev1);
     }
     edgeExists = false;
@@ -256,7 +260,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr))
+      if (ENVELOPE_INTERSECTS_EULERSKEW(EdgeMbr, edge->mbr) && !edge->checked)
       {
         edgeExists = true;
         break;
@@ -266,6 +270,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     {
       eulerskew_edge *edgev2 = g_new0(eulerskew_edge, 1);
       edgev2->mbr = EdgeMbr;
+      edgev2->checked = true;
       listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
     }
     // below left
@@ -478,36 +483,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
     Envelope rs = l->mbr; // pega mbr do objeto
     GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
-    // descobrir a celula de que o objeto intercepta
-    // int xini = (ev.MinX - eh->mbr.MinX) / eh->xsize; // descobrir a celula do objeto
-    // int xfim = (ev.MaxX - eh->mbr.MinX) / eh->xsize;
-    // int yini = (ev.MinY - eh->mbr.MinY) / eh->ysize;
-    // int yfim = (ev.MaxY - eh->mbr.MinY) / eh->ysize;
-    // if (xfim < eh->xqtd)
-    //   xfim++;
-    // if (yfim < eh->yqtd)
-    //   yfim++;
-    // for (int x = xini; x <= xfim; x++)
-    // {
-    //   
-    //   rs.MinX = eh->xtics[x];
-    //   if (x < eh->xqtd)
-    //     rs.MaxX = eh->xtics[x + 1];
-    //   else
-    //     rs.MaxX = rs.MinX + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
-    //   for (int y = yini; y <= yfim; y++)
-    //   {
-    //     rs.MinY = eh->ytics[y];
-    //     if (y < eh->yqtd)
-    //       rs.MaxY = eh->ytics[y + 1];
-    //     else
-    //       rs.MaxY = rs.MinY + 1e-10; // sum a litle fraction to prevent clip error due to empty mbr
-    //     GEOSGeometryH clipped = GEOSClipByRect(geo, rs.MinX, rs.MinY, rs.MaxX, rs.MaxY);
-    //     if (clipped == NULL)
-    //       continue;
-    //     Envelope ev2;
-    //     GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
-    //     GEOSGeom_destroy(clipped);
+    
         // face
         GList *item;
         g_list_foreach(item, ml->bucketsList)
