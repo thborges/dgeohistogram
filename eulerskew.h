@@ -21,7 +21,6 @@ typedef struct {
     Envelope mbr;
 	double cardin;
     double avg_projection;
-    bool checked;
 } eulerskew_edge;
 
 typedef struct {
