@@ -195,7 +195,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY)
+      if (edge->mbr.MaxX == edgeAdded->mbr.MaxX && edge->mbr.MinX == edgeAdded->mbr.MinX && edge->mbr.MaxY == edgeAdded->mbr.MaxY && edge->mbr.MinY == edgeAdded->mbr.MinY)
       {
         edgeExists = true;
         break;
@@ -226,7 +226,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY)
+      if (edge->mbr.MaxX == edgeAdded->mbr.MaxX && edge->mbr.MinX == edgeAdded->mbr.MinX && edge->mbr.MaxY == edgeAdded->mbr.MaxY && edge->mbr.MinY == edgeAdded->mbr.MinY)
       {
         edgeExists = true;
         break;
@@ -238,7 +238,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       edgeh2->mbr = EdgeMbr;
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(edgeh2->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh2->mbr.MinX == edgeAdded->mbr.MinX && edgeh2->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh2->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
@@ -256,7 +256,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY)
+      if (edge->mbr.MaxX == edgeAdded->mbr.MaxX && edge->mbr.MinX == edgeAdded->mbr.MinX && edge->mbr.MaxY == edgeAdded->mbr.MaxY && edge->mbr.MinY == edgeAdded->mbr.MinY)
       {
         edgeExists = true;
         break;
@@ -269,7 +269,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(edgev1->mbr.MaxX == edgeAdded->mbr.MaxX && edgev1->mbr.MinX == edgeAdded->mbr.MinX && edgev1->mbr.MaxY == edgeAdded->mbr.MaxY && edgev1->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
@@ -287,7 +287,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if(edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY)
+      if(edge->mbr.MaxX == edgeAdded->mbr.MaxX && edge->mbr.MinX == edgeAdded->mbr.MinX && edge->mbr.MaxY == edgeAdded->mbr.MaxY && edge->mbr.MinY == edgeAdded->mbr.MinY)
       {
         edgeExists = true;
         break;
@@ -299,7 +299,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       edgev2->mbr = EdgeMbr;
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(edgeh1->mbr.MaxX == edgeAdded->mbr.MaxX && edgeh1->mbr.MinX == edgeAdded->mbr.MinX && edgeh1->mbr.MaxY == edgeAdded->mbr.MaxY && edgeh1->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(edgev2->mbr.MaxX == edgeAdded->mbr.MaxX && edgev2->mbr.MinX == edgeAdded->mbr.MinX && edgev2->mbr.MaxY == edgeAdded->mbr.MaxY && edgev2->mbr.MinY == edgeAdded->mbr.MinY){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
