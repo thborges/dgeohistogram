@@ -478,74 +478,74 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     dataset_leaf *l = get_join_pair_leaf(di.item, pcheck);
     Envelope rs = l->mbr; // pega mbr do objeto
     GEOSGeometryH geo = dataset_get_leaf_geo(ds, l);
-    
-        // face
-        GList *item;
-        g_list_foreach(item, ml->bucketsList)
+
+    // face
+    GList *item;
+    g_list_foreach(item, ml->bucketsList)
+    {
+      eulerskew_face *face = (eulerskew_face *)item->data;
+      if (ENVELOPE_INTERSECTS(face->mbr, rs))
+      {
+        GEOSGeometryH clipped = GEOSClipByRect(geo, face->mbr.MinX, face->mbr.MinY, face->mbr.MaxX, face->mbr.MaxY);
+        if (clipped == NULL)
+          continue;
+        Envelope ev2;
+        GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
+        GEOSGeom_destroy(clipped);
+        // eulerskew_face *face = &ml->faces[x*ml->yqtd +y];
+        // eulerskew_face *face = (eulerskew_face *)item->data;
+        face->cardin += 1;
+        double delta_x = (ev2.MaxX - ev2.MinX);
+        double delta_y = (ev2.MaxY - ev2.MinY);
+        double area = delta_x * delta_y;
+        face->avg_width += (delta_x - face->avg_width) / face->cardin;
+        face->avg_height += (delta_y - face->avg_height) / face->cardin;
+        face->avg_area += (area - face->avg_area) / face->cardin;
+      }
+    }
+    // GList *item2;
+    //  vertex
+    g_list_foreach(item, ml->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
+      // int v = x * (ml->yqtd+1) + y;
+      if (ENVELOPE_CONTAINSP(rs, vertex->x, vertex->y))
+      {
+        vertex->cardin += 1;
+      }
+    }
+    // horizontal edge
+    // GList *item3;
+
+    g_list_foreach(item, ml->EdgesList)
+    {
+
+      eulerskew_edge *ee = (eulerskew_edge *)item->data;
+      if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
+      { // entra no if se a aresta for horizontal
+        if (ENVELOPE_INTERSECTS(ee->mbr, rs))
         {
-          eulerskew_face *face = (eulerskew_face *)item->data;
-          if (ENVELOPE_INTERSECTS(face->mbr, rs))
-          {
-            GEOSGeometryH clipped = GEOSClipByRect(geo, face->mbr.MinX, face->mbr.MinY, face->mbr.MaxX, face->mbr.MaxY);
-            if (clipped == NULL)
-              continue;
-            Envelope ev2;
-            GEOSEnvelopeGetXY(clipped, &ev2.MinX, &ev2.MaxX, &ev2.MinY, &ev2.MaxY);
-            GEOSGeom_destroy(clipped);
-            // eulerskew_face *face = &ml->faces[x*ml->yqtd +y];
-            //eulerskew_face *face = (eulerskew_face *)item->data;
-            face->cardin += 1;
-            double delta_x = (ev2.MaxX - ev2.MinX);
-            double delta_y = (ev2.MaxY - ev2.MinY);
-            double area = delta_x * delta_y;
-            face->avg_width += (delta_x - face->avg_width) / face->cardin;
-            face->avg_height += (delta_y - face->avg_height) / face->cardin;
-            face->avg_area += (area - face->avg_area) / face->cardin;
-          }
+          double delta_x = rs.MaxX - rs.MinX;
+          ee->cardin += 1;
+          double edge_size = (ee->mbr.MaxX - ee->mbr.MinX);
+          ee->avg_projection += (delta_x - ee->avg_projection) / ee->cardin;
         }
-        // GList *item2;
-        //  vertex
-        g_list_foreach(item, ml->VertexesList)
+      }
+      else
+      {
+        if (ENVELOPE_INTERSECTS(ee->mbr, rs))
         {
-          eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
-          // int v = x * (ml->yqtd+1) + y;
-          if (ENVELOPE_CONTAINSP(rs, vertex->x, vertex->y))
-          {
-            vertex->cardin += 1;
-          }
+          double delta_y = rs.MaxY - rs.MinY;
+          ee->cardin += 1;
+          double edge_size = (ee->mbr.MaxY - ee->mbr.MinY);
+          ee->avg_projection += (delta_y - ee->avg_projection) / ee->cardin;
         }
-        // horizontal edge
-        // GList *item3;
-        
-        g_list_foreach(item, ml->EdgesList)
-        {
-          
-          eulerskew_edge *ee = (eulerskew_edge *)item->data;
-          if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
-          { // entra no if se a aresta for horizontal
-            if (ENVELOPE_INTERSECTS(ee->mbr, rs))
-            {
-              double delta_x = rs.MaxX - rs.MinX;
-              ee->cardin += 1;
-              double edge_size = (ee->mbr.MaxX - ee->mbr.MinX);
-              ee->avg_projection += (delta_x - ee->avg_projection) / ee->cardin;
-            }
-          }
-          else
-          {
-            if (ENVELOPE_INTERSECTS(ee->mbr, rs))
-            {
-              double delta_y = rs.MaxY - rs.MinY;
-              ee->cardin += 1;
-              double edge_size = (ee->mbr.MaxY - ee->mbr.MinY);
-              ee->avg_projection += (delta_y - ee->avg_projection) / ee->cardin;
-            }
-          }
-          // int e = GET_HORZ_EDGE(x, y);
-          // ml->avg_projection +=
-        }
-        // vertical edge
-    
+      }
+      // int e = GET_HORZ_EDGE(x, y);
+      // ml->avg_projection +=
+    }
+    // vertical edge
+
     if (l->gid != -1) // free due to the call to dataset_get_leaf_geo
       GEOSGeom_destroy(geo);
   }
@@ -601,78 +601,66 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
     return 0;
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
-  int xini = (query.MinX - eh->mbr.MinX) / eh->xsize;
-  int xfim = (query.MaxX - eh->mbr.MinX) / eh->xsize;
-  int yini = (query.MinY - eh->mbr.MinY) / eh->ysize;
-  int yfim = (query.MaxY - eh->mbr.MinY) / eh->ysize;
-  if (xfim < eh->xqtd)
-    xfim++;
-  if (yfim < eh->yqtd)
-    yfim++;
-  for (int x = xini; x <= xfim; x++)
+
+  // face
+  GList *item;
+  g_list_foreach(item, listaEulerskew->bucketsList)
   {
-    Envelope rs;
-    rs.MinX = eh->xtics[x];
-    if (x < eh->xqtd)
-      rs.MaxX = eh->xtics[x + 1];
-    for (int y = yini; y <= yfim; y++)
+    eulerskew_face *bucket = (eulerskew_face *)item->data;
+
+    if (ENVELOPE_INTERSECTS(query, bucket->mbr))
     {
-      rs.MinY = eh->ytics[y];
-      if (y < eh->yqtd)
-        rs.MaxY = eh->ytics[y + 1];
-      // face
-      if (x < eh->xqtd && y < eh->yqtd)
+      // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
+      Envelope inters = EnvelopeIntersection(query, rs);
+      double int_area = ENVELOPE_AREA(inters);
+      double face_area = ENVELOPE_AREA(rs);
+      double fraction = int_area / face_area;
+      result += fraction * face->cardin;
+    }
+
+    g_list_foreach(item, listaEulerskew->EdgesList)
+    {
+      eulerskew_edge *edge = (eulerskew_edge *)item->data;
+      eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
+      if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
       {
-        if (ENVELOPE_INTERSECTS_EULERSKEW(query, rs))
+        if (ENVELOPE_INTERSECTS(edge->mbr, query))
         {
-          eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
-          Envelope inters = EnvelopeIntersection(query, rs);
-          double int_area = ENVELOPE_AREA(inters);
-          double face_area = ENVELOPE_AREA(rs);
-          double fraction = int_area / face_area;
-          result += fraction * face->cardin;
-        }
-      }
-      // vertex
-      int v = x * (eh->yqtd + 1) + y;
-      if (ENVELOPE_CONTAINSP(query, eh->vertexes[v].x, eh->vertexes[v].y))
-      {
-        result += eh->vertexes[v].cardin;
-      }
-      // horizontal edge
-      if (x < eh->xqtd)
-      {
-        int e = GET_HORZ_EDGE(x, y);
-        if (ENVELOPE_INTERSECTS_EULERSKEW(eh->edges[e].mbr, query))
-        {
-          if (eh->edges[e].mbr.MinY != query.MinY && eh->edges[e + 1].mbr.MinY != query.MaxY)
+          if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
           {
-            Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
+            Envelope inters = EnvelopeIntersection(query, edge->mbr);
             // verifica se há intersecção, se há, a função retorna o envelope/mbr da interseção
             double int_length = inters.MaxX - inters.MinX;
-            double fraction = int_length / (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
-            result -= fraction * eh->edges[e].cardin;
+            double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
+            result -= fraction * edge->cardin;
           }
         }
       }
-      // vertical edge
-      if (y < eh->yqtd)
+      else
       {
-        int e = GET_VERT_EDGE(x, y);
-        if (ENVELOPE_INTERSECTS_EULERSKEW(eh->edges[e].mbr, query))
+        if (ENVELOPE_INTERSECTS(edge->mbr, query))
         {
-          if (eh->edges[e].mbr.MinX != query.MinX && eh->edges[e + 1].mbr.MinX != query.MaxX)
+          if (edge->mbr.MinX != query.MinX && edgeNext->mbr.MinX != query.MaxX)
           {
-            Envelope inters = EnvelopeIntersection(query, eh->edges[e].mbr);
+            Envelope inters = EnvelopeIntersection(query, edge->mbr);
             double int_length = inters.MaxY - inters.MinY;
-            double fraction = int_length / (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
-            result -= fraction * eh->edges[e].cardin;
+            double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
+            result -= fraction * edge->cardin;
           }
         }
       }
     }
+
+    g_list_foreach(item, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
+      if (ENVELOPE_CONTAINSP(query, vertex->x, vertex->y))
+      {
+        result += vertex->cardin;
+      }
+    }
   }
-  return round(result);
+return round(result);
 }
 double eulerskew_estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
                                                       eulerskew_edge *ehr_face, eulerskew_edge *ehs_face)
