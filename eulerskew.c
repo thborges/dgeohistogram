@@ -182,6 +182,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
   {
     eulerskew_face *bucket = (eulerskew_face *)item->data;
     bool edgeExists = false;
+    bool vertexExists = false;
     GList *edgeGlist;
     Envelope EdgeMbr;
     // horizontal edge 1
@@ -269,25 +270,67 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       listaEulerskew->EdgesList = g_list_append(listaEulerskew->EdgesList, edgev2);
     }
     // below left
+  
+
     eulerskew_vertex *vertexbl = g_new0(eulerskew_vertex, 1);
     vertexbl->x = bucket->mbr.MinX;
     vertexbl->y = bucket->mbr.MinY;
-    listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbl);
+    g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
+      if(ENVELOPE_CONTAINSP(vertexbl, vertex->x, vertex->y)){
+        vertexExists = true;
+      }
+    }
+    if(!vertexExists){
+      listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbl);
+    }
+    vertexExists = false;
     // above left
     eulerskew_vertex *vertexal = g_new0(eulerskew_vertex, 1);
     vertexal->x = bucket->mbr.MinX;
     vertexal->y = bucket->mbr.MaxY;
+     g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
+      if(ENVELOPE_CONTAINSP(vertexal, vertex->x, vertex->y)){
+        vertexExists = true;
+      }
+    }
+     if(!vertexExists){
     listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexal);
+     }
+     vertexExists = false;
     // below right
     eulerskew_vertex *vertexbr = g_new0(eulerskew_vertex, 1);
     vertexbr->x = bucket->mbr.MaxX;
     vertexbr->y = bucket->mbr.MinY;
+     g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
+      if(ENVELOPE_CONTAINSP(vertexbr, vertex->x, vertex->y)){
+        vertexExists = true;
+      }
+    }
+    if(!vertexExists){
     listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexbr);
+    }
+    vertexExists = false;
     // above right
     eulerskew_vertex *vertexar = g_new0(eulerskew_vertex, 1);
     vertexar->x = bucket->mbr.MaxX;
     vertexar->y = bucket->mbr.MaxY;
+     g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
+      if(ENVELOPE_CONTAINSP(vertexar, vertex->x, vertex->y)){
+        vertexExists = true;
+      }
+    }
+    if(!vertexExists){
     listaEulerskew->VertexesList = g_list_append(listaEulerskew->VertexesList, vertexar);
+    }
+    vertexExists = false;
   }
   return listaEulerskew;
 }
