@@ -638,14 +638,12 @@ eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGe
   //	printf("Generated histogram %d x %d, %s.\n", ds->metadata.hist.xqtd,
   //		ds->metadata.hist.yqtd, HistogramHashMethodName[spec.hm]);
 }
-int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
+int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewLists *listaEulerskew)
 {
   if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
     return 0;
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
-
-  minskewLists *listaEulerskew;
   // face
   GList *item;
   g_list_foreach(item, listaEulerskew->bucketsList)

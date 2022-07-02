@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
 		else if (ht == HTEULER)
 			rhq = euler_search_hist(eh, query);
         else if (ht == HTHIBRID)
-            rhq = eulerskew_search_hist(esh,query);
+            rhq = eulerskew_search_hist(esh,query, eulerskew_buckets);
 
 		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
 
