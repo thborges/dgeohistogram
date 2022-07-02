@@ -650,7 +650,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   g_list_foreach(item, listaEulerskew->bucketsList)
   {
     eulerskew_face *bucket = (eulerskew_face *)item->data;
-
+    printf("result meio2: %f \n", result);
     if (ENVELOPE_INTERSECTS(query, bucket->mbr))
     {
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
@@ -693,7 +693,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     //     }
     //   }
     // }
-
+  printf("result meio: %f \n", result);
     g_list_foreach(item, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
