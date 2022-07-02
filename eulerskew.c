@@ -527,7 +527,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     g_list_foreach(item, ml->bucketsList)
     {
       eulerskew_face *face = (eulerskew_face *)item->data;
-      if (ENVELOPE_CONTAINS(face->mbr, rs))
+      if (ENVELOPE_CONTAINS(face->mbr, rs) && ENVELOPE_CONTAINS(rs, face->mbr))
       {
         GEOSGeometryH clipped = GEOSClipByRect(geo, face->mbr.MinX, face->mbr.MinY, face->mbr.MaxX, face->mbr.MaxY);
         if (clipped == NULL)
