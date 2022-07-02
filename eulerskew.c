@@ -193,7 +193,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr))
+      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr) || ENVELOPE_CONTAINS(edge->mbr, EdgeMbr))
       {
         edgeExists = true;
         break;
@@ -214,7 +214,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr))
+      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr) || ENVELOPE_CONTAINS(edge->mbr, EdgeMbr))
       {
         edgeExists = true;
         break;
@@ -235,7 +235,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr))
+      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr) || ENVELOPE_CONTAINS(edge->mbr, EdgeMbr))
       {
         edgeExists = true;
         break;
@@ -256,7 +256,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
-      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr))
+      if (ENVELOPE_CONTAINS(EdgeMbr, edge->mbr) || ENVELOPE_CONTAINS(edge->mbr, EdgeMbr))
       {
         edgeExists = true;
         break;
