@@ -643,7 +643,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
     return 0;
   double result = 0;
-  printf("result inicio: %d \n", result);
+  printf("result inicio: %f \n", result);
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
   // face
   GList *item;
@@ -703,7 +703,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       }
     }
   }
-  printf("result final: %d \n", result);
+  printf("result final: %f \n", result);
 return round(result);
 }
 double eulerskew_estimate_intersections_mp_edges_vert(Envelope el, Envelope er, Envelope inters,
