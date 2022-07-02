@@ -484,7 +484,7 @@ void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPr
     g_list_foreach(item, ml->bucketsList)
     {
       eulerskew_face *face = (eulerskew_face *)item->data;
-      if (ENVELOPE_INTERSECTS(face->mbr, rs))
+      if (ENVELOPE_INTERSECTS_EULERSKEW(face->mbr, rs))
       {
         GEOSGeometryH clipped = GEOSClipByRect(geo, face->mbr.MinX, face->mbr.MinY, face->mbr.MaxX, face->mbr.MaxY);
         if (clipped == NULL)
@@ -597,7 +597,7 @@ eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGe
 }
 int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
 {
-  if (!ENVELOPE_INTERSECTS_EULERSKEW(query2, eh->mbr))
+  if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
     return 0;
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
