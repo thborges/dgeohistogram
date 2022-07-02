@@ -602,7 +602,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
 
-  minskewLists *listaEulerskew
+  minskewLists *listaEulerskew;
   // face
   GList *item;
   g_list_foreach(item, listaEulerskew->bucketsList)
@@ -612,11 +612,11 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
     if (ENVELOPE_INTERSECTS(query, bucket->mbr))
     {
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
-      Envelope inters = EnvelopeIntersection(query, rs);
+      Envelope inters = EnvelopeIntersection(query, bucket->mbr);
       double int_area = ENVELOPE_AREA(inters);
-      double face_area = ENVELOPE_AREA(rs);
+      double face_area = ENVELOPE_AREA(bucket->mbr);
       double fraction = int_area / face_area;
-      result += fraction * face->cardin;
+      result += fraction * bucket->cardin;
     }
 
     g_list_foreach(item, listaEulerskew->EdgesList)
