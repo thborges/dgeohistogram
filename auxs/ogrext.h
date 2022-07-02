@@ -189,6 +189,7 @@ char ENVELOPE_INTERSECTS_EULERSKEW(const Envelope mbr1, const Envelope mbr2) {
 #define ENVELOPE_CONTAINSP2(e, x, y) (x > e.MinX && x < e.MaxX && y > e.MinY && y < e.MaxY)
 
 
+
 #ifdef __cplusplus
 }
 #endif

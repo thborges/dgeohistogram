@@ -278,7 +278,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
-      if(ENVELOPE_CONTAINSP(vertexbl, vertex->x, vertex->y)){
+      if(vertex->x == vertexbl->x && vertex->y == vertexbl->y){
         vertexExists = true;
       }
     }
@@ -293,7 +293,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
      g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
-      if(ENVELOPE_CONTAINSP(vertexal, vertex->x, vertex->y)){
+      if(vertex->x == vertexal->x && vertex->y == vertexal->y){
         vertexExists = true;
       }
     }
@@ -308,7 +308,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
      g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
-      if(ENVELOPE_CONTAINSP(vertexbr, vertex->x, vertex->y)){
+      if(vertex->x == vertexbr->x && vertex->y == vertexbr->y){
         vertexExists = true;
       }
     }
@@ -323,7 +323,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
      g_list_foreach(edgeGlist, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)edgeGlist->data;
-      if(ENVELOPE_CONTAINSP(vertexar, vertex->x, vertex->y)){
+      if(vertex->x == vertexar->x && vertex->y == vertexar->y){
         vertexExists = true;
       }
     }
