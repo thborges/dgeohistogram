@@ -697,7 +697,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     g_list_foreach(item, listaEulerskew->VertexesList)
     {
       eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
-      if (ENVELOPE_CONTAINSP(query, vertex->x, vertex->y))
+      if (ENVELOPE_CONTAINSP2(query, vertex->x, vertex->y))
       {
         result += vertex->cardin;
       }
