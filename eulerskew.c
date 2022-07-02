@@ -602,6 +602,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
   double result = 0;
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
 
+  minskewLists *listaEulerskew
   // face
   GList *item;
   g_list_foreach(item, listaEulerskew->bucketsList)
@@ -622,7 +623,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2)
     {
       eulerskew_edge *edge = (eulerskew_edge *)item->data;
       eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
-      if ((ee->mbr.MaxX - ee->mbr.MinX) > (ee->mbr.MaxY - ee->mbr.MinY))
+      if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
       {
         if (ENVELOPE_INTERSECTS(edge->mbr, query))
         {
