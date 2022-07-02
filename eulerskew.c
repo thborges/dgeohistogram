@@ -190,7 +190,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     EdgeMbr.MinX = bucket->mbr.MinX;
     EdgeMbr.MinY = bucket->mbr.MinY;
     EdgeMbr.MaxX = bucket->mbr.MaxX;
-    EdgeMbr.MaxY = bucket->mbr.MinY;
+    EdgeMbr.MaxY = bucket->mbr.MinY + 1e-10;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
@@ -211,7 +211,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     EdgeMbr.MinX = bucket->mbr.MinX;
     EdgeMbr.MinY = bucket->mbr.MaxY;
     EdgeMbr.MaxX = bucket->mbr.MaxX;
-    EdgeMbr.MaxY = bucket->mbr.MaxY;
+    EdgeMbr.MaxY = bucket->mbr.MaxY + 1e-10;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
@@ -231,7 +231,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     // vertical edge 1
     EdgeMbr.MinX = bucket->mbr.MinX;
     EdgeMbr.MinY = bucket->mbr.MinY;
-    EdgeMbr.MaxX = bucket->mbr.MinX;
+    EdgeMbr.MaxX = bucket->mbr.MinX + 1e-10;
     EdgeMbr.MaxY = bucket->mbr.MaxY;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
@@ -252,7 +252,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
     // vertical edge 2
     EdgeMbr.MinX = bucket->mbr.MaxX;
     EdgeMbr.MinY = bucket->mbr.MinY;
-    EdgeMbr.MaxX = bucket->mbr.MaxX;
+    EdgeMbr.MaxX = bucket->mbr.MaxX + 1e-10;
     EdgeMbr.MaxY = bucket->mbr.MaxY;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
