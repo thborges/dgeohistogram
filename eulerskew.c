@@ -207,7 +207,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       edgeh1->mbr = EdgeMbr;
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(ENVELOPE_CONTAINSP2(edgeh1->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(ENVELOPE_CONTAINS(edgeh1->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
@@ -238,7 +238,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       edgeh2->mbr = EdgeMbr;
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(ENVELOPE_CONTAINSP2(edgeh2->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(ENVELOPE_CONTAINS(edgeh2->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
@@ -269,7 +269,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(ENVELOPE_CONTAINSP2(edgev1->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(ENVELOPE_CONTAINS(edgev1->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
@@ -299,7 +299,7 @@ minskewLists *eulerskew_generate_hist(dataset *ds, int buckets_num)
       edgev2->mbr = EdgeMbr;
        g_list_foreach(edgeGlist, listaEulerskew->EdgesList){
         eulerskew_edge *edgeAdded = (eulerskew_edge *)edgeGlist->data;
-        if(ENVELOPE_CONTAINSP2(edgev2->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
+        if(ENVELOPE_CONTAINS(edgev2->mbr, edgeAdded->mbr)){ //if para não adicionar arestas diferentes que estão na mesma posição e possuem o mesmo tamanho
             edgeAdded = true;
         } 
        }
