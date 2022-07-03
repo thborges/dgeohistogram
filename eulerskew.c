@@ -653,6 +653,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     printf("result meio2: %f \n", result);
     if (ENVELOPE_CONTAINS(query, bucket->mbr))
     {
+      printf("result dentro: %f \n", result);
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
       Envelope inters = EnvelopeIntersection(query, bucket->mbr);
       double int_area = ENVELOPE_AREA(inters);
@@ -663,6 +664,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
 
     g_list_foreach(item, listaEulerskew->EdgesList)
     {
+      printf("result dentro1: %f \n", result);
       eulerskew_edge *edge = (eulerskew_edge *)item->data;
       eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
       if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
