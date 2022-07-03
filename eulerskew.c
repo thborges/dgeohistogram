@@ -654,13 +654,14 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     printf("result meio2: %f \n", result);
     if (ENVELOPE_CONTAINS(query, bucket->mbr) || ENVELOPE_CONTAINS( bucket->mbr, query))
     {
-      printf("result dentro: %f \n", result);
+     
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
       Envelope inters = EnvelopeIntersection(query, bucket->mbr);
       double int_area = ENVELOPE_AREA(inters);
       double face_area = ENVELOPE_AREA(bucket->mbr);
       double fraction = int_area / face_area;
       result += fraction * bucket->cardin;
+       printf("result face dentro: %f \n", result);
     }
 
     g_list_foreach(item, listaEulerskew->EdgesList)
@@ -670,7 +671,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
       if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
       {
-        if (ENVELOPE_CONTAINS( query, edge->mbr) || ENVELOPE_CONTAINS( bucket->mbr, query))
+        if (ENVELOPE_CONTAINS( query, edge->mbr) || ENVELOPE_CONTAINS( edge->mbr, query))
         {
           //printf("result dentro1: %f \n", result);
           if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
@@ -680,7 +681,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
             double int_length = inters.MaxX - inters.MinX;
             double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
             result -= fraction * edge->cardin;
-            printf("result dentro2: %f \n", result);
+            //printf("result dentro2: %f \n", result); o codigo passa por aqui
           }
         }
       }
