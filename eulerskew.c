@@ -703,14 +703,14 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       }
     }
   printf("result meio: %f \n", result);
-  //   g_list_foreach(item, listaEulerskew->VertexesList)
-  //   {
-  //     eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
-  //     if (ENVELOPE_CONTAINSP2(query, vertex->x, vertex->y))
-  //     {
-  //       result += vertex->cardin;
-  //     }
-  //   }
+    g_list_foreach(item, listaEulerskew->VertexesList)
+    {
+      eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
+      if (ENVELOPE_CONTAINSP2(query, vertex->x, vertex->y))
+      {
+        result += vertex->cardin;
+      }
+    }
    }
   printf("result final: %f \n", result);
 return round(result);
