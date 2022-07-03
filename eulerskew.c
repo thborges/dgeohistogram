@@ -660,6 +660,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       double int_area = ENVELOPE_AREA(inters);
       double face_area = ENVELOPE_AREA(bucket->mbr);
       double fraction = int_area / face_area;
+      printf("int_area %f, face_area %f, fraction %f, cardin %f \n", int_area, face_area, fraction, bucket->cardin);
       result += fraction * bucket->cardin;
        printf("result face dentro: %f \n", result);
     }
