@@ -651,7 +651,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   {
     eulerskew_face *bucket = (eulerskew_face *)item->data;
     printf("result meio2: %f \n", result);
-    if (ENVELOPE_INTERSECTS(query, bucket->mbr))
+    if (ENVELOPE_CONTAINS(query, bucket->mbr))
     {
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
       Envelope inters = EnvelopeIntersection(query, bucket->mbr);
@@ -661,38 +661,38 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       result += fraction * bucket->cardin;
     }
 
-    // g_list_foreach(item, listaEulerskew->EdgesList)
-    // {
-    //   eulerskew_edge *edge = (eulerskew_edge *)item->data;
-    //   eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
-    //   if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
-    //   {
-    //     if (ENVELOPE_INTERSECTS(edge->mbr, query))
-    //     {
-    //       if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
-    //       {
-    //         Envelope inters = EnvelopeIntersection(query, edge->mbr);
-    //         // verifica se há intersecção, se há, a função retorna o envelope/mbr da interseção
-    //         double int_length = inters.MaxX - inters.MinX;
-    //         double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
-    //         result -= fraction * edge->cardin;
-    //       }
-    //     }
-    //   }
-    //   else
-    //   {
-    //     if (ENVELOPE_INTERSECTS(edge->mbr, query))
-    //     {
-    //       if (edge->mbr.MinX != query.MinX && edgeNext->mbr.MinX != query.MaxX)
-    //       {
-    //         Envelope inters = EnvelopeIntersection(query, edge->mbr);
-    //         double int_length = inters.MaxY - inters.MinY;
-    //         double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
-    //         result -= fraction * edge->cardin;
-    //       }
-    //     }
-    //   }
-    // }
+    g_list_foreach(item, listaEulerskew->EdgesList)
+    {
+      eulerskew_edge *edge = (eulerskew_edge *)item->data;
+      eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
+      if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
+      {
+        if (ENVELOPE_CONTAINS(edge->mbr, query))
+        {
+          if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
+          {
+            Envelope inters = EnvelopeIntersection(query, edge->mbr);
+            // verifica se há intersecção, se há, a função retorna o envelope/mbr da interseção
+            double int_length = inters.MaxX - inters.MinX;
+            double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
+            result -= fraction * edge->cardin;
+          }
+        }
+      }
+      else
+      {
+        if (ENVELOPE_CONTAINS(edge->mbr, query))
+        {
+          if (edge->mbr.MinX != query.MinX && edgeNext->mbr.MinX != query.MaxX)
+          {
+            Envelope inters = EnvelopeIntersection(query, edge->mbr);
+            double int_length = inters.MaxY - inters.MinY;
+            double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
+            result -= fraction * edge->cardin;
+          }
+        }
+      }
+    }
   printf("result meio: %f \n", result);
     g_list_foreach(item, listaEulerskew->VertexesList)
     {
