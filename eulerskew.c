@@ -711,7 +711,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   //       result += vertex->cardin;
   //     }
   //   }
-  // }
+   }
   printf("result final: %f \n", result);
 return round(result);
 }
