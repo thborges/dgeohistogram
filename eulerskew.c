@@ -645,6 +645,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   double result = 0;
   printf("result inicio: %f \n", result);
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
+  print("query mbr: %f %f %f %f, eh mbr: %f %f %f %f \n", query.MaxX, query.MaxY, query.MinX, query.MinY, eh->mbr.MaxX,  eh->mbr.MaxY,  eh->mbr.MinX,  eh->mbr.MinY);
   // face
   GList *item;
   g_list_foreach(item, listaEulerskew->bucketsList)
