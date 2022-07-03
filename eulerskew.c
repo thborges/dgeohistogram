@@ -672,7 +672,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       {
         if (ENVELOPE_CONTAINS( query, edge->mbr) || ENVELOPE_CONTAINS( bucket->mbr, query))
         {
-          printf("result dentro1: %f \n", result);
+          //printf("result dentro1: %f \n", result);
           if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
           {
             Envelope inters = EnvelopeIntersection(query, edge->mbr);
@@ -680,6 +680,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
             double int_length = inters.MaxX - inters.MinX;
             double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
             result -= fraction * edge->cardin;
+            printf("result dentro2: %f \n", result);
           }
         }
       }
