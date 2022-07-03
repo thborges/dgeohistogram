@@ -654,7 +654,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     eulerskew_face *bucket = (eulerskew_face *)item->data;
      printf("cardin %f \n", bucket->cardin);
     printf("result meio2: %f \n", result);
-    if (ENVELOPE_CONTAINS(query, bucket->mbr) || ENVELOPE_CONTAINS( bucket->mbr, query))
+    if (ENVELOPE_INTERSECTS(query, bucket->mbr))
     {
      
       // eulerskew_face *face = &eh->faces[x * eh->yqtd + y];
@@ -674,7 +674,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       eulerskew_edge *edgeNext = (eulerskew_edge *)edgeGlist->next;
       if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
       {
-        if (ENVELOPE_CONTAINS( query, edge->mbr) || ENVELOPE_CONTAINS( edge->mbr, query))
+        if (ENVELOPE_INTERSECTS( query, edge->mbr) )
         {
           //printf("result dentro1: %f \n", result);
           if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
@@ -690,7 +690,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       }
       else
       {
-        if (ENVELOPE_CONTAINS(edge->mbr, query))
+        if (ENVELOPE_INTERSECTS(edge->mbr, query))
         {
           if (edge->mbr.MinX != query.MinX && edgeNext->mbr.MinX != query.MaxX)
           {
@@ -703,10 +703,11 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       }
     }
   printf("result meio: %f \n", result);
-    g_list_foreach(item, listaEulerskew->VertexesList)
+  GList *vertexGlist;
+    g_list_foreach(vertexGlist, listaEulerskew->VertexesList)
     {
-      eulerskew_vertex *vertex = (eulerskew_vertex *)item->data;
-      if (ENVELOPE_CONTAINSP2(query, vertex->x, vertex->y))
+      eulerskew_vertex *vertex = (eulerskew_vertex *)vertexGlist->data;
+      if (ENVELOPE_CONTAINSP(query, vertex->x, vertex->y))
       {
         result += vertex->cardin;
       }
