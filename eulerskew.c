@@ -650,8 +650,9 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   GList *item;
   g_list_foreach(item, listaEulerskew->bucketsList)
   {
-    printf("cardin %f \n", bucket->cardin);
+   
     eulerskew_face *bucket = (eulerskew_face *)item->data;
+     printf("cardin %f \n", bucket->cardin);
     printf("result meio2: %f \n", result);
     if (ENVELOPE_CONTAINS(query, bucket->mbr) || ENVELOPE_CONTAINS( bucket->mbr, query))
     {
