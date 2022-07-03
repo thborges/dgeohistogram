@@ -664,13 +664,14 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
 
     g_list_foreach(item, listaEulerskew->EdgesList)
     {
-      printf("result dentro1: %f \n", result);
+      
       eulerskew_edge *edge = (eulerskew_edge *)item->data;
       eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
       if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
       {
-        if (ENVELOPE_CONTAINS(edge->mbr, query))
+        if (ENVELOPE_CONTAINS( query, edge->mbr))
         {
+          printf("result dentro1: %f \n", result);
           if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
           {
             Envelope inters = EnvelopeIntersection(query, edge->mbr);
