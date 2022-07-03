@@ -666,12 +666,12 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       result += fraction * bucket->cardin;
        printf("result face dentro: %f \n", result);
     }
-
-    g_list_foreach(item, listaEulerskew->EdgesList)
+    GList *edgeGlist;
+    g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
       
-      eulerskew_edge *edge = (eulerskew_edge *)item->data;
-      eulerskew_edge *edgeNext = (eulerskew_edge *)item->next;
+      eulerskew_edge *edge = (eulerskew_edge *)edgeGlist->data;
+      eulerskew_edge *edgeNext = (eulerskew_edge *)edgeGlist->next;
       if ((edge->mbr.MaxX - edge->mbr.MinX) > (edge->mbr.MaxY - edge->mbr.MinY))
       {
         if (ENVELOPE_CONTAINS( query, edge->mbr) || ENVELOPE_CONTAINS( edge->mbr, query))
