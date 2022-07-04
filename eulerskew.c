@@ -679,7 +679,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
           //printf("result dentro1: %f \n", result);
           if (edge->mbr.MinY != query.MinY && edgeNext->mbr.MinY != query.MaxY)
           {
-            printf("edgeH cardin: %f \n", edge->cardin);
+           // printf("edgeH cardin: %f \n", edge->cardin);
             Envelope inters = EnvelopeIntersection(query, edge->mbr);
             // verifica se há intersecção, se há, a função retorna o envelope/mbr da interseção
             double int_length = inters.MaxX - inters.MinX;
@@ -695,7 +695,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
         {
           if (edge->mbr.MinX != query.MinX && edgeNext->mbr.MinX != query.MaxX)
           {
-            printf("edgeV cardin: %f \n", edge->cardin);
+            //printf("edgeV cardin: %f \n", edge->cardin);
             Envelope inters = EnvelopeIntersection(query, edge->mbr);
             double int_length = inters.MaxY - inters.MinY;
             double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
@@ -711,7 +711,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       eulerskew_vertex *vertex = (eulerskew_vertex *)vertexGlist->data;
       if (ENVELOPE_CONTAINSP(query, vertex->x, vertex->y))
       {
-         printf("vertex cardin: %f \n", vertex->cardin);
+        // printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
       }
     }
