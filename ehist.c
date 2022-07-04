@@ -242,6 +242,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                     double fraction = int_area / face_area;
                     result += fraction * face->cardin;
                     printf("bucket cardin: %f \n", face->cardin);
+                     printf("result face: %f \n", result);
                 }
             }
 
@@ -249,6 +250,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
             int v = x * (eh->yqtd+1) + y;
             if (ENVELOPE_CONTAINSP(query, eh->vertexes[v].x, eh->vertexes[v].y)){
                 result += eh->vertexes[v].cardin;
+                 printf("result vertex: %f \n", result);
             }
 
             // horizontal edge
@@ -261,6 +263,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                         double int_length = inters.MaxX - inters.MinX;
                         double fraction = int_length / (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
                         result -= fraction * eh->edges[e].cardin;
+                         printf("result edge: %f \n", result);
                     }
                 }
 
@@ -275,6 +278,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                         double int_length = inters.MaxY - inters.MinY;
                         double fraction = int_length / (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
                         result -= fraction * eh->edges[e].cardin;
+                         printf("result edge: %f \n", result);
                     }
                 }
             }
