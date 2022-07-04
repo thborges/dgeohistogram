@@ -724,7 +724,6 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
         cont++;
       }
     }
-    printf("\n");
    }
   //printf("result final: %f \n", result);
 return round(result);
