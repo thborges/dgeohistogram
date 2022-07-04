@@ -52,12 +52,15 @@ int main(int argc, char *argv[]) {
 
 		std::vector<int> gridSizes;
 		gridSizes.push_back(5);
-		gridSizes.push_back(10);
 		gridSizes.push_back(15);
-		gridSizes.push_back(20);
 		gridSizes.push_back(25);
-		gridSizes.push_back(30);
-		gridSizes.push_back(35);
+		gridSizes.push_back(50);
+		gridSizes.push_back(100);
+		gridSizes.push_back(125);
+		gridSizes.push_back(150);
+		gridSizes.push_back(175);
+		gridSizes.push_back(200);
+		gridSizes.push_back(225);
 
 		// IHWAF histogram
 		//SpatialGridHistogramIHWAF histIHWAF(ds);
