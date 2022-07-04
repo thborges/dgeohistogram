@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
 	#endif
 
 	int qryno = 0;
-	while (n < qtd) {
+	while (n + 1 < qtd) {
 		n++;
 
 		Envelope query;
