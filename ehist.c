@@ -249,7 +249,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
             int v = x * (eh->yqtd+1) + y;
             if (ENVELOPE_CONTAINSP(query, eh->vertexes[v].x, eh->vertexes[v].y)){
                 result += eh->vertexes[v].cardin;
-                printf("result vertex: %f cardin : %f \n", result,eh->vertexes[v].cardin);
+                //printf("result vertex: %f cardin : %f \n", result,eh->vertexes[v].cardin);
             }
 
             // horizontal edge
@@ -262,7 +262,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                         double int_length = inters.MaxX - inters.MinX;
                         double fraction = int_length / (eh->edges[e].mbr.MaxX - eh->edges[e].mbr.MinX);
                         result -= fraction * eh->edges[e].cardin;
-                         printf("result edge: %f cardin : %f fraction: %f \n", result, eh->edges[e].cardin, fraction);
+                        // printf("result edge: %f cardin : %f fraction: %f \n", result, eh->edges[e].cardin, fraction);
                     }
                 }
 
@@ -277,7 +277,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                         double int_length = inters.MaxY - inters.MinY;
                         double fraction = int_length / (eh->edges[e].mbr.MaxY - eh->edges[e].mbr.MinY);
                         result -= fraction * eh->edges[e].cardin;
-                         printf("result edge: %f cardin: %f fraction: %f \n", result, eh->edges[e].cardin);
+                         //printf("result edge: %f cardin: %f fraction: %f \n", result, eh->edges[e].cardin);
                     }
                 }
             }

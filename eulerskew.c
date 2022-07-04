@@ -686,7 +686,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
             double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
             result -= fraction * edge->cardin;
             //printf("result dentro2: %f \n", result); o codigo passa por aqui
-            printf("result edge: %f cardin : %f fraction: %f \n", result,edge->cardin, fraction);
+            //printf("result edge: %f cardin : %f fraction: %f \n", result,edge->cardin, fraction);
           }
         }
       }
@@ -701,7 +701,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
             double int_length = inters.MaxY - inters.MinY;
             double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
             result -= fraction * edge->cardin;
-            printf("result edge: %f cardin: %f fraction %f \n", result,edge->cardin, fraction);
+            //printf("result edge: %f cardin: %f fraction %f \n", result,edge->cardin, fraction);
           }
         }
       }
@@ -715,7 +715,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       {
         // printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
-        printf("result vertex: %f cardin : %f fraction: %f \n", result,vertex->cardin);
+        //printf("result vertex: %f cardin : %f fraction: %f \n", result,vertex->cardin);
       }
     }
    }
