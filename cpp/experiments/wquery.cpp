@@ -118,31 +118,44 @@ int main(int argc, char *argv[]) {
 }
 
 void printMessageAndGenGeoJson(SpatialHistogramMinskew& hist, const std::string& filename) {
-	std::cout << hist.name() << "\t" 
-			  << hist.bucketCount() << "\t\t"
+    /*
+	std::cout << hist.name() << "\t"
+			  //<< hist.bucketCount() << "\t\t"
 			  << hist.getSize() << " KB\t";
+    */
 	std::string histname(filename);
 	histname += "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
-	std::cout << histname << std::endl;
+	//std::cout << histname << std::endl;
 }
 
 void printMessageAndGenGeoJson(SpatialHistogramAB& hist, const std::string& filename) {
-	std::cout << hist.name() << "\t" 
+    /*
+	std::cout << hist.name() << "\t"
 			  << hist.getcolumns() << "x" << hist.getrows() << " (" << hist.getNumBuckets() << ")\t"
 			  << hist.getSize() << " KB\t";
+    */
+	std::cout << hist.name() << "\t"
+			  << hist.getcolumns() << "x" << hist.getrows() << "\t"
+			  << hist.getNumBuckets() << "\t"
+			  << hist.getSize() << "\n";
 	std::string histname(filename);
-	histname += "." + hist.name() + ".geojson";
+	histname += "." + std::to_string(hist.getcolumns()) + "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
-	std::cout << histname << std::endl;
+	//std::cout << histname << std::endl;
 }
 
 void printMessageAndGenGeoJson(SpatialGridHistogram& hist, const std::string& filename) {
-	std::cout << hist.name() << "\t" 
-			  << hist.columns() << "x" << hist.rows() << "\t\t"
+    /*
+	std::cout << hist.name() << "\t"
+			  //<< hist.columns() << "x" << hist.rows() << "\t\t"
 			  << hist.getSize() << " KB\t";
+    */
+	std::cout << hist.name() << "\t"
+			  << hist.columns() << "x" << hist.rows() << "\t"
+			  << hist.getSize() << "\n";
 	std::string histname(filename);
-	histname += "." + hist.name() + ".geojson";
+	histname += "." + std::to_string(hist.columns()) + "." + hist.name() + ".geojson";
 	hist.printGeoJson(histname);
-	std::cout << histname << std::endl;
+	//std::cout << histname << std::endl;
 }
