@@ -28,13 +28,13 @@ public:
 		rtree_root *rtree = NULL;
 		rtree = rtree_new_r0(30, 10);
 
-		std::printf("Building R0-Tree\n");
+		//std::printf("Building R0-Tree\n");
 		for(const DatasetEntry& de: ds.geoms()) {
 			EnvelopeC env{de.mbr.MinX, de.mbr.MinY, de.mbr.MaxX, de.mbr.MaxY};
 			rtree_append(rtree, de.geo, env);
 		}
 
-		std::printf("\nSize\tARE\t\tSTD\t\tSUM\tTime\t\tMethod\tName\n");
+		//std::printf("\nSize\tARE\t\tSTD\t\tSUM\tTime\t\tMethod\tName\n");
 		const DatasetMetadata& meta = ds.metadata();
 		rtree_window_stat stats;
 		double width = meta.mbr.MaxX - meta.mbr.MinX;
