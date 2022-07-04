@@ -719,11 +719,12 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
         //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
         if(cont == 0){
-          printf("result vertex: %f cardin : %f \n", result,vertex->cardin);
+          printf("result vertex: %f cardin : %f \t", result,vertex->cardin);
         }
         cont++;
       }
     }
+    printf("\n");
    }
   //printf("result final: %f \n", result);
 return round(result);
