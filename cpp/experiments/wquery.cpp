@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
 		int cols = ceil(dsw / ratio);
 		int rows = ceil(dsh / ratio);
 		printf("%dx%d\n", cols, rows);
-
 		// Query sizes
 		std::vector<double> qsizes;
 		//qsizes.push_back(0.01);
@@ -62,7 +61,6 @@ int main(int argc, char *argv[]) {
 		gridSizes.push_back(200);
 		gridSizes.push_back(225);
 
-		
 		// MinSkew histogram
 		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
 		//SpatialHistogramMinskew histMinSkew(histMP, 1000);
@@ -76,6 +74,7 @@ int main(int argc, char *argv[]) {
 			std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
 			std::cout << elapsed.count() * 1000.0 << "\t";
 			printMessageAndGenGeoJson(histIHWAF, filename);
+
 			// Mamoulis/Papadias histogram
 			start = std::chrono::system_clock::now();
 			SpatialGridHistogramMP histMP(ds, size, size);
@@ -106,7 +105,7 @@ int main(int argc, char *argv[]) {
 			hists.push_back(&histAB);
 
 			UniformWQueryExperiment exp(ds, hists, qsizes);
-			exp.run();
+			exp.run(filename);
 		}
 
 	}

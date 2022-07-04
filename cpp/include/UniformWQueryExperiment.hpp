@@ -17,13 +17,27 @@
 
 #include <chrono>
 
+static void WriteQueryToFile(std::ofstream& output, Envelope& windowQuery, int ID, bool first=true)
+{
+	if (!first)
+		output << ",\n";
+
+	output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [";
+	output << "[[" << windowQuery.MinX << "," << windowQuery.MinY << "],";
+	output << "["  << windowQuery.MaxX << "," << windowQuery.MinY << "],";
+	output << "["  << windowQuery.MaxX << "," << windowQuery.MaxY << "],";
+	output << "["  << windowQuery.MinX << "," << windowQuery.MaxY << "],";
+	output << "["  << windowQuery.MinX << "," << windowQuery.MinY << "]]";
+	output << "]}, \"properties\": {";
+	output << "\"name\": \"" << ID << "\"}}\n";
+}
+
 class UniformWQueryExperiment: public GenericExperiment {
 public:
-    UniformWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs,
-		std::vector<double> qsizes): ds(d), hists(hs),
+    UniformWQueryExperiment(Dataset& d, std::vector<SpatialHistogram*>& hs, std::vector<double> qsizes): ds(d), hists(hs),
 		query_sizes(qsizes) {}
 
-    const virtual void run() {
+    const virtual void run(const std::string& fileName) {
 		// cria uma r*
 		rtree_root *rtree = NULL;
 		rtree = rtree_new_r0(30, 10);
@@ -71,6 +85,13 @@ public:
 			int n = 0;
 			int qryno = 0;
 
+			std::ofstream output;
+			output.open(fileName + ".Query-" + std::to_string(query_size) + ".geojson");
+			output << std::fixed;
+			output.precision(15);
+			output << "{\"type\": \"FeatureCollection\", \"features\": [\n";
+			bool first = true;
+
 			while (n < qtd) {
 				n++;
 
@@ -80,6 +101,9 @@ public:
 				queryc.MaxX = queryc.MinX + wsize;
 				queryc.MaxY = queryc.MinY + hsize;
 				Envelope query{queryc.MinX, queryc.MinY, queryc.MaxX, queryc.MaxY};
+
+				WriteQueryToFile(output, query, n, first);
+				first = false;
 
 				char wkt[512];
 				std::sprintf(wkt, "POLYGON((%lf %lf, %lf %lf, %lf %lf, %lf %lf, %lf %lf))",
@@ -100,7 +124,6 @@ public:
 				for(int i = 0; i < hs; i++) {
 					// histogram estimate cardinality
 					auto start = std::chrono::system_clock::now();
-
 					int rhq = hists[i]->estimateWQuery(query);
 
 					std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
@@ -125,6 +148,9 @@ public:
 				g_list_free(results);
 				qryno++;
 			}
+
+			output << "]}\n";
+			output.close();
 
 			for(int i = 0; i < hs; i++) {
 				double avg_time = sum_time[i] / qtd;

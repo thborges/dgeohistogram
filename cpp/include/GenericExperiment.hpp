@@ -9,6 +9,6 @@
 
 class GenericExperiment {
 public:
-    const virtual void run() = 0;
+    const virtual void run(const std::string& fileName) = 0;
 
 };
