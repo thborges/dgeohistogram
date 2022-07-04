@@ -16,19 +16,31 @@
 #include "Envelope.hpp"
 #include "SpatialGridHistogram.hpp"
 
+struct Cell {
+    int X;
+    int Y;
+};
+
+struct Pos {
+    double X;
+    double Y;
+};
+
 struct ABBucket {
     int ID;
     double Cardinality;
 
-    int MinCellX, MinCellY;
-    int MaxCellX, MaxCellY;
+    Cell MinCell;
+    Cell MaxCell;
 
-    bool contains(int minCellX, int minCellY, int maxCellX, int maxCellY) const
+    ABBucket() = default;
+
+    bool contains(Cell minCell, Cell maxCell) const
     {
-        return MinCellX == minCellX &&
-               MinCellY == minCellY &&
-               MaxCellX == maxCellX &&
-               MaxCellY == maxCellY;
+        return MinCell.X == minCell.X &&
+               MinCell.Y == minCell.Y &&
+               MaxCell.X == maxCell.X &&
+               MaxCell.Y == maxCell.Y;
     }
 };
 
@@ -50,7 +62,7 @@ public:
     int getNumBuckets() const { return buckets.size(); }
     double getSize() const override {
         size_t bytes = buckets.size() * sizeof(ABBucket);
-        return (bytes/(1000.0)); 
+        return (bytes/(1000.0));
     }
 
 private:
@@ -59,13 +71,11 @@ private:
     int rows;
     double cellWidth;
     double cellHeight;
-    double bottomLeftX;
-    double bottomLeftY;
+    Pos bottomLeft;
 
-    void getCell(double x, double y, int* cellX, int* cellY);
-    ABBucket getMBRBucket(const Envelope& mbr);
-    void getCellBottomLeft(int cellX, int cellY, double* x, double* y);
-    void getCellTopRight(int cellX, int cellY, double* x, double* y);
+    Cell getCell(double x, double y);
+    Pos getCellBottomLeft(Cell cell);
+    Pos getCellTopRight(Cell cell);
     Envelope getOuterRect(ABBucket);
     Envelope getInnerRect(ABBucket);
     double intersectionEstimation(const Envelope& wquery);

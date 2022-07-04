@@ -3,34 +3,12 @@
 #include <array>
 #include <algorithm>
 
-void SpatialHistogramAB::getCell(double x, double y, int* cellX, int* cellY)
+Cell SpatialHistogramAB::getCell(double x, double y)
 {
-    *cellX = std::floor((x - bottomLeftX) / cellWidth);
-    *cellY = std::floor((y - bottomLeftY) / cellHeight);
-}
-
-ABBucket SpatialHistogramAB::getMBRBucket(const Envelope& mbr)
-{
-    int minCellX, minCellY;
-    getCell(mbr.MinX, mbr.MinY, &minCellX, &minCellY);
-    int maxCellX, maxCellY;
-    getCell(mbr.MaxX, mbr.MaxY, &maxCellX, &maxCellY);
-
-    for (ABBucket& bucket : buckets) {
-        if (bucket.contains(minCellX, minCellY, maxCellX, maxCellY)) {
-            bucket.Cardinality++;
-            return bucket;
-        }
-    }
-
-    ABBucket newBucket;
-    newBucket.MinCellX = minCellX;
-    newBucket.MinCellY = minCellY;
-    newBucket.MaxCellX = maxCellX;
-    newBucket.MaxCellY = maxCellY;
-    newBucket.Cardinality = 0;
-
-    return newBucket;
+    Cell cell;
+    cell.X = std::floor((x - bottomLeft.X) / cellWidth);
+    cell.Y = std::floor((y - bottomLeft.Y) / cellHeight);
+    return cell;
 }
 
 SpatialHistogramAB::SpatialHistogramAB(Dataset& ds, int columns, int rows)
@@ -45,15 +23,30 @@ SpatialHistogramAB::SpatialHistogramAB(Dataset& ds, int columns, int rows)
     cellWidth = rangex / columns;
     cellHeight = rangey / rows;
 
-    bottomLeftX = metadata.mbr.MinX;
-    bottomLeftY = metadata.mbr.MinY;
+    bottomLeft.X = metadata.mbr.MinX;
+    bottomLeft.Y = metadata.mbr.MinY;
 
     for(const DatasetEntry& object : ds.geoms()) {
-        ABBucket bucket = getMBRBucket(object.mbr);
-        if (bucket.Cardinality == 0) {
-            bucket.ID = buckets.size();
-            bucket.Cardinality++;
-            buckets.push_back(bucket);
+        const Envelope& mbr = object.mbr;
+        bool found = false;
+
+        Cell minCell = getCell(mbr.MinX, mbr.MinY);
+        Cell maxCell = getCell(mbr.MaxX, mbr.MaxY);
+
+        for (ABBucket& bucket : buckets) {
+            if (bucket.contains(minCell, maxCell)) {
+                bucket.Cardinality++;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            ABBucket newBucket;
+            newBucket.MinCell = minCell;
+            newBucket.MaxCell = maxCell;
+            newBucket.Cardinality = 1;
+            newBucket.ID = buckets.size();
+            buckets.push_back(newBucket);
         }
     }
 }
@@ -63,40 +56,48 @@ SpatialHistogramAB::~SpatialHistogramAB()
     buckets.clear();
 }
 
-void SpatialHistogramAB::getCellBottomLeft(int cellX, int cellY, double* x, double* y)
+Pos SpatialHistogramAB::getCellBottomLeft(Cell cell)
 {
-    *x = bottomLeftX + cellX * cellWidth;
-    *y = bottomLeftY + cellY * cellHeight;
+    Pos pos;
+    pos.X = bottomLeft.X + cell.X * cellWidth;
+    pos.Y = bottomLeft.Y + cell.Y * cellHeight;
+    return pos;
 }
 
-void SpatialHistogramAB::getCellTopRight(int cellX, int cellY, double* x, double* y)
+Pos SpatialHistogramAB::getCellTopRight(Cell cell)
 {
-    *x = bottomLeftX + cellX * cellWidth + cellWidth;
-    *y = bottomLeftY + cellY * cellHeight + cellHeight;
+    Pos pos;
+    pos.X = bottomLeft.X + cell.X * cellWidth + cellWidth;
+    pos.Y = bottomLeft.Y + cell.Y * cellHeight + cellHeight;
+    return pos;
 }
 
 Envelope SpatialHistogramAB::getOuterRect(ABBucket bucket)
 {
+    Pos minPos = getCellBottomLeft(bucket.MinCell);
+    Pos maxPos = getCellTopRight(bucket.MaxCell);
+
     Envelope outer;
-    getCellBottomLeft(bucket.MinCellX, bucket.MinCellY, &outer.MinX, &outer.MinY);
-    getCellTopRight(bucket.MaxCellX, bucket.MaxCellY, &outer.MaxX, &outer.MaxY);
+    outer.MinX = minPos.X;
+    outer.MinY = minPos.Y;
+    outer.MaxX = maxPos.X;
+    outer.MaxY = maxPos.Y;
     return outer;
 }
 
 Envelope SpatialHistogramAB::getInnerRect(ABBucket bucket)
 {
     Envelope inner;
-    if ((bucket.MaxCellX - bucket.MinCellX <= 1) ||
-        (bucket.MaxCellY - bucket.MinCellY <= 1))
-    {
-        double minX, minY;
-        double maxX, maxY;
-        getCellBottomLeft(bucket.MinCellX, bucket.MinCellY, &minX, &minY);
-        getCellTopRight(bucket.MaxCellX, bucket.MaxCellY, &maxX, &maxY);
 
-        double middleX = minX + (abs(maxX-minX)/2.0);
-        double middleY = minY + (abs(maxY-minY)/2.0);
-        
+    Pos min = getCellBottomLeft(bucket.MinCell);
+    Pos max = getCellTopRight(bucket.MaxCell);
+
+    if ((bucket.MaxCell.X - bucket.MinCell.X <= 1) ||
+        (bucket.MaxCell.Y - bucket.MinCell.Y <= 1))
+    {
+        double middleX = min.X + (abs(max.X-min.X)/2.0);
+        double middleY = min.Y + (abs(max.Y-min.Y)/2.0);
+
         inner.MinX = middleX;
         inner.MaxX = middleX;
         inner.MinY = middleY;
@@ -104,8 +105,10 @@ Envelope SpatialHistogramAB::getInnerRect(ABBucket bucket)
     }
     else
     {
-        getCellTopRight(bucket.MinCellX, bucket.MinCellY, &inner.MinX, &inner.MinY);
-        getCellBottomLeft(bucket.MaxCellX, bucket.MaxCellY, &inner.MaxX, &inner.MaxY);
+        inner.MinX = min.X;
+        inner.MinY = min.Y;
+        inner.MaxX = max.X;
+        inner.MaxY = max.Y;
     }
     return inner;
 }
