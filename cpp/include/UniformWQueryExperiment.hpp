@@ -104,7 +104,7 @@ public:
 					int rhq = hists[i]->estimateWQuery(query);
 
 					std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
-					sum_time[i] += elapsed.count();
+					sum_time[i] += elapsed.count() * 1000.0; // miliseconds
 					//printf("%d %7s:\tr: %5d, e: %5d, %5d\n", n, hists[i]->name().c_str(), riq, rhq, rhq - riq);
 
 					int error = abs(rhq-riq);
