@@ -686,7 +686,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
             double fraction = int_length / (edge->mbr.MaxX - edge->mbr.MinX);
             result -= fraction * edge->cardin;
             //printf("result dentro2: %f \n", result); o codigo passa por aqui
-          /printf("result edge: %f cardin : %f fraction: %f \n", result,edge->cardin, fraction);
+          printf("result edge: %f cardin : %f fraction: %f \n", result,edge->cardin, fraction);
           }
         }
       }
