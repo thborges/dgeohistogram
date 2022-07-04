@@ -664,7 +664,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       double fraction = int_area / face_area;
      // printf("int_area %f, face_area %f, fraction %f, cardin %f \n", int_area, face_area, fraction, bucket->cardin);
       result += fraction * bucket->cardin;
-      printf("result face: %f cardin: %f fraction %f\n", result,bucket->cardin, fraction);
+      //printf("result face: %f cardin: %f fraction %f\n", result,bucket->cardin, fraction);
     }
     GList *edgeGlist;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
@@ -715,7 +715,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
       {
         //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
-       // printf("result vertex: %f cardin : %f \n", result,vertex->cardin);
+        printf("result vertex: %f cardin : %f \n", result,vertex->cardin);
       }
     }
    }
