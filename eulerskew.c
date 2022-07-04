@@ -643,6 +643,7 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
   if (!ENVELOPE_INTERSECTS(query2, eh->mbr))
     return 0;
   double result = 0;
+  int cont = 0;
   printf("result inicio: %f \n", result);
   Envelope query = EnvelopeIntersection2(query2, eh->mbr);
   //printf("query mbr: %f %f %f %f, eh mbr: %f %f %f %f \n", query.MaxX, query.MaxY, query.MinX, query.MinY, eh->mbr.MaxX,  eh->mbr.MaxY,  eh->mbr.MinX,  eh->mbr.MinY);
@@ -708,14 +709,19 @@ int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewList
     }
   //printf("result meio: %f \n", result);
   GList *vertexGlist;
+    cont =0;
     g_list_foreach(vertexGlist, listaEulerskew->VertexesList)
     {
+      
       eulerskew_vertex *vertex = (eulerskew_vertex *)vertexGlist->data;
       if (ENVELOPE_CONTAINSP(query, vertex->x, vertex->y))
       {
         //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
-        printf("result vertex: %f cardin : %f \n", result,vertex->cardin);
+        if(cont == 0){
+          printf("result vertex: %f cardin : %f \n", result,vertex->cardin);
+        }
+        cont++;
       }
     }
    }

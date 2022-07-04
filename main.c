@@ -278,7 +278,7 @@ int main(int argc, char* argv[]) {
 		//printf(" %.2f", (p+r)/2.0);
 		//printf(" %d:%d", rhq, riq);
 		//printf(" %d", error);
-
+    printf("error %i: sum_ei: %f, sum_ri: %f, sum_error: %f \n", error, sum_ei, sum_ri, sum_error);
 		if (isnan(p+r))
 			printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
 
