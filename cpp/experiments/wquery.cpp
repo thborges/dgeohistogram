@@ -62,9 +62,6 @@ int main(int argc, char *argv[]) {
 		gridSizes.push_back(200);
 		gridSizes.push_back(225);
 
-		// IHWAF histogram
-		//SpatialGridHistogramIHWAF histIHWAF(ds);
-		//printMessageAndGenGeoJson(histIHWAF, filename);
 		
 		// MinSkew histogram
 		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
@@ -73,31 +70,37 @@ int main(int argc, char *argv[]) {
 		//printMessageAndGenGeoJson(histMinSkew, filename);
 
 		for (auto size : gridSizes) {
-			// Mamoulis/Papadias histogram
+			// IHWAF histogram
 			auto start = std::chrono::system_clock::now();
-			SpatialGridHistogramMP histMP(ds, size, size);
+			SpatialGridHistogramIHWAF histIHWAF(ds);
 			std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - start;
-			std::cout << elapsed.count() << "s\t";
+			std::cout << elapsed.count() * 1000.0 << "\t";
+			printMessageAndGenGeoJson(histIHWAF, filename);
+			// Mamoulis/Papadias histogram
+			start = std::chrono::system_clock::now();
+			SpatialGridHistogramMP histMP(ds, size, size);
+			elapsed = std::chrono::system_clock::now() - start;
+			std::cout << elapsed.count() * 1000.0 << "\t";
 			printMessageAndGenGeoJson(histMP, filename);
 
 			// Euler histogram
 			start = std::chrono::system_clock::now();
 			SpatialGridHistogramEuler histEuler(ds, size, size);
 			elapsed = std::chrono::system_clock::now() - start;
-			std::cout << elapsed.count() << "s\t";
+			std::cout << elapsed.count() * 1000.0 << "\t";
 			printMessageAndGenGeoJson(histEuler, filename);
 
 			// AB histogram
 			start = std::chrono::system_clock::now();
 			SpatialHistogramAB histAB(ds, size, size);
 			elapsed = std::chrono::system_clock::now() - start;
-			std::cout << elapsed.count() << "s\t";
+			std::cout << elapsed.count() * 1000.0 << "\t";
 			printMessageAndGenGeoJson(histAB, filename);
 
 			// Histogram list to experiment with
 			std::vector<SpatialHistogram*> hists;
 			hists.push_back(&histMP);
-			//hists.push_back(&histIHWAF);
+			hists.push_back(&histIHWAF);
 			//hists.push_back(&histMinSkew);
 			hists.push_back(&histEuler);
 			hists.push_back(&histAB);
