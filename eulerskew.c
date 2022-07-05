@@ -666,6 +666,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
      // printf("int_area %f, face_area %f, fraction %f, cardin %f \n", int_area, face_area, fraction, bucket->cardin);
       result += fraction * bucket->cardin;
       //printf("result face: %f cardin: %f fraction %f\n", result,bucket->cardin, fraction);
+      printf("cardin : %2f ||",face->cardin);
     }
   }
     GList *edgeGlist;
@@ -689,6 +690,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
             result -= fraction * edge->cardin;
             //printf("result dentro2: %f \n", result); o codigo passa por aqui
          // printf("result edge: %f cardin : %f fraction: %f \n", result,edge->cardin, fraction);
+         printf("cardin : %2f ||",edge->cardin);
           }
         //}
       }
@@ -704,6 +706,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
             double fraction = int_length / (edge->mbr.MaxY - edge->mbr.MinY);
             result -= fraction * edge->cardin;
            //printf("result edge: %f cardin: %f fraction %f \n", result,edge->cardin, fraction);
+           printf("cardin : %2f ||",edge->cardin);
          // }
         }
       }
@@ -720,7 +723,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
          //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
         
-          printf("cardin : %2f ||",vertex->cardin);
+          //printf("cardin : %2f ||",vertex->cardin);
         }
        
       }
