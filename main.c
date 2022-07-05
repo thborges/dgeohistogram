@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
         else if (ht == HTHIBRID)
             rhq = eulerskew_search_hist(esh,query, eulerskew_buckets);
 
-		printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
+		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
 
 		int error = abs(rhq-riq);
 
@@ -278,7 +278,7 @@ int main(int argc, char* argv[]) {
 		//printf(" %.2f", (p+r)/2.0);
 		//printf(" %d:%d", rhq, riq);
 		//printf(" %d", error);
-    printf("error %i: sum_ei: %f, sum_ri: %f, sum_error: %f \n", error, sum_ei, sum_ri, sum_error);
+   // printf("error %i: sum_ei: %f, sum_ri: %f, sum_error: %f \n", error, sum_ei, sum_ri, sum_error);
 		if (isnan(p+r))
 			printf(": pv%d pf%d nf%d riq%d rhq%d\n", pv, pf, nf, riq, rhq);
 
