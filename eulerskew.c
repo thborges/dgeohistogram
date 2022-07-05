@@ -666,7 +666,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
      // printf("int_area %f, face_area %f, fraction %f, cardin %f \n", int_area, face_area, fraction, bucket->cardin);
       result += fraction * bucket->cardin;
       //printf("result face: %f cardin: %f fraction %f\n", result,bucket->cardin, fraction);
-      printf("cardin : %2f ||",face->cardin);
+      printf("cardin : %2f ||",bucket->cardin);
     }
   }
     GList *edgeGlist;
