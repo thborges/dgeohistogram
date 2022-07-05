@@ -241,7 +241,7 @@ int euler_search_hist(euler_histogram *eh, Envelope query2) {
                     double face_area = ENVELOPE_AREA(rs);
                     double fraction = int_area / face_area;
                     result += fraction * face->cardin;
-                    printf("result face: %f cardin : %f fraction %f\n", result,face->cardin, fraction);
+                    //printf("result face: %f cardin : %f fraction %f\n", result,face->cardin, fraction);
                 }
             }
 
