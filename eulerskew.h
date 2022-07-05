@@ -94,7 +94,7 @@ void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, in
 eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, GList *minskewhist);
 //eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck);
 
-int eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2, minskewLists *listaEulerskew);
+double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2, minskewLists *listaEulerskew);
 
 void eulerskew_print_hist(dataset *ds, minskewLists *eh);
 
