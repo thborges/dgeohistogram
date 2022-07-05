@@ -717,10 +717,10 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
       eulerskew_vertex *vertex = (eulerskew_vertex *)vertexGlist->data;
       if (ENVELOPE_CONTAINSP(query2, vertex->x, vertex->y))
       {
-        //printf("vertex cardin: %f \n", vertex->cardin);
+         //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
         
-          //printf("cardin : %2f ||", result,vertex->cardin);
+          printf("cardin : %2f ||", result,vertex->cardin);
         }
        
       }
