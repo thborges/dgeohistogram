@@ -667,6 +667,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
       result += fraction * bucket->cardin;
       //printf("result face: %f cardin: %f fraction %f\n", result,bucket->cardin, fraction);
     }
+  }
     GList *edgeGlist;
     g_list_foreach(edgeGlist, listaEulerskew->EdgesList)
     {
@@ -723,7 +724,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
         }
        
       }
-    }
+    
   //printf("result final: %f \n", result);
 return round(result);
 }
