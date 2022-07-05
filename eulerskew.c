@@ -720,7 +720,7 @@ double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2,  minskewL
          //printf("vertex cardin: %f \n", vertex->cardin);
         result += vertex->cardin;
         
-          printf("cardin : %2f ||", result,vertex->cardin);
+          printf("cardin : %2f ||",vertex->cardin);
         }
        
       }
