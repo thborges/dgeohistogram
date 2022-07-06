@@ -86,12 +86,12 @@ void eulerskew_alloc(dataset *ds, eulerskew_histogram *eh, int xqtd, int yqtd, d
 void eulerskew_hash_ds_objects(dataset *ds, eulerskew_histogram *eh, enum JoinPredicateCheck pcheck, minskewLists *ml);
 
 //void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck);
-void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, GList *minskewhist) ;
+void eulerskew_generate_hw(dataset *ds, eulerskew_histogram *eh, double x, double y, enum JoinPredicateCheck pcheck, minskewLists *minskewhist) ;
 
 //void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, int fsizey, enum JoinPredicateCheck pcheck);
-void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, int fsizey, enum JoinPredicateCheck pcheck, GList *minskewhist);
+void eulerskew_generate_fix(dataset *ds, eulerskew_histogram *eh, int fsizex, int fsizey, enum JoinPredicateCheck pcheck, minskewLists *minskewhist);
 
-eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, GList *minskewhist);
+eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck, minskewLists *minskewhist);
 //eulerskew_histogram *eulerskew_generate_hist_with_euler(dataset *ds, HistogramGenerateSpec spec, enum JoinPredicateCheck pcheck);
 
 double eulerskew_search_hist(eulerskew_histogram *eh, Envelope query2, minskewLists *listaEulerskew);
