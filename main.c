@@ -17,6 +17,7 @@
 #include "dataset_specs.h"
 
 char *dataset_name;
+int query_no;
 
 dataset *read_geos(char *shpfile);
 
@@ -179,27 +180,39 @@ int main(int argc, char* argv[]) {
 	rtree_window_stat stats;
 	double width = ds->metadata.hist.mbr.MaxX - ds->metadata.hist.mbr.MinX;
 	double height = ds->metadata.hist.mbr.MaxY - ds->metadata.hist.mbr.MinY;
+	
+	// janela calculada como percentual de cada lado
 	double wsize = width * query_size;
 	double hsize = height * query_size;
+	
+	/* // janela calculada como percentual da area total
+	double area = width * height;
+	double rect_area = area * query_size;
+	double rect_side = sqrt(rect_area);
+	double wsize = rect_side;
+	double hsize = rect_area / wsize;*/
 
 	// quantidade de consultas para cobrir o dataset, considerando
 	// uma distribuicao uniforme
-	int qtd = ceil((width / wsize) * (height/hsize));
-	int qtdqx = (width / wsize);
+	int qtd = ceil((width / wsize)) * ceil((height/hsize));
+	int qtdqx = ceil(width / wsize);
 	//int qtd = 500;
 
 	printf("MBR: %20.19e %20.19e %20.19e %20.19e\n", hist->mbr.MinX, hist->mbr.MinY, hist->mbr.MaxX, hist->mbr.MaxY);
 	printf("Query count: %d, w %f, h %f, w_size %f, h_size %f\n", qtd, width, height, wsize, hsize);
-	printf("%dx%d\n",xqtd, yqtd );
+	printf("%dx%d\n",xqtd, yqtd);
 	#define PRINT_QUERY_GEOJSON
 	#ifdef PRINT_QUERY_GEOJSON
 	FILE *fqueries = fopen("queries.geojson", "w");
 	print_geojson_header_file(fqueries);
 	#endif
 
+	int largest_error_qno = -1;
+	int largest_error_value = 0;
 	int qryno = 0;
 	while (n  < qtd) {
 		n++;
+		query_no = n;
 
 		Envelope query;
 		// query.MinX = ds->metadata.hist.mbr.MinX;
@@ -214,7 +227,9 @@ int main(int argc, char* argv[]) {
 		query.MaxY = query.MinY + hsize;
 
 		#ifdef PRINT_QUERY_GEOJSON
-		print_geojson_mbr_file(query, "0", fqueries);
+		char query_no[10];
+		sprintf(query_no, "%d", n);
+		print_geojson_mbr_file(query, query_no, fqueries);
 		#endif
 
 	    char wkt[512];
@@ -247,6 +262,11 @@ int main(int argc, char* argv[]) {
 		//printf("Query %d: r: %5d, e: %5d, %5d\n", n, riq, rhq, rhq - riq);
 
 		int error = abs(rhq-riq);
+
+		if (error > largest_error_value) {
+			largest_error_qno = n;
+			largest_error_value = error;
+		}
 
 		// average relative error
 		sum_ei += error;
@@ -302,6 +322,8 @@ int main(int argc, char* argv[]) {
 		sum_error,
 		argv[1],
 		ds->metadata.name);
+
+	printf("Largest error query no %d: %d\n", largest_error_qno, largest_error_value);
 
 	//print result to csv file data.csv in dgeohistogram
 	char filename[100] = "data.csv";
