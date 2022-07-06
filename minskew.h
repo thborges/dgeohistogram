@@ -10,7 +10,6 @@ typedef struct {
 	char split_axis;
 	short split_point;
 	double skew_reduction;
-
 	Envelope mbr;
 	double cardin;
 } minskew_bucket;
