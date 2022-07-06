@@ -61,5 +61,8 @@ int euler_join_cardinality(dataset *dr,
         rtree_root* rtree_r,
         rtree_root* rtree_s,
         double* stddev);
+
+int real_cardin_euler_histogram_cell(rtree_root* rtree_r, rtree_root* rtree_s, Envelope inters);
+
 #endif
 
