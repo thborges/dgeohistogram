@@ -34,18 +34,21 @@ int main(int argc, char *argv[]) {
 		SpatialGridHistogramIHWAF histIHWAF(ds);
 		printMessageAndGenGeoJson(histIHWAF, filename);
 
+		int cols = histIHWAF.columns();
+		int rows = histIHWAF.rows();
+
 		// Mamoulis/Papadias histogram
-		SpatialGridHistogramMP histMP(ds, histIHWAF.columns(), histIHWAF.rows());
+		SpatialGridHistogramMP histMP(ds, cols, rows);
 		printMessageAndGenGeoJson(histMP, filename);
 
 		// MinSkew histogram
-		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * histMP.columns() * histMP.rows());
+		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * cols * rows);
 		//SpatialHistogramMinskew histMinSkew(histMP, 1000);
-		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * histIHWAF.columns() * histIHWAF.rows());
+		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.8 * cols * rows);
 		printMessageAndGenGeoJson(histMinSkew, filename);
 
 		// Euler histogram
-		SpatialGridHistogramEuler histEuler(ds, histIHWAF.columns(), histIHWAF.rows());
+		SpatialGridHistogramEuler histEuler(ds, cols, rows);
 		printMessageAndGenGeoJson(histEuler, filename);
 
 		// Histogram list to experiment with
