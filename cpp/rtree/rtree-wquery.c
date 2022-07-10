@@ -79,4 +79,26 @@ GList *rtree_window_csearch(const rtree_root *root, const GEOSGeometryH window, 
 	return results;
 }
 
+void rtree_window_search_mbr_recursive(rtree_node *node, const int m, const EnvelopeC *query, GList **results) {
+	if (node->type == DIRECTORY) {
+		for(int i = 0; i < node->used; i++) {
+			rtree_node *dir = node->dirs[i];
+			if (ENVELOPE_INTERSECTS(dir->mbr, *query)) {
+				rtree_window_search_mbr_recursive(dir, m, query, results);
+			}
+		}
+	}
+	else {
+		for(int i=0; i<node->used; i++) {
+			if (ENVELOPE_INTERSECTS(node->leaves[i].mbr, *query))
+				*results = g_list_prepend(*results, &node->leaves[i]);
+		}
+	}
+}
+
+GList *rtree_window_search_mbr(const rtree_root *root, const EnvelopeC query) {
+	GList *results = NULL;
+	rtree_window_search_mbr_recursive(root->root, root->m, &query, &results);
+	return results;
+}
 

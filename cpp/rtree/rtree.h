@@ -132,6 +132,9 @@ int 		rtree_height			(const rtree_root *r);
 /*Find geometries on rtree r, wich intercepts Envelope window.*/
 GList		*rtree_window_search	(const rtree_root *r, const GEOSGeometryH window, const EnvelopeC env, rtree_window_stat *stats);
 
+/*Find leaves on rtree r, whose mbr intercepts Envelope query.*/
+GList		*rtree_window_search_mbr(const rtree_root *root, const EnvelopeC query);
+
 /*Find candidate nodes on rtree r, wich intercepts Envelope window.*/
 GList		*rtree_window_csearch	(const rtree_root *r, const GEOSGeometryH window, const EnvelopeC env, rtree_window_stat *stats);
 
