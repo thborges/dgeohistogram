@@ -14,6 +14,7 @@
 #include "Dataset.hpp"
 #include "Envelope.hpp"
 #include "SpatialGridHistogram.hpp"
+#include "SimpleEnvelopeRTree.hpp"
 
 struct MinskewBucket {
 	int id;
@@ -59,7 +60,7 @@ class SpatialHistogramMinskew: public SpatialHistogram {
 	private:
         int bucketsNeeded;
 		SpatialGridHistogram& basehist;
-        std::list<MinskewBucket> buckets;
+        SimpleEnvelopeRTree<MinskewBucket, 30> buckets;
 		void generateBuckets();
         void minskewCalculateSkewReduction(MinskewBucket &bucket);
 		void calculateBucketWithMbr(MinskewBucket &bucket);

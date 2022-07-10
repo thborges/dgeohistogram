@@ -15,25 +15,26 @@ SpatialHistogramMinskew::SpatialHistogramMinskew(SpatialGridHistogram &hist,
     this->bucketsNeeded = bucketsNeeded;
 	this->hmbr = basehist.mbr();
 	generateBuckets();
+	buckets.buildRTree();
 }
 
 double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 	double result = 0.0;
 	// A simple loop through buckets. Can be improved if a RTree is used to
 	// store them; or a sweep line algorithm
-	for(MinskewBucket& b : buckets) {
-		if (wquery.intersects(b.usedarea)) {
-			#define IMPROVED_IHWAF
-			//#define DEFAULT_MP
+	for(const MinskewBucket* b : buckets.getIntersections(wquery)) {
+		if (wquery.intersects(b->usedarea)) {
+			//#define IMPROVED_IHWAF
+			#define DEFAULT_MP
 			//#define AREA_BASED
 			
 			#ifdef AREA_BASED
 			// TODO: This is a very simple uniformity assumption.
 			// One can improve this by using the avg_x and avg_y
 			// form the original histogram used to create the buckets
-			Envelope inters = wquery.intersection(b.mbr);
-			double fraction = inters.area() / b.mbr.area();
-			result += fraction * b.cardin;
+			Envelope inters = wquery.intersection(b->mbr);
+			double fraction = inters.area() / b->mbr.area();
+			result += fraction * b->cardin;
 			#endif
 
 			#ifdef DEFAULT_MP
@@ -43,10 +44,10 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 				Springer, 2001. Chap. Selectivity Estimation of Complex Spatial Queries, pp. 155–174.
 				See also Equation 2.2 in de Oliveira, T.B. thesis */
 			// uniformity assumption! objects aren't uniform located at the cell
-			Envelope inters = wquery.intersection(b.mbr);
-			double xprob = std::min(1.0, (b.avg_x + inters.width()) / b.mbr.width());
-			double yprob = std::min(1.0, (b.avg_y + inters.length()) / b.mbr.length());
-			result += b.cardin * xprob * yprob;
+			Envelope inters = wquery.intersection(b->mbr);
+			double xprob = std::min(1.0, (b->avg_x + inters.width()) / b->mbr.width());
+			double yprob = std::min(1.0, (b->avg_y + inters.length()) / b->mbr.length());
+			result += b->cardin * xprob * yprob;
 			#endif
 
 			#ifdef IMPROVED_IHWAF
@@ -54,24 +55,24 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
  			 * in Distributed Systems. 152 p. Tese (Doutorado) — Instituto de Informática, 
 			 * Universidade Federal de Goiás, Goiânia, GO, Brasil, 2017.
 			 */
-			double avg_x = b.avg_x;
-			double avg_y = b.avg_y;
+			double avg_x = b->avg_x;
+			double avg_y = b->avg_y;
 
 			// observing that objects generally doesn't overlap in both axis,
 			// (e.g. political land limits)
 			// fix the probability of intersection in one of them
-			double ux = b.usedarea.width();
-			double uy = b.usedarea.length();
+			double ux = b->usedarea.width();
+			double uy = b->usedarea.length();
 			if (avg_x > avg_y)
-				avg_x = std::min(avg_x, avg_x/(avg_y * b.objcount / uy));
+				avg_x = std::min(avg_x, avg_x/(avg_y * b->objcount / uy));
 			else
-				avg_y = std::min(avg_y, avg_y/(avg_x * b.objcount / ux));
+				avg_y = std::min(avg_y, avg_y/(avg_x * b->objcount / ux));
 
 			// uniformity assumption! objects aren't uniform located at the cell
-			Envelope inters = wquery.intersection(b.usedarea);
-			double xprob = std::min(1.0, (avg_x + inters.width()) / b.usedarea.width());
-			double yprob = std::min(1.0, (avg_y + inters.length()) / b.usedarea.length());
-			result += b.cardin * xprob * yprob;
+			Envelope inters = wquery.intersection(b->usedarea);
+			double xprob = std::min(1.0, (avg_x + inters.width()) / b->usedarea.width());
+			double yprob = std::min(1.0, (avg_y + inters.length()) / b->usedarea.length());
+			result += b->cardin * xprob * yprob;
 			#endif
 		}
 	}
