@@ -94,19 +94,25 @@ void SpatialGridHistogram::printGeoJson(const std::string& filename) {
             e.MinY = ytics[y];
             e.MaxY = ytics[y+1];
 
-            output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[";
-            output << "[" << e.MinX << "," << e.MinY << "],";
-            output << "[" << e.MaxX << "," << e.MinY << "],";
-            output << "[" << e.MaxX << "," << e.MaxY << "],";
-            output << "[" << e.MinX << "," << e.MaxY << "],";
-            output << "[" << e.MinX << "," << e.MinY << "]";
-            output << "]]}, \"properties\": {";
+            if (!printGeoJsonPolygon(output, x, y)) {
+                output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[";
+                output << "[" << e.MinX << "," << e.MinY << "],";
+                output << "[" << e.MaxX << "," << e.MinY << "],";
+                output << "[" << e.MaxX << "," << e.MaxY << "],";
+                output << "[" << e.MinX << "," << e.MaxY << "],";
+                output << "[" << e.MinX << "," << e.MinY << "]";
+                output << "]]}";
+            }
+            output << ", \"properties\": {";
             output << "\"name\": \"" << x << "." << y << "\",";
+
+            printGeoJsonOtherFields(output, x, y);
+            
             auto *cell = getHistogramCell(x, y);
             output << "\"card\": " << cell->cardin << ",";
             output << "\"avg_x\": " << cell->avg_x << ",";
             output << "\"avg_y\": " << cell->avg_y;
-            
+        
             if (x == xqtd-1 && y == yqtd-1)
                 output << "}}\n";
             else

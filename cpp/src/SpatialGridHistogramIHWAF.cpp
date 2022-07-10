@@ -164,3 +164,20 @@ double SpatialGridHistogramIHWAF::estimateWQuery(const Envelope& query) {
     return result;
 }
 
+void SpatialGridHistogramIHWAF::printGeoJsonOtherFields(std::ostream& output, int x, int y) {
+    auto *cell = getHistogramCell(x, y);
+    output << "\"objcount\": " << cell->objcount << ",";
+}
+
+bool SpatialGridHistogramIHWAF::printGeoJsonPolygon(std::ostream& output, int x, int y) {     
+    auto *cell = getHistogramCell(x, y);
+    auto e = cell->usedarea;    
+    output << "{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[";
+    output << "[" << e.MinX << "," << e.MinY << "],";
+    output << "[" << e.MaxX << "," << e.MinY << "],";
+    output << "[" << e.MaxX << "," << e.MaxY << "],";
+    output << "[" << e.MinX << "," << e.MaxY << "],";
+    output << "[" << e.MinX << "," << e.MinY << "]";
+    output << "]]}";
+    return true;
+}

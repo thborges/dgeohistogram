@@ -41,4 +41,6 @@ protected:
         
         virtual void histogramAlloc(Dataset& ds, int xqtd, int yqtd);
         virtual void allocCells(int size) = 0;
+        virtual bool printGeoJsonPolygon(std::ostream& output, int x, int y) { return false; };
+        virtual void printGeoJsonOtherFields(std::ostream& output, int x, int y) {};
 };

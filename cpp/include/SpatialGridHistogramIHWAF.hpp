@@ -31,6 +31,8 @@ protected:
 	SpatialHistogramCellImproved* hcells;
 	SpatialHistogramCellImproved* getHistogramCell(int x, int y) override;
 	virtual void allocCells(int size) override;
+	virtual void printGeoJsonOtherFields(std::ostream& output, int x, int y) override;
+	virtual bool printGeoJsonPolygon(std::ostream& output, int x, int y) override;
 
 private:
 	void fillHistogramProportionalOverlap(Dataset& ds);
