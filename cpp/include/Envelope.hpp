@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <geos/geom/Geometry.h>
+#include <ogrext.h>
 #include <numeric>
 
 struct Envelope { 
@@ -56,6 +58,10 @@ struct Envelope {
 		return !isEmpty() && x >= MinX && x <= MaxX && y >= MinY && y <= MaxY;
 	}
 
+	bool contains(const Envelope& i) const {
+		return i.MinX >= MinX && i.MaxX <= MaxX && i.MinY >= MinY && i.MaxY <= MaxY;
+	}
+
 	Envelope intersection(const Envelope& r) const {
 		if (intersects(r)) {
 			return Envelope{
@@ -92,4 +98,34 @@ struct Envelope {
 		else
 			return MaxY - MinY;
 	}
+
+	GEOSGeometry *toGEOSGeom() const {
+		char wkt[512];
+		sprintf(wkt, "POLYGON((%lf %lf, %lf %lf, %lf %lf, %lf %lf, %lf %lf))",
+			this->MinX, this->MinY,
+			this->MaxX, this->MinY,
+			this->MaxX, this->MaxY,
+			this->MinX, this->MaxY,
+			this->MinX, this->MinY);
+		GEOSGeometry *geoquery = GEOSGeomFromWKT(wkt);
+		return geoquery;
+	}
+
+	operator EnvelopeC() const {
+		EnvelopeC result;
+		result.MinX = this->MinX;
+		result.MinY = this->MinY;
+		result.MaxX = this->MaxX;
+		result.MaxY = this->MaxY;
+		return result;
+	}
+
+	Envelope& operator=(const geos::geom::Envelope* e) {
+		MinX = e->getMinX();
+		MinY = e->getMinY();
+		MaxX = e->getMaxX();
+		MaxY = e->getMaxY();
+		return (*this);
+	}
+
 };
