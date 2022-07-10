@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.0)
 cmake_policy(SET CMP0054 NEW)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+add_compile_definitions(USE_UNSTABLE_GEOS_CPP_API)
+
 project(dgeohistogram)
 
 find_library(GEOS_C NAMES geos_c 

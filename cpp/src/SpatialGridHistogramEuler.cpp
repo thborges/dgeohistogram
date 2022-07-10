@@ -7,7 +7,6 @@
  *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
  */
 
-#define USE_UNSTABLE_GEOS_CPP_API
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Envelope.h>
 #include "../include/SpatialGridHistogramEuler.hpp"
@@ -100,49 +99,48 @@ void SpatialGridHistogramEuler::fillHistogram(Dataset& ds) {
                 if (clipped_geo != NULL){
 					Envelope clipped_mbr;
                     const geos::geom::Envelope *ev = ((const geos::geom::Geometry*)clipped_geo)->getEnvelopeInternal();
-                    clipped_mbr.MinX = ev->getMinX();
-                    clipped_mbr.MinY = ev->getMinY();
-                    clipped_mbr.MaxX = ev->getMaxX();
-                    clipped_mbr.MaxY = ev->getMaxY();
+                    if (!ev->isNull()) {
+                        clipped_mbr = ev;
 
-                    // face
-                    if (x < xqtd && y < yqtd && facembr.intersects(clipped_mbr)) {
-                        auto *face = getHistogramCell(x, y);
-                        face->cardin += 1.0;
-                        face->avg_x += (clipped_mbr.width() - face->avg_x) / face->cardin;
-                        face->avg_y += (clipped_mbr.length() - face->avg_y) / face->cardin;
-                        face->usedarea.merge(clipped_mbr);
+                        // face
+                        if (x < xqtd && y < yqtd && facembr.intersects(clipped_mbr)) {
+                            auto *face = getHistogramCell(x, y);
+                            face->cardin += 1.0;
+                            face->avg_x += (clipped_mbr.width() - face->avg_x) / face->cardin;
+                            face->avg_y += (clipped_mbr.length() - face->avg_y) / face->cardin;
+                            face->usedarea.merge(clipped_mbr);
+                        }
+
+                        // vertex
+                        int v = x * (yqtd+1) + y;
+                        if (clipped_mbr.contains(vertexes[v].x, vertexes[v].y))
+                            vertexes[v].cardin += 1.0;
+                        
+                        auto compute_edge = [&](auto& edge) {
+                            if (edge.mbr.intersects(clipped_mbr)) {
+                                edge.cardin += 1.0;
+                                const Envelope& inters = edge.mbr.intersection(clipped_mbr);
+                                if (edge.isVertical())
+                                    edge.avg_length += (inters.length() - edge.avg_length) / edge.cardin;
+                                else
+                                    edge.avg_length += (inters.width() - edge.avg_length) / edge.cardin;
+                            }
+                        };
+
+                        // horizontal edge
+                        if (x < xqtd) {
+                            int e = GET_HORZ_EDGE(x, y);
+                            compute_edge(edges[e]);
+                        }
+
+                        // vertical edge
+                        if (y < yqtd) {
+                            int e = GET_VERT_EDGE(x, y);
+                            compute_edge(edges[e]);
+                        }
                     }
-
-                    // vertex
-                    int v = x * (yqtd+1) + y;
-                    if (clipped_mbr.contains(vertexes[v].x, vertexes[v].y))
-                        vertexes[v].cardin += 1.0;
-                    
-                    auto compute_edge = [&](auto& edge) {
-						if (edge.mbr.intersects(clipped_mbr)) {
-							edge.cardin += 1.0;
-                            const Envelope& inters = edge.mbr.intersection(clipped_mbr);
-                            if (edge.isVertical())
-                                edge.avg_length += (inters.length() - edge.avg_length) / edge.cardin;
-                            else
-                                edge.avg_length += (inters.width() - edge.avg_length) / edge.cardin;
-						}
-                    };
-
-                    // horizontal edge
-                    if (x < xqtd) {
-                        int e = GET_HORZ_EDGE(x, y);
-                        compute_edge(edges[e]);
-                    }
-
-                    // vertical edge
-                    if (y < yqtd) {
-                        int e = GET_VERT_EDGE(x, y);
-                        compute_edge(edges[e]);
-                    }
+                    GEOSGeom_destroy(clipped_geo);
                 }
-                GEOSGeom_destroy(clipped_geo);
             }
         }
     }
