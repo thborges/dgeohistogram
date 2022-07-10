@@ -8,6 +8,8 @@
  *      Author: Thiago Borges de Oliveira <thborges@gmail.com>
  */
 
+#include <geos/geom/Geometry.h>
+#include <geos/geom/Envelope.h>
 #include "../include/SpatialGridHistogramIHWAF.hpp"
 
 void SpatialGridHistogramIHWAF::allocCells(int size) {
@@ -56,12 +58,22 @@ SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
 
 void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
     
-    for(DatasetEntry de : ds.geoms()) {
-        double objarea = de.mbr.area();
-        
+    for(const DatasetEntry &de : ds.geoms()) {
+       
         int xini, xfim, yini, yfim;
-        getIntersectionIdxs(de.mbr, &xini, &xfim, &yini, &yfim);	
+        getIntersectionIdxs(de.mbr, &xini, &xfim, &yini, &yfim);
+        int n = (xfim-xini+1)*(yfim-yini+1);
+        
+        struct {
+            SpatialHistogramCellImproved *cell;
+            Envelope cell_mbr;
+            GEOSGeometry *clipped_geo;
+            Envelope clipped_mbr;
+        } intersection_cells[n];
+        double obj_mbr_clipped_area = 0;
 
+        // identify proportional area
+        int i = 0;
         for(int x = xini; x <= xfim; x++) {
             Envelope rs;
             rs.MinX = xtics[x];
@@ -70,40 +82,61 @@ void SpatialGridHistogramIHWAF::fillHistogramProportionalOverlap(Dataset& ds) {
             for(int y = yini; y <= yfim; y++) {
                 rs.MinY = ytics[y];
                 rs.MaxY = ytics[y+1];
+                
+                GEOSGeometry *clipped_geo = GEOSClipByRect(de.geo, rs.MinX, rs.MinY, 
+                    rs.MaxX, rs.MaxY);
 
-                Envelope inters = de.mbr.intersection(rs);
-                double intarea = inters.area();
-                double fraction;
-                if (intarea <= 0.0) { // parallel to one axis
-                    bool parallel_y = (de.mbr.MaxX - de.mbr.MinX < 1e-30);
-                    bool parallel_x = (de.mbr.MaxY - de.mbr.MinY < 1e-30);
-                    if (parallel_x && parallel_y) // point obj
-                        fraction = 1;
-                    else if (parallel_x) {
-                        // the part of de.mbr inside rs / the length of rs in X
-                        double length_inside_cell = std::min(rs.MaxX, de.mbr.MaxX) - std::max(rs.MinX, de.mbr.MinX);
-                        fraction = length_inside_cell / (de.mbr.MaxX - de.mbr.MinX);
+                intersection_cells[i].clipped_geo = clipped_geo;
+                if (clipped_geo != NULL) {
+                    const geos::geom::Envelope *ev = ((const geos::geom::Geometry*)clipped_geo)->getEnvelopeInternal();
+                    if (ev->isNull()) {
+                        GEOSGeom_destroy(clipped_geo);
+                        intersection_cells[i].clipped_geo = NULL;
                     } else {
-                        double length_inside_cell = std::min(rs.MaxY, de.mbr.MaxY) - std::max(rs.MinY, de.mbr.MinY);
-                        fraction = length_inside_cell / (de.mbr.MaxY - de.mbr.MinY);
+                        intersection_cells[i].clipped_mbr = ev;
+                        intersection_cells[i].cell = getHistogramCell(x, y);
+                        intersection_cells[i].cell_mbr = rs;
+
+                        obj_mbr_clipped_area += intersection_cells[i].clipped_mbr.area();
                     }
                 }
-                else {
-                    fraction = intarea / objarea;
-                }
-
-                SpatialHistogramCellImproved *cell = getHistogramCell(x, y);
-                cell->cardin += fraction;
-                
-                // used area in the cell
-                cell->usedarea.merge(inters);
-
-                cell->objcount += 1.0;
-
-                // average length, online average calculation
-                cell->avg_x += (inters.width() - cell->avg_x) / cell->objcount;
-                cell->avg_y += (inters.length() - cell->avg_y) / cell->objcount;
+                i++;
             }
+        }
+
+        for(int i = 0; i < n; i++) {
+            if (!intersection_cells[i].clipped_geo)
+                continue;
+
+            double fraction;
+            double intarea = intersection_cells[i].clipped_mbr.area();
+            if (intarea <= 0.0) {
+                // parallel to one axis
+                bool parallel_y = (de.mbr.MaxX - de.mbr.MinX < 1e-30);
+                bool parallel_x = (de.mbr.MaxY - de.mbr.MinY < 1e-30);
+                Envelope clip = intersection_cells[i].clipped_mbr;
+                if (parallel_x && parallel_y) // point obj
+                    fraction = 1;
+                else if (parallel_x) {
+                    fraction = clip.width() / de.mbr.width();
+                } else {
+                    fraction = clip.length() / de.mbr.length();
+                }
+            }
+            else {
+                fraction = intarea / obj_mbr_clipped_area;
+            }
+
+            SpatialHistogramCellImproved *cell = intersection_cells[i].cell;
+            cell->cardin += fraction;
+            cell->usedarea.merge(intersection_cells[i].clipped_mbr);
+            cell->objcount += 1.0;
+
+            // average length, online average calculation
+            cell->avg_x += (intersection_cells[i].clipped_mbr.width() - cell->avg_x) / cell->objcount;
+            cell->avg_y += (intersection_cells[i].clipped_mbr.length() - cell->avg_y) / cell->objcount;
+
+            GEOSGeom_destroy(intersection_cells[i].clipped_geo);
         }
     }
 }
