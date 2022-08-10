@@ -14,13 +14,13 @@
 #include "rtree.h"
 #include "rtree-star.h"
 #include "rtree-lazy.h"
+#include "externdebugqry.h"
 
 // global, to be used to debug precision errors
-//#define DEBUG_QUERYNO
 #ifdef DEBUG_QUERYNO
 int global_qryno;
 double global_query_size;
-int global_debug_qryno = 74;
+int global_debug_qryno = 71;
 double global_debug_qrysize = 0.1;
 rtree_root *global_search_rtree;
 #endif
