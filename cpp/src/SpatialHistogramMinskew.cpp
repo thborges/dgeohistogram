@@ -24,8 +24,8 @@ double SpatialHistogramMinskew::estimateWQuery(const Envelope& wquery) {
 	// store them; or a sweep line algorithm
 	for(const MinskewBucket* b : buckets.getIntersections(wquery)) {
 		if (wquery.intersects(b->usedarea)) {
-			//#define IMPROVED_IHWAF
-			#define DEFAULT_MP
+			#define IMPROVED_IHWAF
+			//#define DEFAULT_MP
 			//#define AREA_BASED
 			
 			#ifdef AREA_BASED
@@ -112,6 +112,12 @@ VarianceResult SpatialHistogramMinskew::calculateSkewRowCol(int xini, int xfim,
 			if (celli) {
 				r.objcount += celli->objcount;
 				r.usedarea.merge(celli->usedarea);
+			} else {
+				// if not using improved cell, use the mbr as usedarea.
+				// e.g. when building minskew from MP histogram
+				Envelope e(basehist.getColumnX(i), basehist.getRowY(j),
+					basehist.getColumnX(i+1), basehist.getRowY(j+1));
+				r.usedarea.merge(e);
 			}
 		}
 	}

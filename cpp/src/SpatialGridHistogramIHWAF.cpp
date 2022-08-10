@@ -26,6 +26,11 @@ SpatialHistogramCellImproved* SpatialGridHistogramIHWAF::getHistogramCell(int x,
     return &hcells[x * yqtd + y];
 }
 
+SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds, int cols, int rows) {
+	histogramAlloc(ds, cols, rows);
+    fillHistogramProportionalOverlap(ds);
+}
+
 SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
 
     // IHWAF uses average length of objets to decide the
@@ -52,7 +57,7 @@ SpatialGridHistogramIHWAF::SpatialGridHistogramIHWAF(Dataset& ds) {
 		qtd_y = ceil(rangey / (psizey * adjust));
 	}
 
-    histogramAlloc(ds, qtd_x, qtd_y);
+	histogramAlloc(ds, qtd_x, qtd_y);
     fillHistogramProportionalOverlap(ds);
 }
 

@@ -22,34 +22,44 @@ extern "C" void geos_messages(const char *fmt, ...);
 int main(int argc, char *argv[]) {
 	initGEOS(geos_messages, geos_messages);
 
-	if (argc <= 1) {
-		std::cout << argv[0] << " filename.[shp,geojson]\n";
+	if (argc <= 1 || argc == 3) {
+		std::cout << argv[0] << " filename.[shp,geojson] [cols rows]\n";
 		return 1;
 	}
 	std::string filename(argv[1]);
+	int cols, rows;
+	bool input_cols_rows = argc > 2;
+	if (input_cols_rows) {
+		cols = atoi(argv[2]);
+		rows = atoi(argv[3]);
+	}
 
 	try {
 		Dataset ds(filename);
 		std::cout << "Loaded " << filename << ". Objects: " << ds.size() << std::endl;
 
 		// IHWAF histogram
-		SpatialGridHistogramIHWAF histIHWAF(ds);
-		printMessageAndGenGeoJson(histIHWAF, filename);
+		SpatialGridHistogramIHWAF *histIHWAF;
+		if (input_cols_rows)
+			histIHWAF = new SpatialGridHistogramIHWAF(ds, cols, rows);
+		else
+			histIHWAF = new SpatialGridHistogramIHWAF(ds);
+		printMessageAndGenGeoJson(*histIHWAF, filename);
 
-		int cols = histIHWAF.columns();
-		int rows = histIHWAF.rows();
+		int cols = histIHWAF->columns();
+		int rows = histIHWAF->rows();
 
 		// Mamoulis/Papadias histogram
 		SpatialGridHistogramMP histMP(ds, cols, rows);
 		printMessageAndGenGeoJson(histMP, filename);
 
 		// MinSkew histogram
-		//SpatialHistogramMinskew histMinSkew(histMP, 0.1 * cols * rows);
-		SpatialHistogramMinskew histMinSkew(histIHWAF, 0.3 * (cols * rows));
+		SpatialHistogramMinskew histMinSkew(histMP, 0.5 * cols * rows);
+		//SpatialHistogramMinskew histMinSkew(*histIHWAF, 0.3 * (cols * rows));
 		printMessageAndGenGeoJson(histMinSkew, filename);
 
 		// Eulerskew histogram
-		SpatialHistogramEulerskew histEulerskew(histIHWAF, ds, 0.3 * (cols * rows));
+		SpatialHistogramEulerskew histEulerskew(*histIHWAF, ds, 0.5 * (cols * rows));
 		printMessageAndGenGeoJson(histEulerskew, filename);
 
 		// Euler histogram
@@ -59,7 +69,7 @@ int main(int argc, char *argv[]) {
 		// Histogram list to experiment with
 		std::vector<SpatialHistogram*> hists;
 		hists.push_back(&histMP);
-		hists.push_back(&histIHWAF);
+		hists.push_back(histIHWAF);
 		hists.push_back(&histMinSkew);
 		hists.push_back(&histEulerskew);
 		hists.push_back(&histEuler);
@@ -76,6 +86,8 @@ int main(int argc, char *argv[]) {
 
 		UniformWQueryExperiment exp(ds, hists, qsizes);
 		exp.run();
+
+		delete histIHWAF;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what();

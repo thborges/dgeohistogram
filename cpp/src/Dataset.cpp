@@ -53,6 +53,11 @@ Dataset::Dataset(const std::string filename) {
 		}
 	}
 
+	// for point datasets, this epsilon fix access to cells
+	// outside the bounds of histograms
+	meta.mbr.MaxX += 1e-10;
+	meta.mbr.MaxY += 1e-10;
+
 	std::cout << "Dataset object average: x: " << meta.x_average << ", y: " << meta.y_average << std::endl;
 	delete[] wkb;
 }
