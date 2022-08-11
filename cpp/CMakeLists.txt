@@ -33,7 +33,7 @@ find_library(GDAL NAMES gdal
 IF(GDAL)
     MESSAGE ("GDAL lib: ${GDAL}")
     get_filename_component(GDAL_DIR ${GDAL} DIRECTORY)
-    include_directories(${GDAL_DIR}/../include)
+    include_directories(${GDAL_DIR}/../include /usr/include/gdal)
     link_directories(${GDAL_DIR})
     MESSAGE ("GDAL include: ${GDAL_DIR}/../include")
     SET(GDAL_FOUND TRUE)

@@ -146,4 +146,6 @@ void init_geos() {
 
 GEOSContextHandle_t init_geos_context() {
 	return initGEOS_r(geos_messages, geos_messages);
+	signal(SIGSEGV, handle_sigsegv);
+	signal(SIGABRT, handle_sigsegv);
 }

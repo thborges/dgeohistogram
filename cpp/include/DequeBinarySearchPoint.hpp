@@ -9,6 +9,7 @@
 
 #include "rtree-lazy.h"
 #include <deque>
+#include <algorithm>
 
 template<
     class T,

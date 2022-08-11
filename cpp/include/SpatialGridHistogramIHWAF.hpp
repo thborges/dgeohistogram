@@ -19,6 +19,7 @@
 class SpatialGridHistogramIHWAF: public SpatialGridHistogram {
 public:
 	SpatialGridHistogramIHWAF(Dataset& ds);
+	SpatialGridHistogramIHWAF(Dataset& ds, int cols, int rows);
 	~SpatialGridHistogramIHWAF();
 
 	virtual double estimateWQuery(const Envelope& wquery) override;

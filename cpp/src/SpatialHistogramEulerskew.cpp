@@ -476,13 +476,18 @@ void SpatialHistogramEulerskew::hashSpatialObjects(Dataset &ds) {
 
         // vertices
         for(EulerskewVertex *v : vertices.getIntersectionsSL(de.mbr)) {
-            //if (de.mbr.contains(v->x, v->y)) {
-				if (!v->aux_geometry)
-					v->aux_geometry = GEOSGeom_createPointFromXY(v->x, v->y);
-				if (GEOSContains(de.geo, v->aux_geometry)) {
-					v->cardin += 1;				
-				}
-			//}
+			if (!v->aux_geometry) {
+				#if GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 9
+				v->aux_geometry = GEOSGeom_createPointFromXY(v->x, v->y);
+				#else
+				char point_wkt[100];
+				sprintf(point_wkt, "POINT(%.15f %.15f)", v->x, v->y);
+				v->aux_geometry = GEOSGeomFromWKT(point_wkt);
+				#endif
+			}
+			if (GEOSContains(de.geo, v->aux_geometry)) {
+				v->cardin += 1;
+			}
 		}
     }
 
